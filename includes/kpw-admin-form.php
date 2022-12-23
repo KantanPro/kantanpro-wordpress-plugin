@@ -1,4 +1,11 @@
 <?php
+/*
+WordPressの管理画面にプラグインメニューを追加するコードです。
+↓ 以下のサイトを参考にしました。
+OXY NOTES
+https://oxynotes.com/?p=9384#4
+*/
+
 add_action( 'admin_menu', 'add_general_custom_fields' );
 
 function add_general_custom_fields() {
