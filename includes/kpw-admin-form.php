@@ -63,7 +63,9 @@ do_settings_sections( 'default' );
 <th scope="row"><label for="active_kpw">使用する機能</label></th>
 <td>
 <input type="hidden" name="active_kpw" value="0">
-<label for="active_kpw"><input type="checkbox" id="active_kpw" name="active_kpw" size="30" value="1"<?php echo $checked; ?>/>顧客</input></label>
+<label for="active_kpw">
+<input type="checkbox" id="active_kpw" name="active_kpw" size="30" value="1"<?php echo $checked; ?>/>顧客</input>
+</label>
 </td>
 </tr>
 </tbody>

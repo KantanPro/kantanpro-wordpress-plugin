@@ -6,8 +6,6 @@ class Kntan_Client_Class{
 
     public function __construct() {
         $this->$name;
-        // 
-        // $my_client_table = Client_Tab_DB();
         // add_action('');
         // add_filter('');
     }
@@ -72,23 +70,6 @@ class Kntan_Client_Class{
             );
         }
 
-    // if(isset($_POST['your-name'])){
-    //         $client_name = $_POST['your-name'];
-    //         $text = $_POST['your-message'];
-            
-    //         // POSTデータをクリア
-    //         // unset($_POST);
-    //         // 受信したクエリーをテーブルに挿入する
-    //         $table_name = $wpdb->prefix. 'ktpwp_client';
-    //         $wpdb->insert( 
-    //             $table_name, 
-    //             array( 
-    //                 'time' => current_time( 'mysql' ),
-    //                 'name' => $client_name,
-    //                 'text' => $text,
-    //             ) 
-    //         );
-    //     }
     }
 
     // フォームからのクエリーを受信する（コンタクトフォーム７）
@@ -114,7 +95,6 @@ class Kntan_Client_Class{
         }
     }
     
-
     // 表示する
     function Client_Table_View( $name ) {
 
@@ -142,24 +122,16 @@ class Kntan_Client_Class{
             $time = esc_html($row->time);
             $client_name = esc_html($row->name);
             $text = esc_html($row->text);
-            // $results[] = <<<END
-            // <p>$id : $time : $client_name : $text : <a href="?method=post&client_id=$id">詳細</a></p><hr>
-            // END;
             $results[] = <<<END
-            <p>$id : $time : $client_name : $text : 
-            <form method="post" action="">
-            <input type="hidden" name="client_id" value="$id">
-            <input type="submit" name="send_post" value=" 詳細 ">
-            </form></p>
+            <p>$id : $time : $client_name : $text : <a href="?client_id=$id">詳細</a></p>
             <hr>
-            </p>    
             END;
         }
         $client_list = implode( $results );
 
-        // 任意のIDからクライアント情報を取得
-        if(isset( $_POST['client_id'] )){
-            $query_id = $_POST['client_id'];
+        // 任意のIDからクライアント情報を取得(GET)
+        if(isset( $_GET['client_id'] )){
+            $query_id = $_GET['client_id'];
         } else {
             $query_id = $wpdb->insert_id;
         }
@@ -186,7 +158,6 @@ class Kntan_Client_Class{
         
         // 新規クライアント作成入力フォーム
         $form_action = '/' . $name;
-        // $form_action = the_permalink();
         $client_form = <<<END
         <h3>■ 顧客を登録</h3>
         <form method="post" action="$form_action">
@@ -196,18 +167,13 @@ class Kntan_Client_Class{
         </form>
         END;
 
-        // // 行数
-        // $list_num = $wpdb->num_rows;
-        // // 最後のクエリ結果
-        // $last_result = $wpdb->last_result;
-        
         // 表示するもの
         $message = <<<END
         <p><font size="4">ログインユーザー$login_user <a href="/$name">更新</a></font>
         <a href="$logout_link">ログアウト</a></p>
         END;
 
-        $content = $top_client . $message . $client_form . $client_list;
+        $content = $top_client . $message . $client_list . $client_form;
         return $content;
 
         // POSTデータをクリア

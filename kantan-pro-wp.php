@@ -34,7 +34,7 @@ include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
 include 'includes/class-form-client.php'; // クライアントフォームクラス
-require_once "includes/kpw-admin-form.php"; // 管理画面に追加
+include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 // 関数をロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
