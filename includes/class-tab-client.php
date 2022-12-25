@@ -116,18 +116,19 @@ class Kntan_Client_Class{
         // クライアントリスト表示
         $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` ASC LIMIT $query_range");
         $post_row = $wpdb->get_results($query);
-        $results[] = "<h3>■ 顧客リスト($query_range)</h3>";
+        $results_h = '<div class="contents"><div class="item"><h3>■ 顧客リスト('. $query_range . ')</h3>';
         foreach ($post_row as $row){
             $id = esc_html($row->id);
             $time = esc_html($row->time);
             $client_name = esc_html($row->name);
             $text = esc_html($row->text);
             $results[] = <<<END
-            <p>$id : $time : $client_name : $text : <a href="?client_id=$id">詳細</a></p>
+            <p>$id : $time : $client_name : $text : <a href="?client_id=$id"> → </a></p>
             <hr>
             END;
         }
-        $client_list = implode( $results );
+        $results_f = '</div>';
+        $client_list = $results_h . implode( $results ) . $results_f;
 
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
@@ -145,35 +146,32 @@ class Kntan_Client_Class{
             $text = esc_html($row->text);
         }
         $top_client = <<<END
-        <h3>■ 顧客の詳細（ID: $client_id ）</h3>
-        ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃<br />
-        ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃<br />
+        <div class="item"><h3>■ 顧客の詳細（ID: $client_id ）</h3>
         ID: $client_id<br />
         TIME: $time<br />
         NAME: $client_name<br />
         MEMO: $text<br />
-        ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃<br />
-        ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃<br />
+        </div>
         END;
         
         // 新規クライアント作成入力フォーム
         $form_action = '/' . $name;
         $client_form = <<<END
-        <h3>■ 顧客を登録</h3>
+        <div class="ktform"><h3>■ 顧客を登録</h3>
         <form method="post" action="$form_action">
         <label> 名前：</label> <input type="text" name="client_name">
         <label> テキスト：</label> <input type="text" name="text">
         <p><input type="submit" name="send_post" value="送信"></p>
-        </form>
+        </form></div>
         END;
 
         // 表示するもの
         $message = <<<END
-        <p><font size="4">ログインユーザー$login_user <a href="/$name">更新</a></font>
-        <a href="$logout_link">ログアウト</a></p>
+        ユーザー：$login_user <a href="$logout_link">ログアウト</a>　<a href="/$name">更新</a>
+        <hr>
         END;
 
-        $content = $top_client . $message . $client_list . $client_form;
+        $content = $message . $client_list . $top_client . $client_form ;
         return $content;
 
         // POSTデータをクリア

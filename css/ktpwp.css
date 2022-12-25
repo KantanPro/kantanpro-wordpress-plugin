@@ -1,0 +1,17 @@
+@charset "UTF-8";
+
+.contents {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+ }
+ .item {
+    width: calc(100% / 2);
+    padding: 20px 10px;
+    text-align: left;
+ }
+ .ktform {
+    width: 100%;
+    padding: 20px 10px;
+    text-align: left;
+ }

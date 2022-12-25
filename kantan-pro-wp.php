@@ -41,6 +41,20 @@ add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 // add_action('wpcf7_mail_sent', 'my_wpcf7_mail_sent'); //ContactForm７から送信された情報を取得
 // add_action('kpw_client_form', 'kpw_client_form'); //ContactForm７のフォームを生成
 
+// スタイルシートを登録
+function register_ktpwp_styles() {
+	// $url = plugins_url( '/css/ktpwp.css' , __FILE__);
+	wp_register_style(
+		'ktpwp.css',
+		plugins_url( '/css/ktpwp.css' , __FILE__),
+		array(),
+		'1.0.0',
+		'all'
+	);
+	wp_enqueue_style( 'ktpwp.css' );
+}
+add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
+
 // テーブル用の関数を登録
 register_activation_hook( __FILE__, 'Client_Table_Create' ); // テーブル作成用
 register_activation_hook( __FILE__, 'Client_Table_Data' ); // デフォルト
