@@ -43,15 +43,14 @@ add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
 // スタイルシートを登録
 function register_ktpwp_styles() {
-	// $url = plugins_url( '/css/ktpwp.css' , __FILE__);
 	wp_register_style(
-		'ktpwp.css',
-		plugins_url( '/css/ktpwp.css' , __FILE__),
+		'ktpwp-css',
+		plugins_url( '/css/styles.css' , __FILE__),
 		array(),
 		'1.0.0',
 		'all'
 	);
-	wp_enqueue_style( 'ktpwp.css' );
+	wp_enqueue_style( 'ktpwp-css' );
 }
 add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
 
