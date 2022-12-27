@@ -1,11 +1,12 @@
 @charset "UTF-8";
 
-.contents {
+/* リストと詳細 */
+.client_contents {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
  }
- .item {
+ .client_item {
     width: calc(100% / 2);
     padding: 20px 10px;
     text-align: left;
@@ -14,4 +15,64 @@
     width: 100%;
     padding: 20px 10px;
     text-align: left;
+ }
+
+/*タブ切り替え全体のスタイル*/
+.tabs {
+   margin-top: 50px;
+   padding-bottom: 40px;
+   background-color: #fff;
+   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+   width: 100%;
+   margin: 0 auto;
+}
+ 
+ /*タブのスタイル*/
+ .tab_item {
+   width: calc(100%/7);
+   height: 50px;
+   border-bottom: 3px solid #5ab4bd;
+   background-color: #d9d9d9;
+   line-height: 50px;
+   font-size: 16px;
+   text-align: center;
+   color: #565656;
+   display: block;
+   float: left;
+   text-align: center;
+   font-weight: bold;
+   transition: all 0.2s ease;
+ }
+ .tab_item:hover {
+   opacity: 0.75;
+ }
+ 
+ /*ラジオボタンを全て消す*/
+ input[name="tab_item"] {
+   display: none;
+ }
+ 
+ /*タブ切り替えの中身のスタイル*/
+ .tab_content {
+   display: none;
+   padding: 40px 40px 0;
+   clear: both;
+   overflow: hidden;
+ }
+ 
+ /*選択されているタブのコンテンツのみを表示*/
+ #list:checked ~ #list_content,
+ #order:checked ~ #order_content,
+ #client:checked ~ #client_content,
+ #service:checked ~ #service_content,
+ #supplier:checked ~ #supplier_content,
+ #report:checked ~ #report_content,
+ #setting:checked ~ #setting_content  {
+   display: block;
+ }
+ 
+ /*選択されているタブのスタイルを変える*/
+ .tabs input:checked + .tab_item {
+   background-color: #5ab4bd;
+   color: #fff;
  }

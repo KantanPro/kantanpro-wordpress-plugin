@@ -34,7 +34,10 @@ include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
 include 'includes/class-form-client.php'; // クライアントフォームクラス
+include "includes/class-view-tab.php"; // タブビュークラス
+// include "js/view.js"; // JS
 include "includes/kpw-admin-form.php"; // 管理画面に追加
+
 
 // 関数をロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
@@ -59,120 +62,72 @@ register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト�
 
 function KTPWP_Index(){
 
-	//ログイン中なら
-	if( is_user_logged_in() ){
+	//すべてのタブのショートコード[kantanAllTab]
+	function kantanAllTab(){
 
-		//仕事リスト
-		function TabList(){
-			$list = new Kantan_List_Class();
-			return $list->List_Tab_View( 'list' );
-		}
-		add_shortcode('list','TabList');
+		//ログイン中なら
+		if( is_user_logged_in() ){
 
-		//受注書
-		function shortcodeorder(){
-			$tabs = new Kntan_Order_Class();
-			return $tabs->Order_Tab_View( 'order' );
-		}
-		add_shortcode('order','shortcodeorder');
+				// ログインユーザー情報を取得
+				global $current_user;
+
+				// ログアウトのリンク
+				$logout_link = wp_logout_url();
+
+				// ヘッダー表示ログインユーザー名など
+				$login_user = $current_user->nickname;
+				$front_message = <<<END
+				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>
+				<hr>
+				END;
 		
-		//クライアント
-		function shortcodeclient(){
-			
-			$tabs = new Kntan_Client_Class();
-			$tabs->Client_Table_Create();
-			$tabs->Client_Table_Data();
-			$view = $tabs->Client_Table_View( 'client' );
-			return $client_form . $view;
+				//仕事リスト
+				$list = new Kantan_List_Class();
+				$list_content = $list->List_Tab_View( 'list' );
+
+				//受注書
+				$tabs = new Kntan_Order_Class();
+				$order_content = $tabs->Order_Tab_View( 'order' );
+				
+				//クライアント				
+				$tabs = new Kntan_Client_Class();
+				$tabs->Client_Table_Create();
+				$tabs->Client_Table_Data();
+				$view = $tabs->Client_Table_View( 'client' );
+				$client_content = $client_form . $view;
+				
+				//商品・サービス
+				$tabs = new Kntan_Service_Class();
+				$service_content = $tabs->Service_Tab_View( 'service' );
+				
+				//協力会社
+				$tabs = new Kantan_Supplier_Class();
+				$supplier_content = $tabs->Supplier_Tab_View( 'supplier' );
+				
+				//レポート
+				$tabs = new Kntan_Report_Class();
+				$report_content = $tabs->Report_Tab_View( 'report' );
+				
+				//設定
+				$tabs = new Kntan_Setting_Class();
+				$setting_content = $tabs->Setting_Tab_View( 'setting' );
+
+				// view
+				$view = new view_tabs_Class();
+				$tab_view = $view ->TabsView( $list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content );
+				return $front_message . $tab_view;
+
 
 		}
-		add_shortcode('client','shortcodeclient');
-		
-		//商品・サービス
-		function shortcodeservice(){
-			$tabs = new Kntan_Service_Class();
-			return $tabs->Service_Tab_View( 'service' );
-		}
-		add_shortcode('service','shortcodeservice');
-		
-		//協力会社
-		function shortcodesupplier(){
-			$tabs = new Kantan_Supplier_Class();
-			return $tabs->Supplier_Tab_View( 'supplier' );
-		}
-		add_shortcode('supplier','shortcodesupplier');
-		
-		//レポート
-		function shortcodereport(){
-			$tabs = new Kntan_Report_Class();
-			return $tabs->Report_Tab_View( 'report' );
-		}
-		add_shortcode('report','shortcodereport');
-		
-		//設定
-		function shortcodesetting(){
-			$tabs = new Kntan_Setting_Class();
-			return $tabs->Setting_Tab_View( 'setting' );
-		}
-		add_shortcode('setting','shortcodesetting');
-	
-	//ログアウト中なら
-	}else{
 
-		//仕事リスト
-		function shortcodelist(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
+		//ログアウト中なら
+		else{
+				$login_error = new Kantan_Login_Error();
+				$error = $login_error->Error_View();
+				return $error;
 		}
-		add_shortcode('list','shortcodelist');
 
-		//受注書
-		function shortcodeorder(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('order','shortcodeorder');
-		
-		//クライアント
-		function shortcodeclient(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('client','shortcodeclient');
-		
-		//商品・サービス
-		function shortcodeservice(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('service','shortcodeservice');
-		
-		//協力会社
-		function shortcodesupplier(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('supplier','shortcodesupplier');
-		
-		//レポート
-		function shortcodereport(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('report','shortcodereport');
-		
-		//設定
-		function shortcodesetting(){
-			$login_error = new Kantan_Login_Error();
-			$error = $login_error->Error_View();
-			return $error;
-		}
-		add_shortcode('setting','shortcodesetting');
 	}
+	add_shortcode('kantanAllTab','kantanAllTab');
+
 }
