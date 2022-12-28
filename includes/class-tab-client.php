@@ -137,6 +137,9 @@ class Kntan_Client_Class{
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
             $query_id = $_GET['client_id'];
+            // クッキーを保存
+            $position = $name;
+            setcookie('position', $position, time() + 3600);
         } else {
             $query_id = $wpdb->insert_id;
         }
@@ -161,11 +164,11 @@ class Kntan_Client_Class{
         END;
         
         // 新規クライアント作成入力フォーム
-        $form_action = '/' . $name;
+        // $form_action = '/' . $name;
         $client_form = <<<END
         <div class="ktform">
             <h3>■ 顧客を登録</h3>
-            <form method="post" action="$form_action">
+            <form method="post" action="">
                 <label> 名前：</label> <input type="text" name="client_name">
                 <label> テキスト：</label> <input type="text" name="text">
                 <p><input type="submit" name="send_post" value="送信"></p>
@@ -179,6 +182,7 @@ class Kntan_Client_Class{
 
         // POSTデータをクリア
         unset($_POST);
+
     }
 
 }
