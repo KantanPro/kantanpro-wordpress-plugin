@@ -24,7 +24,7 @@ class view_tabs_Class{
       ) {
         
         // クッキーでタブの位置を取得
-        $position = $_COOKIE['position'];
+        $position = $_COOKIE['ktpwp_tab_position'];
 
         switch ( $position ) {
           case 'list':
@@ -123,37 +123,37 @@ class view_tabs_Class{
               <input id="setting" type="radio" name="tab_item"><label class="tab_item" for="setting">setting</label>
               EOF;
         }
-        $view .= <<< EOF
-        <div class="tab_content" id="list_content">
-        $list_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="order_content">
-        $order_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="client_content">
-        $client_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="service_content">
-        $service_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="supplier_content">
-        $supplier_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="report_content">
-        $report_content
-        <br />Cookie：$position
-        </div>
-        <div class="tab_content" id="setting_content">
-        $setting_content
-        <br />Cookie：$position
-        </div>
-        </div>
-        EOF;
+              $view .= <<< EOF
+              <div class="tab_content" id="list_content">
+              $list_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="order_content">
+              $order_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="client_content">
+              $client_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="service_content">
+              $service_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="supplier_content">
+              $supplier_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="report_content">
+              $report_content
+              <br />Cookie：$position
+              </div>
+              <div class="tab_content" id="setting_content">
+              $setting_content
+              <br />Cookie：$position
+              </div>
+              </div>
+              EOF;
 
     return $view;
     }
