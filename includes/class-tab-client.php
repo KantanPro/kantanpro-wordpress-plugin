@@ -49,17 +49,48 @@ class Kntan_Client_Class{
     
     }
     
-    // フォームから値を受信しレコードを挿入する
+    // フォームから値を受信しレコードを更新または追加する
     function Client_Table_Data() {
         global $wpdb;
+        $table_name = $wpdb->prefix. 'ktpwp_client';
         
-        // フォームからのクエリーを受信する（デフォルト）
-        if(isset($_POST['client_name'])){
-            $client_name = $_POST['client_name'];
-            $text = $_POST['text'];
+        // POSTデーター受信
+        $client_id = $_POST['client_id'];
+        $query_post = $_POST['query_post'];
+        $client_name = $_POST['client_name'];
+        $text = $_POST['text'];
+        
+        // // GETデーター受信
+        // $client_id = $_GET['client_id'];
+        // $query_post = $_GET['query_post'];
+        // $client_name = $_GET['client_name'];
+        // $text = $_GET['text'];
+        
+        // 更新
+        if( $query_post == 'update' ){
+            
+            // // クッキーでクライアントIDを取得
+            // $client_id = $_COOKIE['ktpwp_client_id'];
 
-            // 受信したクエリーをテーブルに挿入する
-            $table_name = $wpdb->prefix. 'ktpwp_client';
+            $wpdb->update( 
+                $table_name, 
+                array( 
+                    'name' => $client_name,
+                    'text' => $text,
+                ),
+                array( 'ID' => $client_id ), 
+                array( 
+                    '%s',	// name
+                    '%s'	// text
+                ), 
+                array( '%d' ) 
+            
+            );
+            
+        }
+        
+        // 追加
+        elseif( $query_post == 'insert' ) {
             $wpdb->insert( 
                 $table_name, 
                 array( 
@@ -68,33 +99,30 @@ class Kntan_Client_Class{
                     'text' => $text,
                 ) 
             );
+
         }
-
-    }
-
-    // フォームからのクエリーを受信する（コンタクトフォーム７）
-    function my_wpcf7_mail_sent($contact_form){
-        global $wpdb;
-
-        $submission = new WPCF7_Submission();
-        if($submission) {
         
-            //フォームデーターを取得
-            $formdata = $submission->get_posted_data();
-            
-            // 受信したクエリーをテーブルに挿入する
-            $table_name = $wpdb->prefix. 'ktpwp_client';
-            $wpdb->insert( 
-                $table_name, 
-                array( 
-                    'time' => current_time( 'mysql' ),
-                    'name' => $formdata['your-name'],
-                    'text' => $formdata['your-message'],
-                ) 
+        // 削除
+        elseif( $query_post == 'delete' ) {
+            $wpdb->delete(
+                $table_name,
+                array(
+                    'id' => $client_id
+                ),
+                array(
+                    '%d'
+                )
             );
         }
+        
+        // エラー処理
+        else {
+            // $query_postがないよ
+            // echo 'NG';
+        }
+
     }
-    
+
     // 表示する
     function Client_Table_View( $name ) {
 
@@ -137,13 +165,14 @@ class Kntan_Client_Class{
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
             $query_id = $_GET['client_id'];
-            // クッキーを保存
-            $position = $name;
-            setcookie('position', $position, time() + 3600);
+            // クッキーを保存（１０年間保存します）
+            setcookie('ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60));
+            setcookie('ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60));
         } else {
             $query_id = $wpdb->insert_id;
         }
 
+        // 詳細表示
         $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
         $post_row = $wpdb->get_results($query);
         foreach ($post_row as $row){
@@ -152,32 +181,49 @@ class Kntan_Client_Class{
             $client_name = esc_html($row->name);
             $text = esc_html($row->text);
         }
-        $top_client = <<<END
-            <div class="client_item">
-                <h3>■ 顧客の詳細（ID: $client_id ）</h3>
-                ID: $client_id<br />
-                TIME: $time<br />
-                NAME: $client_name<br />
-                MEMO: $text<br />
-            </div>
-        </div>
+
+        // 表題
+        $client_title = <<<END
+        <div class="client_item">
+            <h3>■ 顧客の詳細（ID: $client_id ）</h3>
+            ID: $client_id TIME: $time<br />
         END;
-        
-        // 新規クライアント作成入力フォーム
-        // $form_action = '/' . $name;
-        $client_form = <<<END
-        <div class="ktform">
-            <h3>■ 顧客を登録</h3>
-            <form method="post" action="">
-                <label> 名前：</label> <input type="text" name="client_name">
-                <label> テキスト：</label> <input type="text" name="text">
-                <p><input type="submit" name="send_post" value="送信"></p>
-            </form>
+
+        // フォーム表示
+        $client_forms = <<<END
+                <div class="box">
+                    <form method="post" action="">
+                    <label> 名前：</label> <input type="text" name="client_name" value="$client_name">
+                    <label> テキスト：</label> <input type="text" name="text" value="$text">
+                    <input type="hidden" name="query_post" value="update">
+                    <input type="hidden" name="client_id" value="$client_id">
+                    <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
+                    </form>
+                    <form method="post" action="">
+                    <input type="hidden" name="client_id" value="$client_id">
+                    <input type="hidden" name="query_post" value="delete">
+                    <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
+                    </form>
+                </div>
+                <div sclass="box">
+                    <h4>顧客追加</h4>
+                    <form method="post" action="">
+                    <label> 名前：</label> <input type="text" name="client_name" value="">
+                    <label> テキスト：</label> <input type="text" name="text" value="">
+                    <input type="hidden" name="query_post" value="insert">
+                    <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
+                    </form>
+                </div>
+        END;
+
+        // DIV閉じ
+        $div_end = <<<END
+            </div>
         </div>
         END;
 
         // 表示するもの
-        $content = $client_list . $top_client . $client_form ;
+        $content = $client_list . $client_title . $client_forms . $div_end;
         return $content;
 
         // POSTデータをクリア

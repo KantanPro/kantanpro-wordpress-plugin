@@ -17,6 +17,22 @@
     text-align: left;
  }
 
+ /* ヘッダー */
+ .ktp_header{
+   text-align: left;
+   border:  1px solid;
+   padding: 15px;
+ }
+
+/* ボタン */
+.box{
+  margin-bottom: 50px;
+}
+.submit_button{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 /*タブ切り替え全体のスタイル*/
 .tabs {
    margin-top: 50px;
