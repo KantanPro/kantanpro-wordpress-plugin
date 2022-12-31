@@ -18,7 +18,8 @@ class Kantan_Login_Error{
 
         // 表示する内容
         $content = <<<END
-        <h3>ログインしてください</h3>
+        <h3>ありがとうございます！</h3>
+        <p><font size="4"><a href="/welcome-to-kantanprowp/">戻る</a></font></p>
 
         <!--ログイン-->
         <p><font size="4"><a href="$login_link">ログイン</a></font></p>
