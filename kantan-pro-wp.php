@@ -77,8 +77,7 @@ function KTPWP_Index(){
 				// ヘッダー表示ログインユーザー名など
 				$login_user = $current_user->nickname;
 				$front_message = <<<END
-				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>
-				<hr>
+				<div class="ktp_header">ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a></div>
 				END;
 		
 				//仕事リスト
@@ -94,7 +93,7 @@ function KTPWP_Index(){
 				$tabs->Client_Table_Create();
 				$tabs->Client_Table_Data();
 				$view = $tabs->Client_Table_View( 'client' );
-				$client_content = $client_form . $view;
+				$client_content = $view;
 				
 				//商品・サービス
 				$tabs = new Kntan_Service_Class();
