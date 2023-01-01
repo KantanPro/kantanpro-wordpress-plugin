@@ -2,20 +2,44 @@
 
 /* リストと詳細 */
 .client_contents {
-    display: flex;
-    flex-wrap: wrap;
-    width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  text-align: center;
  }
- .client_item {
-    width: calc(100% / 2);
+
+ /* リストBOX */
+.client_list_box {
+  width: 50%;
+  min-width: 286px;
+  display: block;
+  padding: 10px 50px 20px 0px;
+  text-align: left;
+ }
+.client_list_item {
+  width: auto;
+  line-height: 30px;
+  border-bottom: 1px solid #9da4a4;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* 詳細 */
+.client_detail {
+  width: 50%;
+  min-width: 286px;
+  display: block;
+  padding: 10px 0px 20px 10px;
+  text-align: left;
+ }
+
+
+ /* .ktform {
+    width: 100%;
     padding: 20px 10px;
     text-align: left;
- }
- .ktform {
-    width: 100%;
-    padding: 20px 10px;
-    text-align: left;
- }
+ } */
+
+
 
  /* ヘッダー */
  .ktp_header{
@@ -71,7 +95,7 @@
  /*タブ切り替えの中身のスタイル*/
  .tab_content {
    display: none;
-   padding: 40px 40px 0;
+   padding: 0px 40px 0;
    clear: both;
    overflow: hidden;
  }

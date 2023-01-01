@@ -146,7 +146,7 @@ class Kntan_Client_Class{
         $post_row = $wpdb->get_results($query);
         $results_h = <<<END
         <div class="client_contents">
-            <div class="client_item">
+            <div class="client_list_box">
             <h3>■ 顧客リスト($query_range)</h3>
         END;
         foreach ($post_row as $row){
@@ -155,8 +155,7 @@ class Kntan_Client_Class{
             $client_name = esc_html($row->name);
             $text = esc_html($row->text);
             $results[] = <<<END
-            <p>$id : $time : $client_name : $text : <a href="?client_id=$id"> → </a></p>
-            <hr>
+            <div class="client_list_item">$id : $time : $client_name : $text : <a href="?client_id=$id"> → </a></div>
             END;
         }
         $results_f = '</div>';
@@ -165,9 +164,8 @@ class Kntan_Client_Class{
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
             $query_id = $_GET['client_id'];
-            // クッキーを保存（１０年間保存します）
-            setcookie('ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60));
-            setcookie('ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60));
+            setcookie('ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
+            setcookie('ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
         } else {
             $query_id = $wpdb->insert_id;
         }
@@ -184,7 +182,7 @@ class Kntan_Client_Class{
 
         // 表題
         $client_title = <<<END
-        <div class="client_item">
+        <div class="client_detail">
             <h3>■ 顧客の詳細（ID: $client_id ）</h3>
             ID: $client_id TIME: $time<br />
         END;

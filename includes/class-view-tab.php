@@ -34,7 +34,6 @@ class view_tabs_Class{
           $position = $position;
         }
 
-
         switch ( $position ) {
           case 'list':
             $view = <<< EOF
