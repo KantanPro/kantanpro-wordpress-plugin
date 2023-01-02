@@ -188,16 +188,15 @@ class Kntan_Client_Class{
         // 表題
         $client_title = <<<END
         <div class="client_detail">
-            <h3>■ 顧客の詳細（ID: $client_id ）</h3>
-            ID: $client_id TIME: $time
+            <h3>■ 顧客の詳細（ID: $client_id  TIME: $time ）</h3>
         END;
 
         // フォーム表示
         $client_forms = <<<END
                 <div class="box">
                     <form method="post" action="">
-                    <label> 名前：</label> <input type="text" name="client_name" value="$client_name">
-                    <label> テキスト：</label> <input type="text" name="text" value="$text">
+                    <p><label> 名　　前：</label> <input type="text" name="client_name" value="$client_name"></p>
+                    <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
                     <input type="hidden" name="query_post" value="update">
                     <input type="hidden" name="client_id" value="$client_id">
                     <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
@@ -209,10 +208,10 @@ class Kntan_Client_Class{
                     </form>
                 </div>
                 <div class="box">
-                    <h4>顧客追加</h4>
+                    <h3>■ 顧客追加</h3>
                     <form method="post" action="">
-                    <label> 名前：</label> <input type="text" name="client_name" value="">
-                    <label> テキスト：</label> <input type="text" name="text" value="">
+                    <p><label> 名　　前：</label> <input type="text" name="client_name" value=""></p>
+                    <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
                     <input type="hidden" name="query_post" value="insert">
                     <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
                     </form>

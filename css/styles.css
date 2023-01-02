@@ -20,7 +20,7 @@
   line-height: 30px;
   border-bottom: 1px solid #9da4a4;
   margin-top: 20px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
 /* 詳細BOX */
@@ -30,6 +30,7 @@
   display: block;
   padding: 20px 20px 20px 20px;
   text-align: left;
+  background-color: #edf3f3;
  }
 
 
@@ -39,13 +40,12 @@
     text-align: left;
  } */
 
-
-
  /* ヘッダー */
  .ktp_header{
    text-align: left;
    border:  1px solid;
    padding: 15px;
+   margin-bottom: 20px;
  }
 
 /* ボタン */
@@ -60,7 +60,7 @@
 /*タブ切り替え全体のスタイル*/
 .tabs {
    margin-top: 50px;
-   padding-bottom: 40px;
+   padding-bottom: 0px;
    background-color: #fff;
    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
    width: 100%;
@@ -99,6 +99,7 @@
    padding: 10px 20px 10px 20px;
    clear: both;
    overflow: hidden;
+   background-color: #cdd8d8;
  }
  
  /*選択されているタブのコンテンツのみを表示*/
