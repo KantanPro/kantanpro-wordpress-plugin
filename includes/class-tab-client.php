@@ -164,8 +164,11 @@ class Kntan_Client_Class{
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
             $query_id = $_GET['client_id'];
-            setcookie('ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
-            setcookie('ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
+            add_action( 'get_header', 'my_setcookie');
+            function my_setcookie() {
+              setcookie('ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
+              setcookie('ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
+            }
         } else {
             $query_id = $wpdb->insert_id;
         }
