@@ -10,9 +10,9 @@
  /* リストBOX */
 .client_list_box {
   width: 50%;
-  min-width: 286px;
+  min-width: 305px;
   display: block;
-  padding: 10px 50px 20px 0px;
+  padding: 20px 20px 20px 20px;
   text-align: left;
  }
 .client_list_item {
@@ -23,12 +23,12 @@
   margin-bottom: 10px;
 }
 
-/* 詳細 */
+/* 詳細BOX */
 .client_detail {
   width: 50%;
-  min-width: 286px;
+  min-width: 305px;
   display: block;
-  padding: 10px 0px 20px 10px;
+  padding: 20px 20px 20px 20px;
   text-align: left;
  }
 
@@ -82,7 +82,7 @@
    text-align: center;
    font-weight: bold;
    transition: all 0.2s ease;
-   overflow: auto;
+   overflow: hidden;
  }
  .tab_item:hover {
    opacity: 0.75;
@@ -96,7 +96,7 @@
  /*タブ切り替えの中身のスタイル*/
  .tab_content {
    display: none;
-   padding: 0px 40px 0;
+   padding: 10px 20px 10px 20px;
    clear: both;
    overflow: hidden;
  }
