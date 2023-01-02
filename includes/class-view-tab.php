@@ -10,6 +10,7 @@ class view_tabs_Class{
     
     public function __construct() {
       $this->$name;
+      add_action( 'get_header', 'my_setcookie');
     }
     
     //タブの表示
@@ -29,7 +30,6 @@ class view_tabs_Class{
         // クッキー再設定のリンク
         if(isset( $_GET['tab_name'] )){
           $position = $_GET['tab_name'];
-          add_action( 'get_header', 'my_setcookie');
           function my_setcookie() {
             setcookie('ktpwp_tab_position', $position, time() + (20 * 365 * 24 * 60 * 60)); // クッキーを保存（１０年間保存します）
           }
