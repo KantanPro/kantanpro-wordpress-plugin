@@ -82,6 +82,7 @@
    text-align: center;
    font-weight: bold;
    transition: all 0.2s ease;
+   overflow: auto;
  }
  .tab_item:hover {
    opacity: 0.75;
