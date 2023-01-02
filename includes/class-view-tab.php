@@ -47,13 +47,13 @@ class view_tabs_Class{
             <input id="client" type="radio" name="tab_item">
             <label class="tab_item" for="client"><a href="?tab_name=client">client</a></label>
             <input id="service" type="radio" name="tab_item">
-            <label class="tab_item" for="service"><a href="?tab_name=service">service</a><</label>
+            <label class="tab_item" for="service"><a href="?tab_name=service">service</a></label>
             <input id="supplier" type="radio" name="tab_item">
             <label class="tab_item" for="supplier"><a href="?tab_name=supplier">supplier</a></label>
             <input id="report" type="radio" name="tab_item">
             <label class="tab_item" for="report"><a href="?tab_name=report">report</a></label>
             <input id="setting" type="radio" name="tab_item">
-            <label class="tab_item" for="setting"><a href="?tab_name=setting">setting</a><</label>
+            <label class="tab_item" for="setting"><a href="?tab_name=setting">setting</a></label>
             EOF;
             break;
           case 'order':
@@ -173,13 +173,13 @@ class view_tabs_Class{
             <input id="client" type="radio" name="tab_item">
             <label class="tab_item" for="client"><a href="?tab_name=client">client</a></label>
             <input id="service" type="radio" name="tab_item">
-            <label class="tab_item" for="service"><a href="?tab_name=service">service</a><</label>
+            <label class="tab_item" for="service"><a href="?tab_name=service">service</a></label>
             <input id="supplier" type="radio" name="tab_item">
             <label class="tab_item" for="supplier"><a href="?tab_name=supplier">supplier</a></label>
             <input id="report" type="radio" name="tab_item">
             <label class="tab_item" for="report"><a href="?tab_name=report">report</a></label>
             <input id="setting" type="radio" name="tab_item">
-            <label class="tab_item" for="setting"><a href="?tab_name=setting">setting</a><</label>
+            <label class="tab_item" for="setting"><a href="?tab_name=setting">setting</a></label>
             EOF;
         }
               $view .= <<< EOF

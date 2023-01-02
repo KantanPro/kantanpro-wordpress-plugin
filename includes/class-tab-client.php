@@ -187,7 +187,7 @@ class Kntan_Client_Class{
         $client_title = <<<END
         <div class="client_detail">
             <h3>■ 顧客の詳細（ID: $client_id ）</h3>
-            ID: $client_id TIME: $time<br />
+            ID: $client_id TIME: $time
         END;
 
         // フォーム表示
@@ -206,7 +206,7 @@ class Kntan_Client_Class{
                     <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
                     </form>
                 </div>
-                <div sclass="box">
+                <div class="box">
                     <h4>顧客追加</h4>
                     <form method="post" action="">
                     <label> 名前：</label> <input type="text" name="client_name" value="">
