@@ -39,7 +39,7 @@ include "includes/class-view-tab.php"; // タブビュークラス
 include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 
-// 関数をロード
+// カンタンProをロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
 // スタイルシートを登録
@@ -59,6 +59,7 @@ add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
 register_activation_hook( __FILE__, 'Client_Table_Create' ); // テーブル作成用
 register_activation_hook( __FILE__, 'Client_Table_Data' ); // デフォルト
 register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
+
 
 function KTPWP_Index(){
 
