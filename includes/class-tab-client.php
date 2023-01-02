@@ -6,7 +6,7 @@ class Kntan_Client_Class{
 
     public function __construct() {
         $this->$name;
-        add_action( 'get_header', 'my_setcookie');
+        // add_action( 'get_header', 'my_setcookie');
         // add_action('');
         // add_filter('');
     }
@@ -71,7 +71,7 @@ class Kntan_Client_Class{
         if( $query_post == 'update' ){
             
             // // クッキーでクライアントIDを取得
-            // $client_id = $_COOKIE['ktpwp_client_id'];
+            // $client_id = $_COOKIE['ktp_client_id'];
 
             $wpdb->update( 
                 $table_name, 
@@ -156,7 +156,7 @@ class Kntan_Client_Class{
             $client_name = esc_html($row->name);
             $text = esc_html($row->text);
             $results[] = <<<END
-            <div class="client_list_item">$id : $time : $client_name : $text : <a href="?client_id=$id"> → </a></div>
+            <div class="client_list_item">$id : $time : $client_name : $text : <a href="?tab_name=$name&client_id=$id"> → </a></div>
             END;
         }
         $results_f = '</div>';
@@ -165,10 +165,12 @@ class Kntan_Client_Class{
         // 任意のIDからクライアント情報を取得(GET)
         if(isset( $_GET['client_id'] )){
             $query_id = $_GET['client_id'];
-            function my_setcookie() {
-              setcookie( 'ktpwp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60), '/' ); // IDを保存（１０年間保存します）
-              setcookie( 'ktpwp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60), '/' ); // タブのポジションを保存（１０年間保存します）
-            }
+            // function my_setcookie() {
+            //     // IDをクッキーに保存（１０年間保存します）
+            //     setcookie( 'ktp_client_id', $query_id, time() + (20 * 365 * 24 * 60 * 60), '/' );
+            //     // タブポジションをクッキーに保存（１０年間保存します）
+            //     setcookie( 'ktp_tab_position', $name, time() + (20 * 365 * 24 * 60 * 60), '/' );
+            // }
         } else {
             $query_id = $wpdb->insert_id;
         }
