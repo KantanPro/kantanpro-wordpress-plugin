@@ -144,11 +144,12 @@ class Kntan_Client_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
         //表示範囲
-        $query_limit = '6';
+        $query_limit = '3';
 
         //スタート位置を決める
         $page_stage = $_GET['page_stage'];
         $page_start = $_GET['page_start'];
+        $flg = $_GET['flg'];
         
         if( $page_stage == '' ){
             $page_start = 0;
@@ -178,18 +179,25 @@ class Kntan_Client_Class{
         // ページネーションリンク
         $post_num = count($post_row); // 現在の項目数（可変）
         $page_buck = ''; // 前のスタート位置
-        // $page_stage = '';
+        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
         
-        if( !$page_stage ){
-            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; }else{ $page_stage = 3; }
+        if( !$page_stage || $page_stage == 1 ){
+            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
             $page_start ++;
             $page_next_start = $query_max_num;
+            $flg ++;
             $results_f = <<<END
             <div class="pagination">
             END;
+            // $page_buck_stage = 2;
+            if( $page_start > 1 && $flg >= 2 ){
+                $page_buck_stage = 2;
+            } else {
+                $page_buck_stage = 1;
+            }
             if( $post_num >= $query_limit ){
                 $results_f .= <<<END
-                $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage"> > </a>
+                $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
                 </div>
                 END;
             } else {
@@ -201,30 +209,42 @@ class Kntan_Client_Class{
             $page_start = $page_start + $query_limit;
 
         } elseif( $page_stage == 2 ) {
-            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; }else{ $page_stage = 3; }
+            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
+            $page_buck = $page_start - $query_limit;
             $page_next_start = $page_start + $post_num;
             $query_max_num = $query_max_num + $page_start;
             $page_start ++;
+            $flg = 2;
             $results_f = <<<END
             <div class="pagination">
-            <a href="#" onclick="javascript:window.history.back(-1);return false;"> < </a>
             END;
-            if( $post_num >= $query_limit ){
+            if( $page_start > 1 && $flg >= 2 ){
+                $page_buck_stage = 2;
                 $results_f .= <<<END
-                &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage"> > </a>
-                </div>
+                <a href="?tab_name=$name&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
                 END;
             } else {
+                $page_buck_stage = 1;
+            }
+            if( $post_num >= $query_limit ){
                 $results_f .= <<<END
-                &emsp; 戻る
+                &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+                </div>
+                END;
+                $flg ++;
+            } else {
+                $results_f .= <<<END
+                &emsp; 最後です
                 </div>
                 END;
             }
         } elseif( $page_stage == 3 ) {
-            if( $post_num >= $query_limit ){$page_stage = 2;}else{$page_stage = 3;}
+            if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
+            // $page_buck = $page_start - $post_num;
+            // $page_stage = 2;
             $results_f = <<<END
             <div class="pagination">
-            <a href="#" onclick="javascript:window.history.back(-1);return false;"> < </a>
+            <a href="?tab_name=$name&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
             </div>
             END;
         }
