@@ -78,6 +78,17 @@
   margin-bottom: 10px;
 }
 
+/* 前は次へ */
+.zengo {
+  display: block;
+  float: right;
+}
+.zengoButton {
+  font-size: 16px;
+  margin-right: 10px;
+  float: left;
+}
+
 /*タブ切り替え全体のスタイル*/
 .tabs {
    margin-top: 50px;

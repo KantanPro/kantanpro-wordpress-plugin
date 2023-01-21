@@ -33,9 +33,8 @@ include 'includes/class-tab-supplier.php';
 include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
-include 'includes/class-form-client.php'; // クライアントフォームクラス
 include "includes/class-view-tab.php"; // タブビュークラス
-// include "js/view.js"; // JS
+include "js/view.js"; // JS
 include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 
@@ -56,8 +55,8 @@ function register_ktpwp_styles() {
 add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
 
 // テーブル用の関数を登録
-register_activation_hook( __FILE__, 'Client_Table_Create' ); // テーブル作成用
-register_activation_hook( __FILE__, 'Client_Table_Data' ); // デフォルト
+register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
+register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
 register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
 
 
@@ -78,7 +77,12 @@ function KTPWP_Index(){
 				// ヘッダー表示ログインユーザー名など
 				$login_user = $current_user->nickname;
 				$front_message = <<<END
-				<div class="ktp_header">ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a></div>
+				<div class="ktp_header">
+				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
+					<div id="zengo" class="zengo">
+					<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
+					</div>
+				</div>
 				END;
 		
 				//仕事リスト
@@ -91,9 +95,10 @@ function KTPWP_Index(){
 				
 				//クライアント				
 				$tabs = new Kntan_Client_Class();
-				$tabs->Client_Table_Create();
-				$tabs->Client_Table_Data();
-				$view = $tabs->Client_Table_View( 'client' );
+				$tab_name = 'client';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
 				$client_content = $view;
 				
 				//商品・サービス
@@ -102,8 +107,12 @@ function KTPWP_Index(){
 				
 				//協力会社
 				$tabs = new Kantan_Supplier_Class();
-				$supplier_content = $tabs->Supplier_Tab_View( 'supplier' );
-				
+				$tab_name = 'supplier';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$supplier_content = $view;
+
 				//レポート
 				$tabs = new Kntan_Report_Class();
 				$report_content = $tabs->Report_Tab_View( 'report' );
