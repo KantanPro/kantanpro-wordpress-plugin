@@ -87,7 +87,6 @@ class Kntan_Client_Class{
                     'text' => $text,
                 ) 
             );
-
         }
         
         // 削除
@@ -144,7 +143,7 @@ class Kntan_Client_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
         //表示範囲
-        $query_limit = '3';
+        $query_limit = '11';
 
         //スタート位置を決める
         $page_stage = $_GET['page_stage'];
@@ -180,6 +179,12 @@ class Kntan_Client_Class{
         $post_num = count($post_row); // 現在の項目数（可変）
         $page_buck = ''; // 前のスタート位置
         $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
+        // 現在表示中の詳細
+        if(isset( $_GET['data_id'] )){
+            $data_id = $_GET['data_id'];
+        } else {
+            $data_id = $wpdb->insert_id;
+        }
         
         if( !$page_stage || $page_stage == 1 ){
             if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
@@ -197,7 +202,7 @@ class Kntan_Client_Class{
             }
             if( $post_num >= $query_limit ){
                 $results_f .= <<<END
-                $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+                $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
                 </div>
                 END;
             } else {
@@ -221,20 +226,20 @@ class Kntan_Client_Class{
             if( $page_start > 1 && $flg >= 2 ){
                 $page_buck_stage = 2;
                 $results_f .= <<<END
-                <a href="?tab_name=$name&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+                <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
                 END;
             } else {
                 $page_buck_stage = 1;
             }
             if( $post_num >= $query_limit ){
                 $results_f .= <<<END
-                &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+                &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
                 </div>
                 END;
                 $flg ++;
             } else {
                 $results_f .= <<<END
-                &emsp; 最後です
+                &emsp; DATA END!
                 </div>
                 END;
             }
@@ -244,7 +249,7 @@ class Kntan_Client_Class{
             // $page_stage = 2;
             $results_f = <<<END
             <div class="pagination">
-            <a href="?tab_name=$name&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+            <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
             </div>
             END;
         }
@@ -296,6 +301,7 @@ class Kntan_Client_Class{
                     <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
                     <input type="hidden" name="query_post" value="insert">
+                    <input type="hidden" name="data_id" value="$data_id">
                     <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
                     </form>
                 </div>
