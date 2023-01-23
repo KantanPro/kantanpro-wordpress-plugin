@@ -180,31 +180,31 @@ class view_tabs_Class{
             EOF;
         }
             $view .= <<< EOF
-              <div class="tab_content" id="list_content">
+              <div class="ktp_tab_content" id="list_content">
               $list_content
               <br />
               </div>
-              <div class="tab_content" id="order_content">
+              <div class="ktp_tab_content" id="order_content">
               $order_content
               <br />
               </div>
-              <div class="tab_content" id="client_content">
+              <div class="ktp_tab_content" id="client_content">
               $client_content
               <br />
               </div>
-              <div class="tab_content" id="service_content">
+              <div class="ktp_tab_content" id="service_content">
               $service_content
               <br />
               </div>
-              <div class="tab_content" id="supplier_content">
+              <div class="ktp_tab_content" id="supplier_content">
               $supplier_content
               <br />
               </div>
-              <div class="tab_content" id="report_content">
+              <div class="ktp_tab_content" id="report_content">
               $report_content
               <br />
               </div>
-              <div class="tab_content" id="setting_content">
+              <div class="ktp_tab_content" id="setting_content">
               $setting_content
               <br />
               </div>

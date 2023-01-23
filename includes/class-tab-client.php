@@ -143,7 +143,7 @@ class Kntan_Client_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
         //表示範囲
-        $query_limit = '11';
+        $query_limit = '12';
 
         //スタート位置を決める
         $page_stage = $_GET['page_stage'];

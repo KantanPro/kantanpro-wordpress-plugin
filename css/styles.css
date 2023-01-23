@@ -21,11 +21,12 @@ img {
 /* ブラウザ履歴前後移動 */
 .zengo {
   display: flex;
-  margin-left: 20px;
+  background-color: #eef3f3;
+  align-items: center;
 }
 .zengoButton {
   display: block;
-  margin: 0px 10px 0px 0px;
+  margin: 0px 10px 0px 10px;
 }
 
 /* リストと詳細（デフォルト） */
@@ -103,7 +104,7 @@ img {
 .pagination{
   text-align: center;
   padding: 15px;
-  margin: 20px 10px 0px 0px;
+  margin: 10px 10px 0px 0px;
 }
 
 /* ボタン */
@@ -116,7 +117,7 @@ img {
 }
 
 /*タブ切り替え全体のスタイル*/
-.tabs {
+.ktp_tabs {
    margin-top: 50px;
    padding-bottom: 0px;
    background-color: #fff;
@@ -154,7 +155,7 @@ img {
  }
  
  /*タブ切り替えの中身のスタイル*/
- .tab_content {
+ .ktp_tab_content {
    display: none;
    padding: 15px 15px 5px 15px;
    clear: both;
