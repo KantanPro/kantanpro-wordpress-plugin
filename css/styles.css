@@ -9,6 +9,24 @@ img {
 	max-width: 100%;
 	height: auto;
 }
+ /* ヘッダー */
+ .ktp_header{
+  display: flex;
+  flex-wrap: nowrap;
+  text-align: left;
+  border:  1px solid;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+/* ブラウザ履歴前後移動 */
+.zengo {
+  display: flex;
+  margin-left: 20px;
+}
+.zengoButton {
+  display: block;
+  margin: 0px 10px 0px 0px;
+}
 
 /* リストと詳細（デフォルト） */
 .data_contents {
@@ -34,15 +52,6 @@ img {
   background-color: #edf3f3;
 }
 
-/* ブラウザ履歴前後移動 */
-.zengo {
-  display: flex;
-}
-.zengoButton {
-  display: block;
-  margin: 0px 10px 0px 0px;
-}
-
 /*
 ------------------------------------
 レスポンシブ
@@ -56,7 +65,11 @@ img {
 
 /* モバイル */
 @media screen and (max-width:912px) {
-
+  
+  .zengo {
+    display: flex;
+    flex-wrap: nowrap;
+  }
   .data_contents {
     flex-wrap: wrap;
   }
@@ -67,10 +80,6 @@ img {
   .data_detail_box {
     width: 100%;
     margin: 0px 0px 0px 0px;
-  }
-  .zengo {
-    display: flex;
-    flex-wrap: wrap;
   }
 
 }
@@ -89,14 +98,6 @@ img {
     padding: 20px 10px;
     text-align: left;
  } */
-
- /* ヘッダー */
- .ktp_header{
-   text-align: left;
-   border:  1px solid;
-   padding: 15px;
-   margin-bottom: 20px;
- }
 
  /* ページネーション */
 .pagination{
@@ -155,10 +156,10 @@ img {
  /*タブ切り替えの中身のスタイル*/
  .tab_content {
    display: none;
-   padding: 10px 20px 10px 20px;
+   padding: 15px 15px 5px 15px;
    clear: both;
-   /* overflow: auto; */
-   overflow: hidden;
+   overflow: auto;
+   /* overflow: hidden; */
    background-color: #cdd8d8;
  }
  
