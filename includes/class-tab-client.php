@@ -275,7 +275,7 @@ class Kntan_Client_Class{
 
         // 表題
         $data_title = <<<END
-        <div class="data_detail">
+        <div class="data_detail_box">
             <h3>■ 顧客の詳細（ID: $data_id  TIME: $time ）</h3>
         END;
 
@@ -301,7 +301,7 @@ class Kntan_Client_Class{
                     <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
                     <input type="hidden" name="query_post" value="insert">
-                    <input type="hidden" name="data_id" value="$data_id">
+                    <input type="hidden" name="data_id" value="">
                     <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
                     </form>
                 </div>
