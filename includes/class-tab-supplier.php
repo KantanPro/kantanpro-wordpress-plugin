@@ -188,7 +188,7 @@ class Kantan_Supplier_Class{
         $data_forms = <<<END
                 <div class="box">
                     <form method="post" action="">
-                    <p><label> 名　　前：</label> <input type="text" name="data_name" value="$data_name"></p>
+                    <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value="$data_name"></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
                     <input type="hidden" name="query_post" value="update">
                     <input type="hidden" name="data_id" value="$data_id">
@@ -203,7 +203,7 @@ class Kantan_Supplier_Class{
                 <div class="box">
                     <h3>■ 協力会社追加</h3>
                     <form method="post" action="">
-                    <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
+                    <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value=""></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
                     <input type="hidden" name="query_post" value="insert">
                     <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>

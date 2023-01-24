@@ -1,7 +1,7 @@
 <?php
 /*
 全体のタブレイアウト
-2022-12-27　baterです。
+2022-12-27&emsp;baterです。
 */
 
 class view_tabs_Class{

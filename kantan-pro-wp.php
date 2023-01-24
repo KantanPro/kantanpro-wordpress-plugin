@@ -34,8 +34,8 @@ include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
 include "includes/class-view-tab.php"; // タブビュークラス
-include "js/view.js"; // JS
-include "includes/kpw-admin-form.php"; // 管理画面に追加
+// include "js/view.js"; // JS
+// include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 
 // カンタンProをロード
@@ -78,12 +78,17 @@ function KTPWP_Index(){
 				$login_user = $current_user->nickname;
 				$front_message = <<<END
 				<div class="ktp_header">
-				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
-					<div id="zengo" class="zengo">
-					<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
-					</div>
+				ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
 				</div>
 				END;
+				// $front_message = <<<END
+				// <div class="ktp_header">
+				// ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
+				// 	<div id="zengo" class="zengo">
+				// 	<a href="#" id="zengoBack" class="zengoButton"> < </a>&emsp;<a href="#" id="zengoForward" class="zengoButton"> > </a>
+				// 	</div>
+				// </div>
+				// END;
 		
 				//仕事リスト
 				$list = new Kantan_List_Class();

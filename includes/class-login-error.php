@@ -20,7 +20,7 @@ class Kantan_Login_Error{
         $content = <<<END
         <h3>カンタンProを利用するにはログインしてください。</h3>
         <!--ログイン-->
-        <p><font size="4"><a href="$login_link">ログイン</a></font>　
+        <p><font size="4"><a href="$login_link">ログイン</a></font>&emsp;
         <font size="4"><a href="/welcome-to-kantanprowp/">ホームへ</a></font></p>
         END;
         return $content;
