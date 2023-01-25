@@ -164,6 +164,7 @@ img {
    overflow: auto;
    /* overflow: hidden; */
    background-color: #cdd8d8;
+   margin-bottom: 30px;
  }
  
  /*選択されているタブのコンテンツのみを表示*/

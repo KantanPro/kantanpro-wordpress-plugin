@@ -42,17 +42,31 @@ include "includes/class-view-tab.php"; // タブビュークラス
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
 // スタイルシートを登録
-function register_ktpwp_styles() {
+function register_ktp_styles() {
 	wp_register_style(
-		'ktpwp-css',
+		'ktp-css',
 		plugins_url( '/css/styles.css' , __FILE__),
 		array(),
 		'1.0.0',
 		'all'
 	);
-	wp_enqueue_style( 'ktpwp-css' );
+	wp_enqueue_style( 'ktp-css' );
 }
-add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
+add_action( 'wp_enqueue_scripts', 'register_ktp_styles' );
+
+// JavaScriptを登録
+function enqueue_ktp_scripts() {
+	wp_enqueue_script(
+		'ktp-js',
+		plugins_url( '/js/ktpjs.js' , __FILE__),
+		array(),
+		'1.0.0',
+		true
+	);
+	wp_enqueue_style( 'ktp-js' );
+}
+add_action( 'wp_enqueue_scripts', 'enqueue_ktp_scripts' );
+
 
 // テーブル用の関数を登録
 register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
@@ -81,14 +95,14 @@ function KTPWP_Index(){
 				ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
 				</div>
 				END;
-				// $front_message = <<<END
-				// <div class="ktp_header">
-				// ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
-				// 	<div id="zengo" class="zengo">
-				// 	<a href="#" id="zengoBack" class="zengoButton"> < </a>&emsp;<a href="#" id="zengoForward" class="zengoButton"> > </a>
-				// 	</div>
-				// </div>
-				// END;
+				$front_message = <<<END
+				<div class="ktp_header">
+				ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
+					<div id="zengo" class="zengo">
+					<a href="#" id="zengoBack" class="zengoButton"> < </a>&emsp;<a href="#" id="zengoForward" class="zengoButton"> > </a>
+					</div>
+				</div>
+				END;
 		
 				//仕事リスト
 				$list = new Kantan_List_Class();
