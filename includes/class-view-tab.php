@@ -38,7 +38,8 @@ class view_tabs_Class{
           case 'list':
             $view = <<< EOF
             <div class="tabs">
-            <input id="list" type="radio" name="tab_item" checked><label class="tab_item" for="list">list</label>
+            <input id="list" type="radio" name="tab_item" checked><label class="tab_item" for="list">
+            <a href="?tab_name=list">list</a></label>
             <input id="order" type="radio" name="tab_item">
             <label class="tab_item" for="order"><a href="?tab_name=order">order</a></label>
             <input id="client" type="radio" name="tab_item">
@@ -58,7 +59,8 @@ class view_tabs_Class{
             <div class="tabs">
             <input id="list" type="radio" name="tab_item">
             <label class="tab_item" for="list"><a href="?tab_name=list">list</a></label>
-            <input id="order" type="radio" name="tab_item" checked><label class="tab_item" for="order">order</label>
+            <input id="order" type="radio" name="tab_item" checked><label class="tab_item" for="order">
+            <a href="?tab_name=order">order</a></label>
             <input id="client" type="radio" name="tab_item">
             <label class="tab_item" for="client"><a href="?tab_name=client">client</a></label>
             <input id="service" type="radio" name="tab_item">
@@ -78,7 +80,8 @@ class view_tabs_Class{
             <label class="tab_item" for="list"><a href="?tab_name=list">list</a></label>
             <input id="order" type="radio" name="tab_item">
             <label class="tab_item" for="order"><a href="?tab_name=order">order</a></label>
-            <input id="client" type="radio" name="tab_item" checked><label class="tab_item" for="client">client</label>
+            <input id="client" type="radio" name="tab_item" checked><label class="tab_item" for="client">
+            <a href="?tab_name=client">client</a></label>
             <input id="service" type="radio" name="tab_item">
             <label class="tab_item" for="service"><a href="?tab_name=service">service</a></label>
             <input id="supplier" type="radio" name="tab_item">
@@ -98,7 +101,8 @@ class view_tabs_Class{
             <label class="tab_item" for="order"><a href="?tab_name=order">order</a></label>
             <input id="client" type="radio" name="tab_item">
             <label class="tab_item" for="client"><a href="?tab_name=client">client</a></label>
-            <input id="service" type="radio" name="tab_item" checked><label class="tab_item" for="service">service</label>
+            <input id="service" type="radio" name="tab_item" checked><label class="tab_item" for="service">
+            <a href="?tab_name=service">service</a></label>
             <input id="supplier" type="radio" name="tab_item">
             <label class="tab_item" for="supplier"><a href="?tab_name=supplier">supplier</a></label>
             <input id="report" type="radio" name="tab_item">
@@ -118,7 +122,8 @@ class view_tabs_Class{
             <label class="tab_item" for="client"><a href="?tab_name=client">client</a></label>
             <input id="service" type="radio" name="tab_item">
             <label class="tab_item" for="service"><a href="?tab_name=service">service</a></label>
-            <input id="supplier" type="radio" name="tab_item" checked><label class="tab_item" for="supplier">supplier</label>
+            <input id="supplier" type="radio" name="tab_item" checked><label class="tab_item" for="supplier">
+            <a href="?tab_name=supplier">supplier</a></label>
             <input id="report" type="radio" name="tab_item">
             <label class="tab_item" for="report"><a href="?tab_name=report">report</a></label>
             <input id="setting" type="radio" name="tab_item">
@@ -138,7 +143,8 @@ class view_tabs_Class{
             <label class="tab_item" for="service"><a href="?tab_name=service">service</a></label>
             <input id="supplier" type="radio" name="tab_item">
             <label class="tab_item" for="supplier"><a href="?tab_name=supplier">supplier</a></label>
-            <input id="report" type="radio" name="tab_item" checked><label class="tab_item" for="report">report</label>
+            <input id="report" type="radio" name="tab_item" checked><label class="tab_item" for="report">
+            <a href="?tab_name=report">report</a></label>
             <input id="setting" type="radio" name="tab_item">
             <label class="tab_item" for="setting"><a href="?tab_name=setting">setting</a></label>
             EOF;
@@ -158,13 +164,15 @@ class view_tabs_Class{
             <label class="tab_item" for="supplier"><a href="?tab_name=supplier">supplier</a></label>
             <input id="report" type="radio" name="tab_item">
             <label class="tab_item" for="report"><a href="?tab_name=report">report</a></label>
-            <input id="setting" type="radio" name="tab_item" checked><label class="tab_item" for="setting">setting</label>
+            <input id="setting" type="radio" name="tab_item" checked><label class="tab_item" for="setting">
+            <a href="?tab_name=setting">setting</a></label>
             EOF;
             break;
           default:
             $view = <<< EOF
             <div class="tabs">
-            <input id="list" type="radio" name="tab_item" checked><label class="tab_item" for="list">list</label>
+            <input id="list" type="radio" name="tab_item" checked><label class="tab_item" for="list">
+            <a href="?tab_name=list">list</a></label>
             <input id="order" type="radio" name="tab_item">
             <label class="tab_item" for="order"><a href="?tab_name=order">order</a></label>
             <input id="client" type="radio" name="tab_item">
