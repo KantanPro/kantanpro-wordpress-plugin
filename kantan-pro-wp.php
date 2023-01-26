@@ -45,7 +45,7 @@ add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 function register_ktp_styles() {
 	wp_register_style(
 		'ktp-css',
-		plugins_url( '/css/styles.css' , __FILE__),
+		plugins_url( '/css/styles.css' , __FILE__ ),
 		array(),
 		'1.0.0',
 		'all'
@@ -58,7 +58,7 @@ add_action( 'wp_enqueue_scripts', 'register_ktp_styles' );
 function enqueue_ktp_scripts() {
 	wp_enqueue_script(
 		'ktp-js',
-		plugins_url( '/js/ktpjs.js' , __FILE__),
+		plugins_url( '/js/ktpjs.js' , __FILE__ ),
 		array(),
 		'1.0.0',
 		true
@@ -122,7 +122,11 @@ function KTPWP_Index(){
 				
 				//商品・サービス
 				$tabs = new Kntan_Service_Class();
-				$service_content = $tabs->Service_Tab_View( 'service' );
+				$tab_name = 'service';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$service_content = $view;
 				
 				//協力会社
 				$tabs = new Kantan_Supplier_Class();

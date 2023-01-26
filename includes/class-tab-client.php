@@ -74,7 +74,6 @@ class Kntan_Client_Class{
                 array( '%d' ) 
             
             );
-            
         }
         
         // 追加
@@ -143,7 +142,7 @@ class Kntan_Client_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
         //表示範囲
-        $query_limit = '12';
+        $query_limit = '13';
 
         //スタート位置を決める
         $page_stage = $_GET['page_stage'];
@@ -170,8 +169,10 @@ class Kntan_Client_Class{
             $query_max_num = $wpdb->num_rows;
             // $post_num = count($post_row);
         } else {
+        
+            // データーがない場合
             $results[] = <<<END
-            <div class="data_list_item">NO DATA！</div>
+            <div class="data_list_item">顧客を追加してください。</div>
             END;
         }
         
@@ -239,7 +240,7 @@ class Kntan_Client_Class{
                 $flg ++;
             } else {
                 $results_f .= <<<END
-                &emsp; DATA END!
+                &emsp; リストの最後です。
                 </div>
                 END;
             }

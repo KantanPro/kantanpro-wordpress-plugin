@@ -74,7 +74,6 @@ class Kantan_Supplier_Class{
                 array( '%d' ) 
             
             );
-            
         }
         
         // 追加
@@ -87,7 +86,6 @@ class Kantan_Supplier_Class{
                     'text' => $text,
                 ) 
             );
-
         }
         
         // 削除
@@ -129,21 +127,35 @@ class Kantan_Supplier_Class{
 
         // ログアウトのリンク
         $logout_link = wp_logout_url();
-        
-        // リスト表示設定（ページャー）
-        $query_limit = '10'; //表示範囲
-        $query_num = '0'; //スタート位置
-        $query_range = $query_num . ',' . $query_limit;
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
 
-        // リスト表示
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` ASC LIMIT $query_range");
-        $post_row = $wpdb->get_results($query);
+        // リストヘッダ表示
         $results_h = <<<END
         <div class="data_contents">
-            <div class="data_list_box">
-            <h3>■ 協力会社リスト($query_range)</h3>
+        <div class="data_list_box">
+        <h3>■ 協力会社リスト</h3>
         END;
+        
+        //
+        // リスト表示
+        //
+
+        $table_name = $wpdb->prefix . 'ktp_' . $name;
+
+        //表示範囲
+        $query_limit = '15';
+
+        //スタート位置を決める
+        $page_stage = $_GET['page_stage'];
+        $page_start = $_GET['page_start'];
+        $flg = $_GET['flg'];
+        
+        if( $page_stage == '' ){
+            $page_start = 0;
+        }
+
+        $query_range = $page_start . ',' . $query_limit;
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` ASC LIMIT $query_range");
+        $post_row = $wpdb->get_results($query);
         if( $post_row ){
             foreach ($post_row as $row){
                 $id = esc_html($row->id);
@@ -151,15 +163,99 @@ class Kantan_Supplier_Class{
                 $data_name = esc_html($row->name);
                 $text = esc_html($row->text);
                 $results[] = <<<END
-                <div class="data_list_item">$id : $time : $data_name : $text : <a href="?tab_name=$name&data_id=$id"> → </a></div>
+                <div class="data_list_item">$id : $time : $data_name : $text : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
                 END;
             }
+            $query_max_num = $wpdb->num_rows;
+            // $post_num = count($post_row);
         } else {
+        
+            // データーがない場合
             $results[] = <<<END
-            <div class="data_list_item">NO DATA！</div>
+            <div class="data_list_item">協力会社を追加してください。</div>
             END;
         }
-        $results_f = '</div>';
+        
+        // ページネーションリンク
+        $post_num = count($post_row); // 現在の項目数（可変）
+        $page_buck = ''; // 前のスタート位置
+        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
+        // 現在表示中の詳細
+        if(isset( $_GET['data_id'] )){
+            $data_id = $_GET['data_id'];
+        } else {
+            $data_id = $wpdb->insert_id;
+        }
+        
+        if( !$page_stage || $page_stage == 1 ){
+            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
+            $page_start ++;
+            $page_next_start = $query_max_num;
+            $flg ++;
+            $results_f = <<<END
+            <div class="pagination">
+            END;
+            // $page_buck_stage = 2;
+            if( $page_start > 1 && $flg >= 2 ){
+                $page_buck_stage = 2;
+            } else {
+                $page_buck_stage = 1;
+            }
+            if( $post_num >= $query_limit ){
+                $results_f .= <<<END
+                $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+                </div>
+                END;
+            } else {
+                $results_f .= <<<END
+                &emsp; $page_start ~ $query_max_num
+                </div>
+                END;
+            }
+            $page_start = $page_start + $query_limit;
+
+        } elseif( $page_stage == 2 ) {
+            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
+            $page_buck = $page_start - $query_limit;
+            $page_next_start = $page_start + $post_num;
+            $query_max_num = $query_max_num + $page_start;
+            $page_start ++;
+            $flg = 2;
+            $results_f = <<<END
+            <div class="pagination">
+            END;
+            if( $page_start > 1 && $flg >= 2 ){
+                $page_buck_stage = 2;
+                $results_f .= <<<END
+                <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+                END;
+            } else {
+                $page_buck_stage = 1;
+            }
+            if( $post_num >= $query_limit ){
+                $results_f .= <<<END
+                &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+                </div>
+                END;
+                $flg ++;
+            } else {
+                $results_f .= <<<END
+                &emsp; リストの最後です。
+                </div>
+                END;
+            }
+        } elseif( $page_stage == 3 ) {
+            if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
+            // $page_buck = $page_start - $post_num;
+            // $page_stage = 2;
+            $results_f = <<<END
+            <div class="pagination">
+            <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+            </div>
+            END;
+        }
+
+        $results_f .= '</div>';
         $data_list = $results_h . implode( $results ) . $results_f;
 
         // 詳細表示(GET)
@@ -180,7 +276,7 @@ class Kantan_Supplier_Class{
 
         // 表題
         $data_title = <<<END
-        <div class="data_detail">
+        <div class="data_detail_box">
             <h3>■ 協力会社の詳細（ID: $data_id  TIME: $time ）</h3>
         END;
 
@@ -206,6 +302,7 @@ class Kantan_Supplier_Class{
                     <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value=""></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
                     <input type="hidden" name="query_post" value="insert">
+                    <input type="hidden" name="data_id" value="">
                     <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
                     </form>
                 </div>
