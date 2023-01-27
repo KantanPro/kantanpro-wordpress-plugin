@@ -105,8 +105,12 @@ function KTPWP_Index(){
 				END;
 		
 				//仕事リスト
-				$list = new Kantan_List_Class();
-				$list_content = $list->List_Tab_View( 'list' );
+				$tabs = new Kantan_List_Class();
+				$tab_name = 'list';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$list_content = $view;
 
 				//受注書
 				$tabs = new Kntan_Order_Class();
