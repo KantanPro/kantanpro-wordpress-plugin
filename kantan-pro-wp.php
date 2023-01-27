@@ -114,7 +114,11 @@ function KTPWP_Index(){
 
 				//受注書
 				$tabs = new Kntan_Order_Class();
-				$order_content = $tabs->Order_Tab_View( 'order' );
+				$tab_name = 'order';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$order_content = $view;
 				
 				//クライアント				
 				$tabs = new Kntan_Client_Class();
