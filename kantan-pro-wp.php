@@ -143,14 +143,18 @@ function KTPWP_Index(){
 				$tabs->Update_Table( $tab_name );
 				$view = $tabs->View_Table( $tab_name );
 				$supplier_content = $view;
-
+				
 				//レポート
 				$tabs = new Kntan_Report_Class();
 				$report_content = $tabs->Report_Tab_View( 'report' );
 				
 				//設定
 				$tabs = new Kntan_Setting_Class();
-				$setting_content = $tabs->Setting_Tab_View( 'setting' );
+				$tab_name = 'setting';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$setting_content = $view;
 
 				// view
 				$view = new view_tabs_Class();
