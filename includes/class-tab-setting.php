@@ -132,7 +132,7 @@ class Kntan_Setting_Class{
         $results_h = <<<END
         <div class="data_contents">
         <div class="data_list_box">
-        <h3>■ 仕事リスト</h3>
+        <h3>■ 設定リスト</h3>
         END;
         
         //
@@ -277,7 +277,7 @@ class Kntan_Setting_Class{
         // 表題
         $data_title = <<<END
         <div class="data_detail_box">
-            <h3>■ リストの詳細（ID: $data_id  TIME: $time ）</h3>
+            <h3>■ 設定の詳細（ID: $data_id  TIME: $time ）</h3>
         END;
 
         // フォーム表示
@@ -297,7 +297,7 @@ class Kntan_Setting_Class{
                     </form>
                 </div>
                 <div class="box">
-                    <h3>■ リスト追加</h3>
+                    <h3>■ 設定追加</h3>
                     <form method="post" action="">
                     <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value=""></p>
                     <p><label> テキスト：</label> <input type="text" name="text" value=""></p>

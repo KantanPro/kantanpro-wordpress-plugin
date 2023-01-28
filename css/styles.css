@@ -45,9 +45,30 @@ img {
   text-align: left;
   background-color: #f0ffff;
 }
+
+/* 仕事リスト */
+.work_list_box {
+  width: 100%;
+  display: block;
+  padding: 20px 20px 20px 20px;
+  margin: 10px;
+  text-align: left;
+  background-color: #f0ffff;
+}
+
 /* 詳細BOX */
 .data_detail_box {
   width: calc(100%/2);
+  display: block;
+  padding: 20px 20px 20px 20px;
+  margin: 10px;
+  text-align: left;
+  background-color: #edf3f3;
+}
+
+/* 受注書詳細B */
+.order_detail_box {
+  width: 100%;
   display: block;
   padding: 20px 20px 20px 20px;
   margin: 10px;
@@ -158,13 +179,14 @@ img {
  
  /*タブ切り替えの中身のスタイル*/
  .ktp_tab_content {
-   display: none;
-   padding: 15px 15px 5px 15px;
-   clear: both;
-   overflow: auto;
-   /* overflow: hidden; */
-   background-color: #cdd8d8;
-   margin-bottom: 30px;
+  height: 1034.63px;
+  display: none;
+  padding: 15px 15px 5px 15px;
+  clear: both;
+  overflow: auto;
+  /* overflow: hidden; */
+  background-color: #cdd8d8;
+  margin-bottom: 30px;
  }
  
  /*選択されているタブのコンテンツのみを表示*/

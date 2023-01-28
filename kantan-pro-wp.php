@@ -146,7 +146,11 @@ function KTPWP_Index(){
 				
 				//レポート
 				$tabs = new Kntan_Report_Class();
-				$report_content = $tabs->Report_Tab_View( 'report' );
+				$tab_name = 'report';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$report_content = $view;
 				
 				//設定
 				$tabs = new Kntan_Setting_Class();

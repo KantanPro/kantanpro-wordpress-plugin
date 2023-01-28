@@ -131,7 +131,7 @@ class Kantan_List_Class{
         // リストヘッダ表示
         $results_h = <<<END
         <div class="data_contents">
-        <div class="data_list_box">
+        <div class="work_list_box">
         <h3>■ 仕事リスト</h3>
         END;
         
@@ -275,47 +275,46 @@ class Kantan_List_Class{
         }
 
         // 表題
-        $data_title = <<<END
-        <div class="data_detail_box">
-            <h3>■ リストの詳細（ID: $data_id  TIME: $time ）</h3>
-        END;
+        // $data_title = <<<END
+        // <div class="data_detail_box">
+        //     <h3>■ リストの詳細（ID: $data_id  TIME: $time ）</h3>
+        // END;
 
         // フォーム表示
-        $data_forms = <<<END
-                <div class="box">
-                    <form method="post" action="">
-                    <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value="$data_name"></p>
-                    <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
-                    <input type="hidden" name="query_post" value="update">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
-                    </form>
-                    <form method="post" action="">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <input type="hidden" name="query_post" value="delete">
-                    <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
-                    </form>
-                </div>
-                <div class="box">
-                    <h3>■ リスト追加</h3>
-                    <form method="post" action="">
-                    <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value=""></p>
-                    <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
-                    <input type="hidden" name="query_post" value="insert">
-                    <input type="hidden" name="data_id" value="">
-                    <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
-                    </form>
-                </div>
-        END;
+        // $data_forms = <<<END
+        //     <div class="box">
+        //         <form method="post" action="">
+        //         <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value="$data_name"></p>
+        //         <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
+        //         <input type="hidden" name="query_post" value="update">
+        //         <input type="hidden" name="data_id" value="$data_id">
+        //         <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
+        //         </form>
+        //         <form method="post" action="">
+        //         <input type="hidden" name="data_id" value="$data_id">
+        //         <input type="hidden" name="query_post" value="delete">
+        //         <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
+        //         </form>
+        //     </div>
+        //     <div class="box">
+        //         <h3>■ リスト追加</h3>
+        //         <form method="post" action="">
+        //         <p><label> 名&emsp;&emsp;前：</label> <input type="text" name="data_name" value=""></p>
+        //         <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
+        //         <input type="hidden" name="query_post" value="insert">
+        //         <input type="hidden" name="data_id" value="">
+        //         <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
+        //         </form>
+        //     </div>
+        // END;
 
         // DIV閉じ
         $div_end = <<<END
-            </div>
         </div>
         END;
 
         // 表示するもの
-        $content = $data_list . $data_title . $data_forms . $div_end;
+        $content = $data_list . $data_title . $div_end;
         return $content;
 
         // POSTデータをクリア
