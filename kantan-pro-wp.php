@@ -5,6 +5,8 @@
  * Version: 1.0
  */
 
+//  OK
+
 // インクルードステートメント
 include 'includes/class-tab-list.php';
 include 'includes/class-tab-order.php';
