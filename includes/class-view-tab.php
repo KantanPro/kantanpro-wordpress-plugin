@@ -4,6 +4,8 @@
 2022-12-27&emsp;baterです。
 */
 
+// OK
+
 class view_tabs_Class{
 
     public $name;

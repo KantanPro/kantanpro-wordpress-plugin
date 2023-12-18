@@ -1,4 +1,5 @@
 <?php
+// OK
 
 class Kantan_Login_Error{
 

@@ -1,5 +1,5 @@
 <?php
-
+// OK
 
 class Kantan_List_Class{
 

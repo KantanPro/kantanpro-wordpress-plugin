@@ -1,4 +1,5 @@
 <?php
+// OK
 
 class Kntan_Report_Class{
 
