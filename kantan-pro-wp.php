@@ -1,31 +1,11 @@
 <?php
-/*
-Plugin Name: kantan pro wp
-Description: カンタンProWP
-Version: 1.0
-*/
+/**
+ * Plugin Name: kantan pro wp
+ * Description: カンタンProWP
+ * Version: 1.0
+ */
 
-
-// wp-config.phpが存在しているか？
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
-/*
- 必要な定数を定義
-*/
-
-if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
-	define( 'MY_PLUGIN_VERSION', '1.0' );
-}
-if ( ! defined( 'MY_PLUGIN_PATH' ) ) {
-	define( 'MY_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
-}
-if ( ! defined( 'MY_PLUGIN_URL' ) ) {
-	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
-}
-
-// ファイルをインクルード
+// インクルードステートメント
 include 'includes/class-tab-list.php';
 include 'includes/class-tab-order.php';
 include 'includes/class-tab-client.php';
@@ -33,150 +13,190 @@ include 'includes/class-tab-service.php';
 include 'includes/class-tab-supplier.php';
 include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
-include 'includes/class-login-error.php'; // ログインエラークラス
-include "includes/class-view-tab.php"; // タブビュークラス
-// include "js/view.js"; // JS
-// include "includes/kpw-admin-form.php"; // 管理画面に追加
+include 'includes/class-login-error.php';
+include 'includes/class-view-tab.php';
 
+// 定数の定義
+defined( 'ABSPATH' ) || exit;
 
-// カンタンProをロード
-add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
+define( 'KTP_VERSION', '1.0' );
+define( 'KTP_PATH', plugin_dir_path( __FILE__ ) );
+define( 'KTP_URL', plugins_url( '/', __FILE__ ) );
 
-// スタイルシートを登録
-function register_ktp_styles() {
-	wp_register_style(
-		'ktp-css',
-		plugins_url( '/css/styles.css' , __FILE__ ),
-		array(),
-		'1.0.0',
-		'all'
-	);
-	wp_enqueue_style( 'ktp-css' );
+// スタイルとスクリプトの登録
+function ktp_enqueue_scripts() {
+    wp_register_style('ktp-style', KTP_URL . 'css/styles.css', [], KTP_VERSION, 'all');
+    wp_enqueue_style('ktp-style');
+
+    wp_register_script('ktp-script', KTP_URL . 'js/ktpjs.js', [], KTP_VERSION, true);
+    wp_enqueue_script('ktp-script');
 }
-add_action( 'wp_enqueue_scripts', 'register_ktp_styles' );
+add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
 
-// JavaScriptを登録
-function enqueue_ktp_scripts() {
-	wp_enqueue_script(
-		'ktp-js',
-		plugins_url( '/js/ktpjs.js' , __FILE__ ),
-		array(),
-		'1.0.0',
-		true
-	);
-	wp_enqueue_style( 'ktp-js' );
+// データベーステーブルの作成と更新
+function ktp_create_update_tables() {
+    global $wpdb;
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+    // 仕事リストテーブル
+    $table_name = $wpdb->prefix . 'ktp_list';
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name tinytext NOT NULL,
+        description text NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // 受注書テーブル
+    $table_name = $wpdb->prefix . 'ktp_order';
+    $sql = "CREATE TABLE $table_name (
+        order_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        client_id mediumint(9) NOT NULL,
+        order_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+        total_amount float NOT NULL,
+        PRIMARY KEY  (order_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // 顧客テーブル
+    $table_name = $wpdb->prefix . 'ktp_client';
+    $sql = "CREATE TABLE $table_name (
+        client_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name tinytext NOT NULL,
+        email text NOT NULL,
+        phone text,
+        PRIMARY KEY  (client_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // 商品・サービステーブル
+    $table_name = $wpdb->prefix . 'ktp_service';
+    $sql = "CREATE TABLE $table_name (
+        service_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name tinytext NOT NULL,
+        price float NOT NULL,
+        description text,
+        PRIMARY KEY  (service_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // 協力会社テーブル
+    $table_name = $wpdb->prefix . 'ktp_supplier';
+    $sql = "CREATE TABLE $table_name (
+        supplier_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name tinytext NOT NULL,
+        contact_info text,
+        PRIMARY KEY  (supplier_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // レポートテーブル
+    $table_name = $wpdb->prefix . 'ktp_report';
+    $sql = "CREATE TABLE $table_name (
+        report_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        content longtext NOT NULL,
+        created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+        PRIMARY KEY  (report_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
+
+    // 設定テーブル（任意の設定項目を追加）
+    $table_name = $wpdb->prefix . 'ktp_setting';
+    $sql = "CREATE TABLE $table_name (
+        setting_id mediumint(9) NOT NULL AUTO_INCREMENT,
+        name tinytext NOT NULL,
+        value text NOT NULL,
+        PRIMARY KEY  (setting_id)
+    ) $charset_collate;";
+    dbDelta( $sql );
 }
-add_action( 'wp_enqueue_scripts', 'enqueue_ktp_scripts' );
 
+register_activation_hook(__FILE__, 'ktp_create_update_tables');
 
-// テーブル用の関数を登録
-register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
-register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
-register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
+// ショートコードの追加
+function kantan_all_tab_shortcode() {
+    ob_start();
 
+    // タブインターフェースの出力
+    echo '<div id="ktp-tabs">';
+    
+    // 各タブのコンテンツを読み込む
+    // ここでは、各タブを表す関数を呼び出す例を示します。
+    // 実際の実装では、これらの関数がタブのコンテンツを生成する必要があります。
+    
+    echo '<div id="tab-list">';
+    ktp_tab_list(); // 仕事リストタブの内容
+    echo '</div>';
 
-function KTPWP_Index(){
+    echo '<div id="tab-order">';
+    ktp_tab_order(); // 受注書タブの内容
+    echo '</div>';
 
-	//すべてのタブのショートコード[kantanAllTab]
-	function kantanAllTab(){
+    echo '<div id="tab-client">';
+    ktp_tab_client(); // 顧客タブの内容
+    echo '</div>';
 
-		//ログイン中なら
-		if( is_user_logged_in() ){
+    echo '<div id="tab-service">';
+    ktp_tab_service(); // 商品・サービスタブの内容
+    echo '</div>';
 
-				// ログインユーザー情報を取得
-				global $current_user;
+    echo '<div id="tab-supplier">';
+    ktp_tab_supplier(); // 協力会社タブの内容
+    echo '</div>';
 
-				// ログアウトのリンク
-				$logout_link = wp_logout_url();
+    echo '<div id="tab-report">';
+    ktp_tab_report(); // レポートタブの内容
+    echo '</div>';
 
-				// ヘッダー表示ログインユーザー名など
-				$login_user = $current_user->nickname;
-				$front_message = <<<END
-				<div class="ktp_header">
-				ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
-				</div>
-				END;
-				$front_message = <<<END
-				<div class="ktp_header">
-				ログイン中：$login_user さん&emsp;<a href="$logout_link">ログアウト</a>&emsp;<a href="/">更新</a>&emsp;
-					<div id="zengo" class="zengo">
-					<a href="#" id="zengoBack" class="zengoButton"> < </a>&emsp;<a href="#" id="zengoForward" class="zengoButton"> > </a>
-					</div>
-				</div>
-				END;
-		
-				//仕事リスト
-				$tabs = new Kantan_List_Class();
-				$tab_name = 'list';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$list_content = $view;
+    echo '<div id="tab-setting">';
+    ktp_tab_setting(); // 設定タブの内容
+    echo '</div>';
 
-				//受注書
-				$tabs = new Kntan_Order_Class();
-				$tab_name = 'order';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$order_content = $view;
-				
-				//クライアント				
-				$tabs = new Kntan_Client_Class();
-				$tab_name = 'client';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$client_content = $view;
-				
-				//商品・サービス
-				$tabs = new Kntan_Service_Class();
-				$tab_name = 'service';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$service_content = $view;
-				
-				//協力会社
-				$tabs = new Kantan_Supplier_Class();
-				$tab_name = 'supplier';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$supplier_content = $view;
-				
-				//レポート
-				$tabs = new Kntan_Report_Class();
-				$tab_name = 'report';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$report_content = $view;
-				
-				//設定
-				$tabs = new Kntan_Setting_Class();
-				$tab_name = 'setting';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$setting_content = $view;
+    echo '</div>';
 
-				// view
-				$view = new view_tabs_Class();
-				$tab_view = $view ->TabsView( $list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content );
-				return $front_message . $tab_view;
-
-
-		}
-
-		//ログアウト中なら
-		else{
-				$login_error = new Kantan_Login_Error();
-				$error = $login_error->Error_View();
-				return $error;
-		}
-
-	}
-	add_shortcode('kantanAllTab','kantanAllTab');
-
+    // 出力のバッファリングを終了し、内容を返す
+    return ob_get_clean();
 }
+
+function ktp_tab_list() {
+    // 仕事リストデータを取得するロジック（省略）
+    // HTMLコンテンツを出力
+    echo '<h3>仕事リスト</h3>';
+    // 仕事リストのデータを表示するコード
+}
+
+function ktp_tab_order() {
+    // 受注データを取得するロジック（省略）
+    echo '<h3>受注書</h3>';
+    // 受注書のデータを表示するコード
+}
+
+function ktp_tab_client() {
+    echo '<h3>顧客</h3>';
+    // 顧客データを表示するコード
+}
+
+function ktp_tab_service() {
+    echo '<h3>商品・サービス</h3>';
+    // 商品・サービスデータを表示するコード
+}
+
+function ktp_tab_supplier() {
+    echo '<h3>協力会社</h3>';
+    // 協力会社データを表示するコード
+}
+
+function ktp_tab_report() {
+    echo '<h3>レポート</h3>';
+    // レポートデータを表示するコード
+}
+
+function ktp_tab_setting() {
+    echo '<h3>設定</h3>';
+    // 設定オプションを表示するコード
+}
+
+add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
