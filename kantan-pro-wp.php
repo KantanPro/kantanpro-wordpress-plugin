@@ -5,6 +5,7 @@ Description: カンタンProWP
 Version: 1.0
 */
 
+
 // wp-config.phpが存在しているか？
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
