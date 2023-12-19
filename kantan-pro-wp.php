@@ -5,18 +5,21 @@
  * Version: 1.0
  */
 
-//  OK
+// バージョン管理
+if ( ! defined( 'WPINC' ) ) {
+    die;
+}
 
 // インクルードステートメント
-include 'includes/class-tab-list.php';
-include 'includes/class-tab-order.php';
-include 'includes/class-tab-client.php';
-include 'includes/class-tab-service.php';
-include 'includes/class-tab-supplier.php';
-include 'includes/class-tab-report.php';
-include 'includes/class-tab-setting.php';
-include 'includes/class-login-error.php';
-include 'includes/class-view-tab.php';
+include_once 'includes/class-tab-list.php';
+include_once 'includes/class-tab-order.php';
+include_once 'includes/class-tab-client.php';
+include_once 'includes/class-tab-service.php';
+include_once 'includes/class-tab-supplier.php';
+include_once 'includes/class-tab-report.php';
+include_once 'includes/class-tab-setting.php';
+include_once 'includes/class-login-error.php';
+include_once 'includes/class-view-tab.php';
 
 // 定数の定義
 defined( 'ABSPATH' ) || exit;
