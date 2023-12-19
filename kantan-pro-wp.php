@@ -10,6 +10,14 @@ if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
+// WordPressが直接アクセスされるのを防ぐ
+defined( 'ABSPATH' ) || exit;
+
+// 定数の定義
+define( 'KTP_VERSION', '1.0' );
+define( 'KTP_PATH', plugin_dir_path( __FILE__ ) );
+define( 'KTP_URL', plugins_url( '/', __FILE__ ) );
+
 // インクルードステートメント
 include_once 'includes/class-tab-list.php';
 include_once 'includes/class-tab-order.php';
@@ -21,13 +29,7 @@ include_once 'includes/class-tab-setting.php';
 include_once 'includes/class-login-error.php';
 include_once 'includes/class-view-tab.php';
 
-// 定数の定義
-defined( 'ABSPATH' ) || exit;
-
-define( 'KTP_VERSION', '1.0' );
-define( 'KTP_PATH', plugin_dir_path( __FILE__ ) );
-define( 'KTP_URL', plugins_url( '/', __FILE__ ) );
-
+// プラグインの有効化時に実行される処理
 // スタイルとスクリプトの登録
 function ktp_enqueue_scripts() {
     wp_register_style('ktp-style', KTP_URL . 'css/styles.css', [], KTP_VERSION, 'all');
