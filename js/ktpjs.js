@@ -1,10 +1,14 @@
-// ブラウザ表示地歴前後
-let zengoBack = document.getElementById('zengoBack');
-    zengoBack.addEventListener('click', function(){
-        history.back();
+document.addEventListener('DOMContentLoaded', function() {
+    var tabs = document.querySelectorAll('#ktp-tabs > div.tab');
+
+    // タブのクリックイベント
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            // すべてのタブを非アクティブに
+            tabs.forEach(t => t.classList.remove('active'));
+
+            // クリックされたタブをアクティブに
+            tab.classList.add('active');
+        });
     });
-    
-let zengoForward = document.getElementById('zengoForward');
-zengoForward.addEventListener('click', function(){
-    history.forward();
 });

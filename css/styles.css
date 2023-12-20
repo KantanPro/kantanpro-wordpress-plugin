@@ -1,207 +1,52 @@
-/* 課題：名前のコンフリフト */
-
-@charset "UTF-8";
-
-* {
-	float: none;
-	position: static;
-}
- 
-img {
-	max-width: 100%;
-	height: auto;
-}
- /* ヘッダー */
- .ktp_header{
+/* タブコンテナスタイル */
+#ktp-tabs {
   display: flex;
-  flex-wrap: nowrap;
-  text-align: left;
-  border:  1px solid;
-  padding: 15px;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
-/* ブラウザ履歴前後移動 */
-.zengo {
-  display: flex;
-  background-color: #eef3f3;
-  align-items: center;
-}
-.zengoButton {
-  display: block;
-  margin: 0px 10px 0px 10px;
-}
 
-/* リストと詳細（デフォルト） */
-.data_contents {
-  display: flex;
-  flex-wrap: nowrap;
- }
-/* リストBOX */
-.data_list_box {
-  width: calc(100%/2);
-  display: block;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
-  text-align: left;
-  background-color: #f0ffff;
+/* 各タブスタイル */
+#ktp-tabs > div {
+  flex-basis: calc(100% / 3); /* 3列に分割 */
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #ddd;
+  background-color: #f7f7f7;
+  margin-right: -1px; /* ボーダー重複を防ぐ */
+  margin-bottom: -1px; /* ボーダー重複を防ぐ */
 }
 
-/* 仕事リスト */
-.work_list_box {
-  width: 100%;
-  display: block;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
-  text-align: left;
-  background-color: #f0ffff;
+/* タブのタイトル */
+#ktp-tabs > div > h1 {
+  font-size: 16px;
+  margin-top: 0;
 }
 
-/* 詳細BOX */
-.data_detail_box {
-  width: calc(100%/2);
-  display: block;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
-  text-align: left;
-  background-color: #edf3f3;
-}
-
-/* 受注書詳細B */
-.order_detail_box {
-  width: 100%;
-  display: block;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
-  text-align: left;
-  background-color: #edf3f3;
-}
-
-/*
-------------------------------------
-レスポンシブ
-------------------------------------
-*/
-
-/* pc */
-@media screen and (min-width:912px) {
-
-}
-
-/* モバイル */
-@media screen and (max-width:912px) {
-  
-  .zengo {
-    display: flex;
-    flex-wrap: nowrap;
-  }
-  .data_contents {
-    flex-wrap: wrap;
-  }
-  .data_list_box {
-    width: 100%;
-    margin: 0px 0px 10px 0px;
-  }
-  .data_detail_box {
-    width: 100%;
-    margin: 0px 0px 0px 0px;
-  }
-
-}
-
- /* リストの中の項目 */
-.data_list_item {
-  width: auto;
-  line-height: 30px;
-  border-bottom: 1px solid #9da4a4;
-  margin-top: 15px;
-  margin-bottom: 0px;
-}
-
- /* .ktform {
-    width: 100%;
-    padding: 20px 10px;
-    text-align: left;
- } */
-
- /* ページネーション */
-.pagination{
-  text-align: center;
-  padding: 15px;
-  margin: 10px 10px 0px 0px;
-}
-
-/* ボタン */
-.box{
-  margin-bottom: 50px;
-}
-.submit_button{
+/* タブのコンテンツ */
+#ktp-tabs > div > p {
   margin-top: 10px;
-  margin-bottom: 5px;
 }
 
-/*タブ切り替え全体のスタイル*/
-.ktp_tabs {
-   margin-top: 50px;
-   padding-bottom: 0px;
-   background-color: #fff;
-   /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); */
-   width: 100%;
-   margin: 0 auto;
+/* アクティブなタブスタイル */
+#ktp-tabs > div.active {
+  background-color: #fff;
+  border-bottom: none; /* アクティブなタブはボーダーを消す */
 }
- 
- /*タブのスタイル*/
- .tab_item {
-   width: calc(100%/7);
-   height: 50px;
-   border-bottom: 5px solid #9da4a4;
-   background-color: #d9d9d9;
-   line-height: 50px;
-   font-size: 16px;
-   text-align: center;
-   color: #565656;
-   display: block;
-   float: left;
-   text-align: center;
-   font-weight: bold;
-   transition: all 0.2s ease;
-   overflow: hidden;
-   border-top-left-radius: 10px;
-   border-top-right-radius: 10px;
- }
- .tab_item:hover {
-   opacity: 0.75;
- }
- 
- /*ラジオボタンを全て消す*/
- input[name="tab_item"] {
-   display: none;
- }
- 
- /*タブ切り替えの中身のスタイル*/
- .ktp_tab_content {
-  height: 1034.63px;
-  display: none;
-  padding: 15px 15px 5px 15px;
-  clear: both;
-  overflow: auto;
-  /* overflow: hidden; */
-  background-color: #cdd8d8;
-  margin-bottom: 30px;
- }
- 
- /*選択されているタブのコンテンツのみを表示*/
- #list:checked ~ #list_content,
- #order:checked ~ #order_content,
- #client:checked ~ #client_content,
- #service:checked ~ #service_content,
- #supplier:checked ~ #supplier_content,
- #report:checked ~ #report_content,
- #setting:checked ~ #setting_content  {
-   display: block;
- }
- 
- /*選択されているタブのスタイルを変える*/
- .tabs input:checked + .tab_item {
-   background-color: #9da4a4;
-   color: #fff;
- }
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  #ktp-tabs > div {
+      flex-basis: 100%; /* スマートフォンでは1列に */
+  }
+}
+
+/* タブのコンテンツをすべて表示 */
+#ktp-tabs > div.content {
+  display: block;
+}
+
+/* アクティブなタブのスタイル */
+#ktp-tabs > div.tab.active {
+  background-color: #fff;
+  border-bottom: 1px solid transparent; /* アクティブなタブはボーダーを消す */
+}

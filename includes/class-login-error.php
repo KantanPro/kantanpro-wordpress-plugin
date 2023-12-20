@@ -1,34 +1,15 @@
 <?php
-// OK
 
-class Kantan_Login_Error{
-
-    public $name;
-
+class KTP_Login_Error {
     public function __construct() {
-        $this->$name;
-        // add_action('');
-        // add_filter('');
+        add_filter('login_errors', array($this, 'customize_login_errors'));
     }
-    
-    // ログインしていない場合
-    function Error_View() {
 
-        // ログインのリンク
-        $login_link = wp_login_url(); 
-
-        // 表示する内容
-        $content = <<<END
-        <h3>カンタンProを利用するにはログインしてください。</h3>
-        <!--ログイン-->
-        <p><font size="4"><a href="$login_link">ログイン</a></font>&emsp;
-        <font size="4"><a href="/welcome-to-kantanprowp/">ホームへ</a></font></p>
-        END;
-        return $content;
+    public function customize_login_errors() {
+        // ここでカスタムのログインエラーメッセージを設定します
+        return "ログインに関するエラーが発生しました。もう一度お試しください。";
     }
-    // function filter() {
-
-    // }
 }
 
-?>
+// インスタンス化
+new KTP_Login_Error();
