@@ -58,7 +58,7 @@ function kantan_all_tab_shortcode() {
 </div>
 
 <div id="tab-content">
-    <div id="tab-list" class="content active">仕事リストのコンテンツ...</div>
+    <div class="content active" id="content-list">仕事リストのコンテンツ...</div>
     <div class="content" id="content-order">受注書のコンテンツ...</div>
     <div class="content" id="content-service">商品・サービスのコンテンツ...</div>
     <div class="content" id="content-client">顧客のコンテンツ...</div>
