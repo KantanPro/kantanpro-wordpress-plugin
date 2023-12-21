@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // クリックされたタブと対応するコンテンツをアクティブに
             tab.classList.add('active');
-            var activeContent = document.querySelector('#content-' + tab.id.split('-')[1]);
+            var activeContent = document.querySelector(tab.getAttribute('data-target'));
             if (activeContent) {
                 activeContent.classList.add('active');
             }

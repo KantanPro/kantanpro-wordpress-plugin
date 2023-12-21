@@ -1,19 +1,27 @@
 /* タブコンテナスタイル */
 #ktp-tabs {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex; /* Flexboxを使用 */
+  flex-wrap: wrap; /* コンテンツが多い場合は折り返す */
   margin-bottom: 20px;
 }
 
 /* 各タブスタイル */
 #ktp-tabs > div {
-  flex-basis: calc(100% / 3); /* 3列に分割 */
+  flex: 1; /* 各タブが利用可能なスペースを均等に使用 */
+  min-width: 120px; /* 最小幅を設定 */
   box-sizing: border-box;
   padding: 10px;
   border: 1px solid #ddd;
   background-color: #f7f7f7;
+  text-align: center; /* タブのテキストを中央揃え */
   margin-right: -1px; /* ボーダー重複を防ぐ */
   margin-bottom: -1px; /* ボーダー重複を防ぐ */
+}
+
+/* アクティブなタブスタイル */
+#ktp-tabs > div.active {
+  background-color: #fff;
+  border-bottom: none;
 }
 
 /* タブのタイトル */
@@ -22,16 +30,14 @@
   margin-top: 0;
 }
 
-/* タブのコンテンツ */
-#ktp-tabs > div > p {
-  margin-top: 10px;
+/* タブのコンテンツスタイル */
+#tab-content > div {
+  display: none; /* 初期状態では全てのコンテンツを非表示 */
+}
+#tab-content > div.active {
+  display: block; /* アクティブなコンテンツのみ表示 */
 }
 
-/* アクティブなタブスタイル */
-#ktp-tabs > div.active {
-  background-color: #fff;
-  border-bottom: none; /* アクティブなタブはボーダーを消す */
-}
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
