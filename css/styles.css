@@ -40,13 +40,12 @@
   }
 }
 
-/* タブのコンテンツをすべて表示 */
-#ktp-tabs > div.content {
-  display: block;
+/* タブのコンテンツを隠す */
+#tab-content .content {
+  display: none;
 }
 
-/* アクティブなタブのスタイル */
-#ktp-tabs > div.tab.active {
-  background-color: #fff;
-  border-bottom: 1px solid transparent; /* アクティブなタブはボーダーを消す */
+/* アクティブなタブのコンテンツを表示 */
+#tab-content .content.active {
+  display: block;
 }

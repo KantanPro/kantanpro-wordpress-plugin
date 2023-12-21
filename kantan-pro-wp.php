@@ -46,75 +46,156 @@ add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
 // ショートコードの追加
 function kantan_all_tab_shortcode() {
     ob_start();
-    echo '<div id="ktp-tabs">';
+    ?>
+<div id="ktp-tabs">
+    <div class="tab" id="tab-client">顧客</div>
+    <div class="tab" id="tab-list">仕事リスト</div>
+    <div class="tab" id="tab-order">受注書</div>
+    <div class="tab" id="tab-report">レポート</div>
+    <div class="tab" id="tab-service">商品・サービス</div>
+    <div class="tab" id="tab-setting">設定</div>
+    <div class="tab" id="tab-supplier">協力会社</div>
+</div>
 
-    // // KTP_Tab_List クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_list = new KTP_Tab_List();
-    // echo '<div id="tab-list">';
-    // $ktp_tab_list->display();
-    // echo '</div>';
+<div id="tab-content">
+    <div class="content" id="content-client">顧客のコンテンツ...</div>
+    <div class="content" id="content-list">仕事リストのコンテンツ...</div>
+    <div class="content" id="content-order">受注書のコンテンツ...</div>
+    <div class="content" id="content-report">レポートのコンテンツ...</div>
+    <div class="content" id="content-service">商品・サービスのコンテンツ...</div>
+    <div class="content" id="content-setting">設定のコンテンツ...</div>
+    <div class="content" id="content-supplier">協力会社のコンテンツ...</div>
+</div>
 
-    // // KTP_Tab_Order クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_order = new KTP_Tab_Order();
-    // echo '<div id="tab-order">';
-    // $ktp_tab_order->display();
-    // echo '</div>';
-
-    // // KTP_Tab_Client クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_client = new KTP_Tab_Client();
-    // echo '<div id="tab-client">';
-    // $ktp_tab_client->display();
-    // echo '</div>';
-
-    // // KTP_Tab_Service クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_service = new KTP_Tab_Service();
-    // echo '<div id="tab-service">';
-    // $ktp_tab_service->display();
-    // echo '</div>';
-
-    // // KTP_Tab_Supplier クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_supplier = new KTP_Tab_Supplier();
-    // echo '<div id="tab-supplier">';
-    // $ktp_tab_supplier->display();
-    // echo '</div>';
-
-    // // KTP_Tab_Report クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_report = new KTP_Tab_Report();
-    // echo '<div id="tab-report">';
-    // $ktp_tab_report->display();
-    // echo '</div>';
-
-    // // KTP_Tab_Setting クラスのインスタンスを作成し、display メソッドを呼び出す
-    // $ktp_tab_setting = new KTP_Tab_Setting();
-    // echo '<div id="tab-setting">';
-    // $ktp_tab_setting->display();
-    // echo '</div>';
-
-    // タブレイアウトの実装
-    ob_start();
-    echo '<div id="ktp-tabs">';
-
-    // タブ
-    echo '<div class="tab active" data-target="#tab-list">仕事リスト</div>';
-    echo '<div class="tab" data-target="#tab-order">受注書</div>';
-    // ...他のタブ
-
-    // コンテンツ
-    echo '<div id="tab-list" class="content">'; // 仕事リスト
-    // ...仕事リストの内容
-    echo '</div>';
-
-    echo '<div id="tab-order" class="content">'; // 受注書
-    // ...受注書の内容
-    echo '</div>';
-
-    // ...他のタブの内容
-
-    echo '</div>';
+    <?php
     return ob_get_clean();
-    
 }
 add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
 // 以下に、各タブのコンテンツを生成するためのクラス定義を続ける
 // 例えば、TabListクラスでは、display_listメソッドを定義して、仕事リストの内容を出力する
+// また、TabOrderクラスでは、display_orderメソッドを定義して、受注書の内容を出力する
+// その他のタブについても、同様に、各タブのコンテンツを出力するメソッドを定義する
+// そして、各タブのコンテンツを出力するためのショートコードを定義する
+// 例えば、仕事リストのコンテンツを出力するショートコードは、[kantanListTab]とする
+// また、受注書のコンテンツを出力するショートコードは、[kantanOrderTab]とする
+// その他のタブについても、同様に、各タブのコンテンツを出力するショートコードを定義する
+// ここでは、TabListクラスとTabOrderクラスの定義を続ける
+// 以下のコードを、includes/class-tab-list.phpに追加
+// <?php
+//
+// class KTP_Tab_List {
+//     public function __construct() {
+//         add_action('admin_menu', array($this, 'add_list_menu'));
+//     }
+
+//     public function display() {
+//         // ここに表示する内容を実装します。
+//         echo '仕事じゃ';
+//     }
+
+//     public function add_list_menu() {
+//         add_submenu_page(
+//             'ktp-main-menu', // 親メニューのスラッグ
+//             '仕事リスト', // ページタイトル
+//             '仕事リスト', // メニュータイトル
+//             'manage_options', // 権限
+//             'ktp-tab-list', // メニュースラッグ
+//             array($this, 'list_page_content') // 表示内容を生成するコールバック関数
+//         );
+//     }
+
+//     public function list_page_content() {
+//         echo '<h1>仕事リスト</h1>';
+//         echo '<p>ここに仕事リストの管理と表示に関するコンテンツを表示します。</p>';
+//         // ここに仕事リストデータを取得し、表示するコードを追加
+//         // 例えば、WordPressのデータベースから仕事リストデータを取得し、表形式で表示する
+//     }
+
+//     public function display_list() {
+//         // ここに仕事リストの内容を実装します。
+//         echo '<h3>仕事リスト</h3>';
+//     }
+// }
+
+// // インスタンス化
+// new KTP_Tab_List();
+// 以下のコードを、includes/class-tab-order.phpに追加
+// <?php
+//
+// class KTP_Tab_Order {
+//     public function __construct() {
+//         add_action('admin_menu', array($this, 'add_order_menu'));
+//     }
+
+//     public function display() {
+//         // ここに表示する内容を実装します。
+//         echo '<h3>受注書</h3>';
+//     }
+
+//     public function add_order_menu() {
+//         add_submenu_page(
+//             'ktp-main-menu', // 親メニューのスラッグ
+//             '受注書', // ページタイトル
+//             '受注書', // メニュータイトル
+//             'manage_options', // 権限
+//             'ktp-tab-order', // メニュースラッグ
+//             array($this, 'order_page_content') // 表示内容を生成するコールバック関数
+//         );
+//     }
+
+//     public function order_page_content() {
+//         echo '<h1>受注書管理</h1>';
+//         echo '<p>ここに受注書の管理と表示に関するコンテンツを表示します。</p>';
+//         // ここに受注書のデータを取得し、表示するコードを追加
+//         // 例えば、WordPressのデータベースから受注データを取得し、表形式で表示する
+//     }
+
+//     public function display_order() {
+//         // ここに受注書の内容を実装します。
+//         echo '<h3>受注書</h3>';
+//     }
+// }
+
+// // インスタンス化
+// new KTP_Tab_Order();
+// 以下のコードを、includes/class-tab-client.phpに追加
+// <?php
+//  class KTP_Tab_Client {
+//      public function __construct() {
+//          add_action('admin_menu', array($this, 'add_client_menu'));
+//      }
+
+//      public function display() {
+//          // ここに表示する内容を実装します。
+//          echo '<h3>顧客管理</h3>';
+//      }
+
+//      public function add_client_menu() {
+//          add_submenu_page(
+//              'ktp-main-menu', // 親メニューのスラッグ
+//              '顧客', // ページタイトル
+//              '顧客', // メニュータイトル
+//              'manage_options', // 権限
+//              'ktp-tab-client', // メニュースラッグ
+//              array($this, 'client_page_content') // 表示内容を生成するコールバック関数
+//          );
+//      }
+
+//      public function client_page_content() {
+//          echo '<h1>顧客管理</h1>';
+//          echo '<p>ここに顧客の管理と表示に関するコンテンツを表示します。</p>';
+//          // ここに顧客データを取得し、表示するコードを追加
+//          // 例えば、WordPressのデータベースから顧客データを取得し、表形式で表示する
+//      }
+
+//      public function display_client() {
+//          // ここに顧客の内容を実装します。
+//          echo '<h3>顧客</h3>';
+//      }
+//  }
+
+//  // インスタンス化
+//  new KTP_Tab_Client();
+
+
