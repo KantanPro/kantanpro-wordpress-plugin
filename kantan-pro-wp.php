@@ -48,7 +48,7 @@ function kantan_all_tab_shortcode() {
     ob_start();
     ?>
 <div id="ktp-tabs">
-    <div class="tab" class="tab active" id="tab-list">仕事リスト</div>
+    <div class="tab active" id="tab-list">仕事リスト</div>
     <div class="tab" id="tab-order">受注書</div>
     <div class="tab" id="tab-service">商品・サービス</div>
     <div class="tab" id="tab-client">顧客</div>
