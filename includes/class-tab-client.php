@@ -9,9 +9,11 @@ class KTP_Tab_Client {
 
     // 顧客タブのページコンテンツを表示
     public function client_page_content() {
-        echo '<h1>顧客管理</h1>';
+        echo '<h2>顧客詳細</h2>';
         // 顧客データの送信フォームを表示
         $this->display_client_form();
+        echo '<br>';
+        echo '<h2>顧客リスト</h2>';
         // 保存されている顧客データを表示
         $this->display_clients();
     }
@@ -28,7 +30,9 @@ class KTP_Tab_Client {
             <input type="text" id="name" name="name" required><br>
             <label for="email">メールアドレス：</label>
             <input type="email" id="email" name="email" required><br>
+            <br>
             <input type="submit" value="登録">
+            <br>
         </form>
         <?php
     }
