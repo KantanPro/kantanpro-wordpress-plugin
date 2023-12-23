@@ -7,9 +7,9 @@
  */
 
 // 定数の定義
-define( 'KTP_VERSION', '1.0' );
-define( 'KTP_PATH', plugin_dir_path( __FILE__ ) );
-define( 'KTP_URL', plugins_url( '/', __FILE__ ) );
+define('KTP_VERSION', '1.0');
+define('KTP_PATH', plugin_dir_path(__FILE__));
+define('KTP_URL', plugins_url('/', __FILE__));
 
 // インクルードステートメント
 include_once KTP_PATH . 'includes/class-tab-list.php';
@@ -30,19 +30,9 @@ function ktp_enqueue_scripts() {
     wp_register_script('ktp-script', KTP_URL . 'js/ktpjs.js', [], KTP_VERSION, true);
     wp_enqueue_script('ktp-script');
 
-    // タブの状態を制御するためのインラインスクリプト
-    $inline_script = "
-        jQuery(document).ready(function($) {
-            var hash = window.location.hash;
-            if (hash === '#tab-client') {
-                $('.tab').removeClass('active');
-                $('#tab-client').addClass('active');
-                $('.content').hide();
-                $('#content-client').show();
-            }
-        });
-    ";
-    wp_add_inline_script('ktp-script', $inline_script);
+    // AJAX用のスクリプトを追加
+    wp_enqueue_script('ktp-ajax-script', KTP_URL . 'js/ktp-ajax.js', ['jquery'], KTP_VERSION, true);
+    wp_localize_script('ktp-ajax-script', 'ktp_ajax_object', ['ajax_url' => admin_url('admin-ajax.php')]);
 }
 add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
 
@@ -51,7 +41,7 @@ function kantan_all_tab_shortcode() {
     ob_start();
     ?>
     <div id="ktp-tabs">
-        <div class="tab active" id="tab-list">仕事リスト</div>
+        <div class="tab" id="tab-list">仕事リスト</div>
         <div class="tab" id="tab-order">受注書</div>
         <div class="tab" id="tab-service">商品・サービス</div>
         <div class="tab" id="tab-client">顧客</div>
@@ -61,9 +51,15 @@ function kantan_all_tab_shortcode() {
     </div>
 
     <div id="tab-content">
-        <div class="content active" id="content-list">仕事リストのコンテンツ...</div>
-        <div class="content" id="content-order">受注書のコンテンツ...</div>
-        <div class="content" id="content-service">商品・サービスのコンテンツ...</div>
+        <div class="content" id="content-list">
+            <!-- 仕事リストのコンテンツ -->
+        </div>
+        <div class="content" id="content-order">
+            <!-- 受注書のコンテンツ -->
+        </div>
+        <div class="content" id="content-service">
+            <!-- 商品・サービスのコンテンツ -->
+        </div>
         <div class="content" id="content-client">
             <?php
             // 顧客タブのコンテンツを表示
@@ -71,11 +67,27 @@ function kantan_all_tab_shortcode() {
             $client_tab->client_page_content();
             ?>
         </div>
-        <div class="content" id="content-supplier">協力会社のコンテンツ...</div>
-        <div class="content" id="content-report">レポートのコンテンツ...</div>
-        <div class="content" id="content-setting">設定のコンテンツ...</div>
+        <div class="content" id="content-supplier">
+            <!-- 協力会社のコンテンツ -->
+        </div>
+        <div class="content" id="content-report">
+            <!-- レポートのコンテンツ -->
+        </div>
+        <div class="content" id="content-setting">
+            <!-- 設定のコンテンツ -->
+        </div>
     </div>
     <?php
     return ob_get_clean();
 }
 add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
+
+// AJAXリクエストのハンドリング
+function ktp_delete_client_ajax() {
+    global $wpdb;
+    $client_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+    $wpdb->delete($wpdb->prefix . 'ktp_client', ['id' => $client_id], ['%d']);
+    wp_send_json_success();
+}
+add_action('wp_ajax_ktp_delete_client', 'ktp_delete_client_ajax');
+add_action('wp_ajax_nopriv_ktp_delete_client', 'ktp_delete_client_ajax');

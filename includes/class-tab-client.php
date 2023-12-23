@@ -1,24 +1,10 @@
 <?php
 
 class KTP_Tab_Client {
-    // コンストラクタ: WordPressのフックを設定
+    // コンストラクタ
     public function __construct() {
-        // 管理メニューに顧客タブを追加するためのフック
-        add_action('admin_menu', array($this, 'add_client_menu'));
         // フォーム送信の処理を行うためのフック
         add_action('admin_post_ktp_add_client', array($this, 'handle_form_submission'));
-    }
-
-    // 管理メニューに顧客タブを追加
-    public function add_client_menu() {
-        add_submenu_page(
-            'ktp-main-menu', // 親メニューのスラッグ
-            '顧客', // ページタイトル
-            '顧客', // メニュータイトル
-            'manage_options', // 必要な権限
-            'ktp-tab-client', // メニュースラッグ
-            array($this, 'client_page_content') // コンテンツを表示するコールバック関数
-        );
     }
 
     // 顧客タブのページコンテンツを表示
@@ -86,12 +72,13 @@ class KTP_Tab_Client {
         // 顧客データがあればテーブル形式で表示
         if ($clients) {
             echo '<table>';
-            echo '<tr><th>ID</th><th>名前</th><th>メールアドレス</th></tr>';
+            echo '<tr><th>ID</th><th>名前</th><th>メールアドレス</th><th>操作</th></tr>';
             foreach ($clients as $client) {
                 echo '<tr>';
                 echo '<td>' . esc_html($client->id) . '</td>';
                 echo '<td>' . esc_html($client->name) . '</td>';
                 echo '<td>' . esc_html($client->email) . '</td>';
+                echo '<td><button class="ktp-delete-client" data-id="' . esc_attr($client->id) . '">削除</button></td>';
                 echo '</tr>';
             }
             echo '</table>';
