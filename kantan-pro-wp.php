@@ -4,6 +4,8 @@
  * Description: カンタンProWP
  * Version: 1.0
  */
+//2023/12/23MacBookPro
+
 
 // バージョン管理
 if ( ! defined( 'WPINC' ) ) {
