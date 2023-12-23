@@ -33,7 +33,7 @@ class KTP_Tab_Client {
         ?>
         <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
             <input type="hidden" name="action" value="ktp_add_client">
-            <input type="hidden" name="ktp_nonce" value="<?php echo $nonce; ?>">
+            <input type="hidden" name "ktp_nonce" value="<?php echo $nonce; ?>">
             <label for="name">名前：</label>
             <input type="text" id="name" name="name" required><br>
             <label for="email">メールアドレス：</label>

@@ -1,17 +1,10 @@
 <?php
 /**
- * Plugin Name: kantan pro wp
- * Description: カンタンProWP
+ * Plugin Name: Kantan Pro WP
+ * Description: カンタンProWPプラグインの説明。
  * Version: 1.0
+ * Author: あなたの名前
  */
-
-// バージョン管理
-if ( ! defined( 'WPINC' ) ) {
-    die;
-}
-
-// WordPressが直接アクセスされるのを防ぐ
-defined( 'ABSPATH' ) || exit;
 
 // 定数の定義
 define( 'KTP_VERSION', '1.0' );
@@ -36,6 +29,20 @@ function ktp_enqueue_scripts() {
 
     wp_register_script('ktp-script', KTP_URL . 'js/ktpjs.js', [], KTP_VERSION, true);
     wp_enqueue_script('ktp-script');
+
+    // タブの状態を制御するためのインラインスクリプト
+    $inline_script = "
+        jQuery(document).ready(function($) {
+            var hash = window.location.hash;
+            if (hash === '#tab-client') {
+                $('.tab').removeClass('active');
+                $('#tab-client').addClass('active');
+                $('.content').hide();
+                $('#content-client').show();
+            }
+        });
+    ";
+    wp_add_inline_script('ktp-script', $inline_script);
 }
 add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
 
@@ -57,7 +64,6 @@ function kantan_all_tab_shortcode() {
         <div class="content active" id="content-list">仕事リストのコンテンツ...</div>
         <div class="content" id="content-order">受注書のコンテンツ...</div>
         <div class="content" id="content-service">商品・サービスのコンテンツ...</div>
-        <!-- 顧客のコンテンツ -->
         <div class="content" id="content-client">
             <?php
             // 顧客タブのコンテンツを表示
