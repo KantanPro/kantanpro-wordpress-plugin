@@ -1,34 +1,44 @@
 <?php
+// WordPressの環境を読み込む
+require_once( $_SERVER['DOCUMENT_ROOT'] . '/ktp/wp-load.php' );
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    global $wpdb;
+
     // フォームデータの受け取り
     $name = $_POST['name'];
     $email = $_POST['email'];
 
-    // データベース接続とデータの登録
-    // データベース情報
-    $servername = "localhost";
-    $username = "username";
-    $password = "password";
-    $dbname = "myDB";
+    // テーブル名の設定（プレフィックスを含む）
+    $table_name = $wpdb->prefix . 'users'; // 'users'はあなたのテーブル名に置き換えてください
 
-    // データベースに接続
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    // データを挿入
+    $result = $wpdb->insert(
+        $table_name,
+        array(
+            'name' => $name,
+            'email' => $email
+        ),
+        array(
+            '%s',
+            '%s'
+        )
+    );
 
-    // 接続チェック
-    if ($conn->connect_error) {
-        die("接続失敗: " . $conn->connect_error);
-    }
-
-    // SQL文でデータを挿入
-    $sql = "INSERT INTO users (name, email) VALUES ('$name', '$email')";
-
-    if ($conn->query($sql) === TRUE) {
+    // 結果の確認
+    if ($result) {
         echo "新規データを登録しました";
     } else {
-        echo "エラー: " . $sql . "<br>" . $conn->error;
+        echo "エラー: " . $wpdb->last_error;
     }
-
-    // 接続を閉じる
-    $conn->close();
 }
+
+// デバッグ情報の出力
+echo "<p>リクエストメソッド: " . $_SERVER["REQUEST_METHOD"] . "</p>";
+echo "<p>フォームアクションURL: " . esc_html(plugins_url('submit.php', __FILE__)) . "</p>";
+echo "<p>フォームデータ:</p>";
+echo "<pre>";
+var_dump($_POST);
+echo "</pre>";
+
 ?>
