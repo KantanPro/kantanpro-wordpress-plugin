@@ -102,7 +102,7 @@ function ktp_add_client_ajax() {
     if ($result) {
         wp_send_json_success();
     } else {
-        wp_send_json_error(array('message' => 'データベースへの挿入に失敗しました。'));
+        wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
     }
 }
 add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');
@@ -123,7 +123,7 @@ function ktp_delete_client_ajax() {
     if ($result) {
         wp_send_json_success();
     } else {
-        wp_send_json_error();
+        wp_send_json_error(array('message' => '顧客の削除に失敗しました。'));
     }
 }
 add_action('wp_ajax_ktp_delete_client', 'ktp_delete_client_ajax');
