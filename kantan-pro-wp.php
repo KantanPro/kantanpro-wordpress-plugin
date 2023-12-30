@@ -82,12 +82,42 @@ function kantan_all_tab_shortcode() {
 }
 add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
-// AJAXリクエストのハンドリング
-function ktp_delete_client_ajax() {
+// 顧客追加のAJAXリクエストのハンドリング
+function ktp_add_client_ajax() {
+    check_ajax_referer('ktp_add_client_nonce', 'ktp_nonce');
     global $wpdb;
-    $client_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-    $wpdb->delete($wpdb->prefix . 'ktp_client', ['id' => $client_id], ['%d']);
-    wp_send_json_success();
+
+    $name = sanitize_text_field($_POST['name']);
+    $email = sanitize_email($_POST['email']);
+
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'ktp_client',
+        array('name' => $name, 'email' => $email),
+        array('%s', '%s')
+    );
+
+    if ($result) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error(array('message' => 'データベースへの挿入に失敗しました。'));
+    }
+}
+add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');
+add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
+
+// 顧客削除のAJAXリクエストのハンドリング
+function ktp_delete_client_ajax() {
+    check_ajax_referer('ktp_delete_client_nonce', 'nonce');
+    global $wpdb;
+    $client_id = intval($_POST['id']);
+
+    $result = $wpdb->delete($wpdb->prefix . 'ktp_client', array('id' => $client_id), array('%d'));
+
+    if ($result) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error();
+    }
 }
 add_action('wp_ajax_ktp_delete_client', 'ktp_delete_client_ajax');
 add_action('wp_ajax_nopriv_ktp_delete_client', 'ktp_delete_client_ajax');
