@@ -12,12 +12,15 @@ function activate_client_tab_in_plugin() {
     if (isset($_GET['tab']) && $_GET['tab'] == 'clients') {
         echo '<script type="text/javascript">
                 jQuery(document).ready(function($) {
-                    $("#clients-tab").addClass("active");
+                    // 顧客タブをアクティブにする
+                    $(".tab").removeClass("active"); // すべてのタブからactiveクラスを削除
+                    $("#tab-client").addClass("active"); // 顧客タブにactiveクラスを追加
+                    $(".tab-content").hide(); // すべてのタブコンテンツを非表示
+                    $("#content-client").show(); // 顧客タブのコンテンツを表示
                 });
               </script>';
     }
 }
-
 // 定数の定義
 define('KTP_VERSION', '1.0');
 define('KTP_PATH', plugin_dir_path(__FILE__));
