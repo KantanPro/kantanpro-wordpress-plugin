@@ -9,7 +9,6 @@ jQuery(document).ready(function($) {
                 alert('顧客が登録されました');
                 // ここでページの内容を更新する処理を追加する
             } else {
-                // response.data.message が存在するか確認
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
             }

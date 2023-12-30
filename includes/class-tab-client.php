@@ -11,9 +11,11 @@ class KTP_Tab_Client {
     // 顧客タブのページコンテンツを表示
     public function client_page_content() {
         echo '<h2>顧客詳細</h2>';
+        // 顧客データの送信フォームを表示
         $this->display_client_form();
         echo '<br>';
         echo '<h2>顧客リスト</h2>';
+        // 保存されている顧客データを表示
         $this->display_clients();
     }
 
@@ -80,4 +82,5 @@ class KTP_Tab_Client {
         }
     }
 }
+
 new KTP_Tab_Client();
