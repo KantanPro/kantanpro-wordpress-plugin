@@ -110,7 +110,10 @@ function ktp_add_client_ajax() {
     );
 
     if ($result) {
-        wp_send_json_success();
+        // 成功時に顧客リストを更新するためのデータを返す
+        $new_client_id = $wpdb->insert_id;
+        $new_client = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}ktp_client WHERE id = $new_client_id");
+        wp_send_json_success(array('newClient' => $new_client));
     } else {
         wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
     }
