@@ -7,19 +7,21 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 alert('顧客が登録されました');
                 // ここでページの内容を更新する処理を追加する
+                // 例えば、顧客リストを再読み込みするなど
             } else {
-                alert('エラーが発生しました');
+                alert('エラーが発生しました: ' + response.data.message);
             }
         });
     });
 
     // 顧客削除の処理
-    $('.ktp-delete-client').click(function() {
+    $(document).on('click', '.ktp-delete-client', function() {
         var clientId = $(this).data('id');
         if (confirm('本当に削除しますか？')) {
             $.post(ktp_ajax_object.ajax_url, {
                 action: 'ktp_delete_client',
-                id: clientId
+                id: clientId,
+                nonce: ktp_ajax_object.nonce
             }, function(response) {
                 if (response.success) {
                     $('button[data-id="' + clientId + '"]').closest('tr').remove();

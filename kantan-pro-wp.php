@@ -91,7 +91,7 @@ function ktp_add_client_ajax() {
     $email = sanitize_email($_POST['email']);
 
     $result = $wpdb->insert(
-        $wpdb->prefix . 'ktp_client',
+        'ktp_client', // テーブル名を修正
         array('name' => $name, 'email' => $email),
         array('%s', '%s')
     );
@@ -111,7 +111,11 @@ function ktp_delete_client_ajax() {
     global $wpdb;
     $client_id = intval($_POST['id']);
 
-    $result = $wpdb->delete($wpdb->prefix . 'ktp_client', array('id' => $client_id), array('%d'));
+    $result = $wpdb->delete(
+        'ktp_client', // テーブル名を修正
+        array('id' => $client_id),
+        array('%d')
+    );
 
     if ($result) {
         wp_send_json_success();
