@@ -44,7 +44,7 @@ class KTP_Tab_Client {
         $email = sanitize_email($_POST['email']);
 
         $result = $wpdb->insert(
-            $wpdb->prefix . 'ktp_client',
+            $table_name = $wpdb->prefix . 'ktp_client',
             array('name' => $name, 'email' => $email),
             array('%s', '%s')
         );
