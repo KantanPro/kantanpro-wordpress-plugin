@@ -32,7 +32,10 @@ function ktp_enqueue_scripts() {
 
     // AJAX用のスクリプトを追加
     wp_enqueue_script('ktp-ajax-script', KTP_URL . 'js/ktp-ajax.js', ['jquery'], KTP_VERSION, true);
-    wp_localize_script('ktp-ajax-script', 'ktp_ajax_object', ['ajax_url' => admin_url('admin-ajax.php')]);
+    wp_localize_script('ktp-ajax-script', 'ktp_ajax_object', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('ktp_nonce') // ノンスを追加
+    ]);
 }
 add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
 
@@ -84,7 +87,7 @@ add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
 // 顧客追加のAJAXリクエストのハンドリング
 function ktp_add_client_ajax() {
-    check_ajax_referer('ktp_add_client_nonce', 'ktp_nonce');
+    check_ajax_referer('ktp_nonce', 'nonce'); // ノンスの検証
     global $wpdb;
 
     $name = sanitize_text_field($_POST['name']);
@@ -107,7 +110,7 @@ add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
 
 // 顧客削除のAJAXリクエストのハンドリング
 function ktp_delete_client_ajax() {
-    check_ajax_referer('ktp_delete_client_nonce', 'nonce');
+    check_ajax_referer('ktp_nonce', 'nonce'); // ノンスの検証
     global $wpdb;
     $client_id = intval($_POST['id']);
 

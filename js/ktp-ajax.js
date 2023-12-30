@@ -1,15 +1,17 @@
 jQuery(document).ready(function($) {
-    // 顧客登録の処理
     $('#ktp-client-form').submit(function(e) {
         e.preventDefault();
         var formData = $(this).serialize();
+        formData += '&nonce=' + ktp_ajax_object.nonce; // ノンスを追加
+
         $.post(ktp_ajax_object.ajax_url, formData, function(response) {
             if (response.success) {
                 alert('顧客が登録されました');
                 // ここでページの内容を更新する処理を追加する
-                // 例えば、顧客リストを再読み込みするなど
             } else {
-                alert('エラーが発生しました: ' + response.data.message);
+                // response.data.message が存在するか確認
+                var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
+                alert('エラーが発生しました: ' + errorMessage);
             }
         });
     });
@@ -26,7 +28,8 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $('button[data-id="' + clientId + '"]').closest('tr').remove();
                 } else {
-                    alert('削除に失敗しました');
+                    var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
+                    alert('削除に失敗しました: ' + errorMessage);
                 }
             });
         }
