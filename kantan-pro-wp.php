@@ -6,6 +6,22 @@
  * Author: あなたの名前
  */
 
+ // ページがロードされたときにURLのパラメータをチェック
+add_action('wp_footer', 'activate_customer_tab_in_plugin');
+function activate_customer_tab_in_plugin() {
+    if (isset($_GET['tab']) && $_GET['tab'] == 'customers') {
+        // JavaScriptを使って顧客タブをアクティブにする
+        echo '<script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    // 顧客タブをアクティブにするコード
+                    $("#customers-tab").addClass("active");
+                    // 他のタブからアクティブクラスを削除
+                    // ...
+                });
+              </script>';
+    }
+}
+
 // 定数の定義
 define('KTP_VERSION', '1.0');
 define('KTP_PATH', plugin_dir_path(__FILE__));
