@@ -16,24 +16,6 @@ jQuery(document).ready(function($) {
             }
         });
     });
-
-    function updateCustomerList() {
-        $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_customer_list' }, function(response) {
-            if (response.success) {
-                $('#customer-list').html(response.data);
-            } else {
-                alert('顧客リストの取得に失敗しました');
-            }
-        });
-    }
-
-    function activateCustomerTab() {
-        $('.tab').removeClass('active');
-        $('#tab-client').addClass('active');
-        $('.content').hide();
-        $('#content-client').show();
-    }
-
     // 顧客削除の処理
     $(document).on('click', '.ktp-delete-client', function() {
         var clientId = $(this).data('id');
@@ -52,4 +34,21 @@ jQuery(document).ready(function($) {
             });
         }
     });
+
+    function updateCustomerList() {
+        $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {
+            if (response.success) {
+                $('#client-list').html(response.data);
+            } else {
+                alert('顧客リストの取得に失敗しました');
+            }
+        });
+    }
+
+    function activateCustomerTab() {
+        $('.tab').removeClass('active');
+        $('#tab-client').addClass('active');
+        $('.content').hide();
+        $('#content-client').show();
+    }
 });

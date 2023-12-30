@@ -7,12 +7,12 @@
  */
 
 // ページがロードされたときにURLのパラメータをチェック
-add_action('wp_footer', 'activate_customer_tab_in_plugin');
-function activate_customer_tab_in_plugin() {
-    if (isset($_GET['tab']) && $_GET['tab'] == 'customers') {
+add_action('wp_footer', 'activate_client_tab_in_plugin');
+function activate_client_tab_in_plugin() {
+    if (isset($_GET['tab']) && $_GET['tab'] == 'clients') {
         echo '<script type="text/javascript">
                 jQuery(document).ready(function($) {
-                    $("#customers-tab").addClass("active");
+                    $("#clients-tab").addClass("active");
                 });
               </script>';
     }
@@ -140,20 +140,20 @@ add_action('wp_ajax_ktp_delete_client', 'ktp_delete_client_ajax');
 add_action('wp_ajax_nopriv_ktp_delete_client', 'ktp_delete_client_ajax');
 
 // 顧客リストを取得するAjaxリクエストのハンドリング
-add_action('wp_ajax_ktp_get_customer_list', 'ktp_get_customer_list');
-function ktp_get_customer_list() {
+add_action('wp_ajax_ktp_get_client_list', 'ktp_get_client_list');
+function ktp_get_client_list() {
     global $wpdb;
 
-    $customers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}ktp_client");
+    $clients = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}ktp_client");
 
-    if ($customers) {
-        $customer_list_html = '<ul>';
-        foreach ($customers as $customer) {
-            $customer_list_html .= '<li>' . esc_html($customer->name) . ' (' . esc_html($customer->email) . ')</li>';
+    if ($clients) {
+        $client_list_html = '<ul>';
+        foreach ($clients as $client) {
+            $client_list_html .= '<li>' . esc_html($client->name) . ' (' . esc_html($client->email) . ')</li>';
         }
-        $customer_list_html .= '</ul>';
+        $client_list_html .= '</ul>';
 
-        wp_send_json_success(['data' => $customer_list_html]);
+        wp_send_json_success(['data' => $client_list_html]);
     } else {
         wp_send_json_error(['message' => '顧客リストの取得に失敗しました']);
     }
