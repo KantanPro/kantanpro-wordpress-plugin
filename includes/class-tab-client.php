@@ -60,9 +60,15 @@ class KTP_Tab_Client {
             array('%s', '%s')
         );
 
-        // 前のページにリダイレクト
-        wp_redirect($_SERVER['HTTP_REFERER']);
+        // // 前のページにリダイレクト
+        // wp_redirect($_SERVER['HTTP_REFERER']);
+        // exit;
+
+        // データベースにデータを挿入後、顧客タブにリダイレクト
+        $redirect_url = admin_url('/page=ktp-tab-client');
+        wp_redirect($redirect_url);
         exit;
+
     }
 
     // 保存されている顧客データを表示

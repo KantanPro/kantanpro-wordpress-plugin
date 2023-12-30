@@ -43,8 +43,8 @@ function kantan_all_tab_shortcode() {
     <div id="ktp-tabs">
         <div class="tab" id="tab-list">仕事リスト</div>
         <div class="tab" id="tab-order">受注書</div>
-        <div class="tab" id="tab-service">商品・サービス</div>
         <div class="tab" id="tab-client">顧客</div>
+        <div class="tab" id="tab-service">商品・サービス</div>
         <div class="tab" id="tab-supplier">協力会社</div>
         <div class="tab" id="tab-report">レポート</div>
         <div class="tab" id="tab-setting">設定</div>
@@ -57,15 +57,15 @@ function kantan_all_tab_shortcode() {
         <div class="content" id="content-order">
             <!-- 受注書のコンテンツ -->
         </div>
-        <div class="content" id="content-service">
-            <!-- 商品・サービスのコンテンツ -->
-        </div>
         <div class="content" id="content-client">
             <?php
             // 顧客タブのコンテンツを表示
             $client_tab = new KTP_Tab_Client();
             $client_tab->client_page_content();
             ?>
+        </div>
+        <div class="content" id="content-service">
+            <!-- 商品・サービスのコンテンツ -->
         </div>
         <div class="content" id="content-supplier">
             <!-- 協力会社のコンテンツ -->
