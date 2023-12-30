@@ -59,12 +59,22 @@ class KTP_Tab_Client {
     // 保存されている顧客データを表示
     private function display_clients() {
         global $wpdb;
-        $table_name = 'ktp_client'; // テーブル名を修正
-
+        $table_name = $wpdb->prefix . 'ktp_client'; // テーブル名を修正
+    
         $clients = $wpdb->get_results("SELECT * FROM $table_name");
-
+    
         if ($clients) {
-            // 顧客データの表示処理
+            echo '<table>';
+            echo '<tr><th>ID</th><th>名前</th><th>メールアドレス</th><th>操作</th></tr>';
+            foreach ($clients as $client) {
+                echo '<tr>';
+                echo '<td>' . esc_html($client->id) . '</td>';
+                echo '<td>' . esc_html($client->name) . '</td>';
+                echo '<td>' . esc_html($client->email) . '</td>';
+                echo '<td><button class="ktp-delete-client" data-id="' . esc_attr($client->id) . '">削除</button></td>';
+                echo '</tr>';
+            }
+            echo '</table>';
         } else {
             echo '<p>顧客データはありません。</p>';
         }
