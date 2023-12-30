@@ -8,8 +8,8 @@ jQuery(document).ready(function($) {
         $.post(ktp_ajax_object.ajax_url, formData, function(response) {
             if (response.success) {
                 alert('顧客が登録されました');
-                updateCustomerList();
-                activateCustomerTab();
+                updateClientList();
+                activateClientTab();
             } else {
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
@@ -35,7 +35,7 @@ jQuery(document).ready(function($) {
         }
     });
 
-    function updateCustomerList() {
+    function updateClientList() {
         $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {
             if (response.success) {
                 $('#client-list').html(response.data);
@@ -45,7 +45,7 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function activateCustomerTab() {
+    function activateClientTab() {
         $('.tab').removeClass('active');
         $('#tab-client').addClass('active');
         $('.content').hide();
