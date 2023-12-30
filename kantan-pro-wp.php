@@ -21,6 +21,7 @@ function activate_client_tab_in_plugin() {
               </script>';
     }
 }
+
 // 定数の定義
 define('KTP_VERSION', '1.0');
 define('KTP_PATH', plugin_dir_path(__FILE__));
@@ -69,10 +70,10 @@ function kantan_all_tab_shortcode() {
 
     <div id="tab-content">
         <div class="content" id="content-list">
-            <!-- 仕事リストのコンテンツ -->
+            仕事リストのコンテンツ
         </div>
         <div class="content" id="content-order">
-            <!-- 受注書のコンテンツ -->
+            受注書のコンテンツ
         </div>
         <div class="content" id="content-client">
             <?php
@@ -81,16 +82,16 @@ function kantan_all_tab_shortcode() {
             ?>
         </div>
         <div class="content" id="content-service">
-            <!-- 商品・サービスのコンテンツ -->
+            商品・サービスのコンテンツ
         </div>
         <div class="content" id="content-supplier">
-            <!-- 協力会社のコンテンツ -->
+            協力会社のコンテンツ
         </div>
         <div class="content" id="content-report">
-            <!-- レポートのコンテンツ -->
+            レポートのコンテンツ
         </div>
         <div class="content" id="content-setting">
-            <!-- 設定のコンテンツ -->
+            設定のコンテンツ
         </div>
     </div>
     <?php

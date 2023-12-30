@@ -1,4 +1,18 @@
 jQuery(document).ready(function($) {
+
+    // タブのクリックイベントを処理
+    $('.tab').click(function() {
+        var tabId = $(this).attr('id'); // クリックされたタブのIDを取得
+
+        // すべてのタブから 'active' クラスを削除し、クリックされたタブに 'active' クラスを追加
+        $('.tab').removeClass('active');
+        $('#' + tabId).addClass('active');
+
+        // すべてのタブコンテンツを非表示にし、クリックされたタブに対応するコンテンツを表示
+        $('.tab-content').hide();
+        $('#content-' + tabId).show();
+    });
+    
     // 顧客登録フォームの送信処理
     $('#ktp-client-form').submit(function(e) {
         e.preventDefault();
