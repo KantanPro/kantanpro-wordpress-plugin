@@ -10,13 +10,9 @@
 add_action('wp_footer', 'activate_customer_tab_in_plugin');
 function activate_customer_tab_in_plugin() {
     if (isset($_GET['tab']) && $_GET['tab'] == 'customers') {
-        // JavaScriptを使って顧客タブをアクティブにする
         echo '<script type="text/javascript">
                 jQuery(document).ready(function($) {
-                    // 顧客タブをアクティブにするコード
                     $("#customers-tab").addClass("active");
-                    // 他のタブからアクティブクラスを削除
-                    // ...
                 });
               </script>';
     }
@@ -46,11 +42,10 @@ function ktp_enqueue_scripts() {
     wp_register_script('ktp-script', KTP_URL . 'js/ktpjs.js', [], KTP_VERSION, true);
     wp_enqueue_script('ktp-script');
 
-    // AJAX用のスクリプトを追加
     wp_enqueue_script('ktp-ajax-script', KTP_URL . 'js/ktp-ajax.js', ['jquery'], KTP_VERSION, true);
     wp_localize_script('ktp-ajax-script', 'ktp_ajax_object', [
         'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('ktp_nonce') // ノンスを追加
+        'nonce' => wp_create_nonce('ktp_nonce')
     ]);
 }
 add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
@@ -78,7 +73,6 @@ function kantan_all_tab_shortcode() {
         </div>
         <div class="content" id="content-client">
             <?php
-            // 顧客タブのコンテンツを表示
             $client_tab = new KTP_Tab_Client();
             $client_tab->client_page_content();
             ?>
@@ -103,14 +97,14 @@ add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
 // 顧客追加のAJAXリクエストのハンドリング
 function ktp_add_client_ajax() {
-    check_ajax_referer('ktp_nonce', 'nonce'); // ノンスの検証
+    check_ajax_referer('ktp_nonce', 'nonce');
     global $wpdb;
 
     $name = sanitize_text_field($_POST['name']);
     $email = sanitize_email($_POST['email']);
 
     $result = $wpdb->insert(
-        $wpdb->prefix . 'ktp_client', // テーブル名を修正
+        $wpdb->prefix . 'ktp_client',
         array('name' => $name, 'email' => $email),
         array('%s', '%s')
     );
@@ -126,12 +120,12 @@ add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
 
 // 顧客削除のAJAXリクエストのハンドリング
 function ktp_delete_client_ajax() {
-    check_ajax_referer('ktp_nonce', 'nonce'); // ノンスの検証
+    check_ajax_referer('ktp_nonce', 'nonce');
     global $wpdb;
     $client_id = intval($_POST['id']);
 
     $result = $wpdb->delete(
-        $wpdb->prefix . 'ktp_client', // テーブル名を修正
+        $wpdb->prefix . 'ktp_client',
         array('id' => $client_id),
         array('%d')
     );
@@ -148,14 +142,19 @@ add_action('wp_ajax_nopriv_ktp_delete_client', 'ktp_delete_client_ajax');
 // 顧客リストを取得するAjaxリクエストのハンドリング
 add_action('wp_ajax_ktp_get_customer_list', 'ktp_get_customer_list');
 function ktp_get_customer_list() {
-    // 顧客リストを取得するロジック
-    // ...
+    global $wpdb;
 
-    if ($list_retrieved) {
-        // 顧客リストをHTML形式で返す
+    $customers = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}ktp_client");
+
+    if ($customers) {
+        $customer_list_html = '<ul>';
+        foreach ($customers as $customer) {
+            $customer_list_html .= '<li>' . esc_html($customer->name) . ' (' . esc_html($customer->email) . ')</li>';
+        }
+        $customer_list_html .= '</ul>';
+
         wp_send_json_success(['data' => $customer_list_html]);
     } else {
-        // リスト取得失敗時、エラーメッセージを返す
         wp_send_json_error(['message' => '顧客リストの取得に失敗しました']);
     }
 }
