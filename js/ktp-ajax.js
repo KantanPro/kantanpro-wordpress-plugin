@@ -1,5 +1,4 @@
 jQuery(document).ready(function($) {
-    
     // 顧客登録フォームの送信処理
     $('#ktp-client-form').submit(function(e) {
         e.preventDefault();
@@ -10,14 +9,36 @@ jQuery(document).ready(function($) {
         $.post(ktp_ajax_object.ajax_url, formData, function(response) {
             if (response.success) {
                 alert('顧客が登録されました');
-                // ページをリロードして最新の顧客リストを表示し、顧客タブをアクティブにする
-                window.location.href = window.location.pathname + '?tab=customers';
+                // 顧客リストを更新する
+                updateCustomerList();
+                // 顧客タブをアクティブにする
+                activateCustomerTab();
             } else {
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
             }
         });
     });
+
+    // 顧客リストを更新する関数
+    function updateCustomerList() {
+        // Ajaxリクエストを使用して顧客リストを取得し、ページに表示する
+        $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_customer_list' }, function(response) {
+            if (response.success) {
+                $('#customer-list').html(response.data);
+            } else {
+                alert('顧客リストの取得に失敗しました');
+            }
+        });
+    }
+
+    // 顧客タブをアクティブにする関数
+    function activateCustomerTab() {
+        $('.tab').removeClass('active'); // 他のタブのアクティブ状態を解除
+        $('#tab-client').addClass('active'); // 顧客タブをアクティブにする
+        $('.content').hide(); // 他のコンテンツを非表示にする
+        $('#content-client').show(); // 顧客コンテンツを表示する
+    }
 
     // 顧客削除の処理
     $(document).on('click', '.ktp-delete-client', function() {
@@ -37,22 +58,4 @@ jQuery(document).ready(function($) {
             });
         }
     });
-
-    // 顧客リストを更新する関数
-    function updateCustomerList(response) {
-        if (response.success) {
-            updateCustomerListHtml(response.data);
-        } else {
-            showError('顧客リストの取得に失敗しました');
-        }
-        }
-        
-        function updateCustomerListHtml(data) {
-        document.getElementById('customer-list').innerHTML = data;
-        }
-        
-        function showError(message) {
-        alert(message);
-        }
-    
 });

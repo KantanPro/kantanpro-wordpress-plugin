@@ -6,7 +6,7 @@
  * Author: あなたの名前
  */
 
- // ページがロードされたときにURLのパラメータをチェック
+// ページがロードされたときにURLのパラメータをチェック
 add_action('wp_footer', 'activate_customer_tab_in_plugin');
 function activate_customer_tab_in_plugin() {
     if (isset($_GET['tab']) && $_GET['tab'] == 'customers') {
@@ -144,3 +144,18 @@ function ktp_delete_client_ajax() {
 }
 add_action('wp_ajax_ktp_delete_client', 'ktp_delete_client_ajax');
 add_action('wp_ajax_nopriv_ktp_delete_client', 'ktp_delete_client_ajax');
+
+// 顧客リストを取得するAjaxリクエストのハンドリング
+add_action('wp_ajax_ktp_get_customer_list', 'ktp_get_customer_list');
+function ktp_get_customer_list() {
+    // 顧客リストを取得するロジック
+    // ...
+
+    if ($list_retrieved) {
+        // 顧客リストをHTML形式で返す
+        wp_send_json_success(['data' => $customer_list_html]);
+    } else {
+        // リスト取得失敗時、エラーメッセージを返す
+        wp_send_json_error(['message' => '顧客リストの取得に失敗しました']);
+    }
+}
