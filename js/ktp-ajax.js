@@ -16,6 +16,7 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
     // 顧客削除の処理
     $(document).on('click', '.ktp-delete-client', function() {
         var clientId = $(this).data('id');
