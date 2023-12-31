@@ -11,6 +11,9 @@ jQuery(document).ready(function($) {
         // すべてのタブコンテンツを非表示にし、クリックされたタブに対応するコンテンツを表示
         $('.tab-content').hide();
         $('#content-' + tabId).show();
+
+        // URLにタブのパラメーターを追加
+        window.history.pushState(null, null, '?tab=' + tabId);
     });
     
     // 顧客登録フォームの送信処理
@@ -25,6 +28,8 @@ jQuery(document).ready(function($) {
                 updateClientList();
                 // 顧客タブをアクティブにし、そのコンテンツを表示する
                 activateTab('tab-client');
+                // URLに顧客タブのパラメーターを追加
+                window.history.pushState(null, null, '?tab=tab-client');
             } else {
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
@@ -63,6 +68,8 @@ jQuery(document).ready(function($) {
             }, function(response) {
                 if (response.success) {
                     $('button[data-id="' + clientId + '"]').closest('tr').remove();
+                    // URLにタブのパラメーターを更新
+                    window.history.pushState(null, null, '?tab=tab-client');
                 } else {
                     var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                     alert('削除に失敗しました: ' + errorMessage);
