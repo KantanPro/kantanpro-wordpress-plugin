@@ -21,8 +21,10 @@ jQuery(document).ready(function($) {
 
         $.post(ktp_ajax_object.ajax_url, formData, function(response) {
             if (response.success) {
-                // 顧客登録が成功したら、URLにパラメータを追加してリロード
-                window.location.href = window.location.origin + window.location.pathname + '?tab=clients';
+                // 顧客リストを更新する関数を呼び出す
+                updateClientList();
+                // 顧客タブをアクティブにし、そのコンテンツを表示する
+                activateTab('tab-client');
             } else {
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
@@ -35,11 +37,19 @@ jQuery(document).ready(function($) {
         $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {
             if (response.success) {
                 // 顧客リストのHTMLを更新
-                $('#client-list').html(response.data);
+                $('#content-client').html(response.data);
             } else {
                 alert('顧客リストの取得に失敗しました');
             }
         });
+    }
+
+    // タブをアクティブにする関数
+    function activateTab(tabId) {
+        $('.tab').removeClass('active');
+        $('#' + tabId).addClass('active');
+        $('.tab-content').hide();
+        $('#content-' + tabId).show();
     }
 
     // 顧客削除の処理
