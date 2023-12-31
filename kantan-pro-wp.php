@@ -1,121 +1,142 @@
 <?php
-/**
- * Plugin Name: Kantan Pro WP
- * Description: カンタンProWPプラグインの説明。
- * Version: 1.0
- * Author: あなたの名前
- */
+/*
+Plugin Name: kantan pro wp
+Description: カンタンProWP
+Version: 1.0
+*/
 
-// ページがロードされたときにURLのパラメータをチェックしてタブをアクティブにする
-add_action('wp_footer', 'activate_tab_based_on_url_parameter');
-function activate_tab_based_on_url_parameter() {
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // URLパラメーターに基づいてタブをアクティブにする
-            var urlParams = new URLSearchParams(window.location.search);
-            var activeTab = urlParams.get('tab');
-
-            if (activeTab) {
-                $('.tab').removeClass('active');
-                $('#tab-' + activeTab).addClass('active');
-                $('.tab-content').hide();
-                $('#content-' + activeTab).show();
-            }
-
-            // タブがクリックされたときにURLを更新する
-            $('.tab').click(function() {
-                var tabId = $(this).attr('id').replace('tab-', '');
-                window.history.pushState(null, null, '?tab=' + tabId);
-
-                $('.tab').removeClass('active');
-                $(this).addClass('active');
-                $('.tab-content').hide();
-                $('#content-' + tabId).show();
-            });
-        });
-    </script>
-    <?php
+// wp-config.phpが存在しているか？
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-// 定数の定義
-define('KTP_VERSION', '1.0');
-define('KTP_PATH', plugin_dir_path(__FILE__));
-define('KTP_URL', plugins_url('/', __FILE__));
+/*
+ 必要な定数を定義
+*/
 
-// インクルードステートメント
-include_once KTP_PATH . 'includes/class-tab-list.php';
-include_once KTP_PATH . 'includes/class-tab-order.php';
-include_once KTP_PATH . 'includes/class-tab-client.php';
-include_once KTP_PATH . 'includes/class-tab-service.php';
-include_once KTP_PATH . 'includes/class-tab-supplier.php';
-include_once KTP_PATH . 'includes/class-tab-report.php';
-include_once KTP_PATH . 'includes/class-tab-setting.php';
-include_once KTP_PATH . 'includes/class-login-error.php';
-include_once KTP_PATH . 'includes/class-view-tab.php';
-
-// スタイルとスクリプトの登録
-function ktp_enqueue_scripts() {
-    wp_register_style('ktp-style', KTP_URL . 'css/styles.css', [], KTP_VERSION, 'all');
-    wp_enqueue_style('ktp-style');
-
-    wp_register_script('ktp-script', KTP_URL . 'js/ktpjs.js', [], KTP_VERSION, true);
-    wp_enqueue_script('ktp-script');
-
-    wp_enqueue_script('ktp-ajax-script', KTP_URL . 'js/ktp-ajax.js', ['jquery'], KTP_VERSION, true);
-    wp_localize_script('ktp-ajax-script', 'ktp_ajax_object', array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('ktp_nonce')
-    ));
+if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
+	define( 'MY_PLUGIN_VERSION', '1.0' );
 }
-add_action('wp_enqueue_scripts', 'ktp_enqueue_scripts');
-
-// ショートコードの追加
-function kantan_all_tab_shortcode() {
-    ob_start();
-    ?>
-    <div id="ktp-tabs">
-        <div class="tab" id="tab-list">仕事リスト</div>
-        <div class="tab" id="tab-order">受注書</div>
-        <div class="tab" id="tab-client">顧客</div>
-        <div class="tab" id="tab-service">商品・サービス</div>
-        <div class="tab" id="tab-supplier">協力会社</div>
-        <div class="tab" id="tab-report">レポート</div>
-        <div class="tab" id="tab-setting">設定</div>
-    </div>
-
-    <div id="tab-content">
-        <div class="content" id="content-list">
-            <!-- 仕事リストのコンテンツ -->
-        </div>
-        <div class="content" id="content-order">
-            <!-- 受注書のコンテンツ -->
-        </div>
-        <div class="content" id="content-client">
-            <?php
-            $client_tab = new KTP_Tab_Client();
-            $client_tab->client_page_content();
-            ?>
-        </div>
-        <div class="content" id="content-service">
-            <!-- 商品・サービスのコンテンツ -->
-        </div>
-        <div class="content" id="content-supplier">
-            <!-- 協力会社のコンテンツ -->
-        </div>
-        <div class="content" id="content-report">
-            <!-- レポートのコンテンツ -->
-        </div>
-        <div class="content" id="content-setting">
-            <!-- 設定のコンテンツ -->
-        </div>
-    </div>
-    <?php
-    return ob_get_clean();
+if ( ! defined( 'MY_PLUGIN_PATH' ) ) {
+	define( 'MY_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 }
-add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
+if ( ! defined( 'MY_PLUGIN_URL' ) ) {
+	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
+}
 
-// その他の関数や処理
-// ...
+// ファイルをインクルード
+include 'includes/class-tab-list.php';
+include 'includes/class-tab-order.php';
+include 'includes/class-tab-client.php';
+include 'includes/class-tab-service.php';
+include 'includes/class-tab-supplier.php';
+include 'includes/class-tab-report.php';
+include 'includes/class-tab-setting.php';
+include 'includes/class-login-error.php'; // ログインエラークラス
+include "includes/class-view-tab.php"; // タブビュークラス
+include "js/view.js"; // JS
+include "includes/kpw-admin-form.php"; // 管理画面に追加
 
-?>
+
+// カンタンProをロード
+add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
+
+// スタイルシートを登録
+function register_ktpwp_styles() {
+	wp_register_style(
+		'ktpwp-css',
+		plugins_url( '/css/styles.css' , __FILE__),
+		array(),
+		'1.0.0',
+		'all'
+	);
+	wp_enqueue_style( 'ktpwp-css' );
+}
+add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
+
+// テーブル用の関数を登録
+register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
+register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
+register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
+
+
+function KTPWP_Index(){
+
+	//すべてのタブのショートコード[kantanAllTab]
+	function kantanAllTab(){
+
+		//ログイン中なら
+		if( is_user_logged_in() ){
+
+				// ログインユーザー情報を取得
+				global $current_user;
+
+				// ログアウトのリンク
+				$logout_link = wp_logout_url();
+
+				// ヘッダー表示ログインユーザー名など
+				$login_user = $current_user->nickname;
+				$front_message = <<<END
+				<div class="ktp_header">
+				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
+					<div id="zengo" class="zengo">
+					<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
+					</div>
+				</div>
+				END;
+		
+				//仕事リスト
+				$list = new Kantan_List_Class();
+				$list_content = $list->List_Tab_View( 'list' );
+
+				//受注書
+				$tabs = new Kntan_Order_Class();
+				$order_content = $tabs->Order_Tab_View( 'order' );
+				
+				//クライアント				
+				$tabs = new Kntan_Client_Class();
+				$tab_name = 'client';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$client_content = $view;
+				
+				//商品・サービス
+				$tabs = new Kntan_Service_Class();
+				$service_content = $tabs->Service_Tab_View( 'service' );
+				
+				//協力会社
+				$tabs = new Kantan_Supplier_Class();
+				$tab_name = 'supplier';
+				$tabs->Create_Table( $tab_name );
+				$tabs->Update_Table( $tab_name );
+				$view = $tabs->View_Table( $tab_name );
+				$supplier_content = $view;
+
+				//レポート
+				$tabs = new Kntan_Report_Class();
+				$report_content = $tabs->Report_Tab_View( 'report' );
+				
+				//設定
+				$tabs = new Kntan_Setting_Class();
+				$setting_content = $tabs->Setting_Tab_View( 'setting' );
+
+				// view
+				$view = new view_tabs_Class();
+				$tab_view = $view ->TabsView( $list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content );
+				return $front_message . $tab_view;
+
+
+		}
+
+		//ログアウト中なら
+		else{
+				$login_error = new Kantan_Login_Error();
+				$error = $login_error->Error_View();
+				return $error;
+		}
+
+	}
+	add_shortcode('kantanAllTab','kantanAllTab');
+
+}

@@ -1,57 +1,154 @@
-/* タブコンテナスタイル */
-#ktp-tabs {
-  display: flex; /* Flexboxを使用 */
-  flex-wrap: wrap; /* コンテンツが多い場合は折り返す */
-  margin-bottom: 20px;
-}
+@charset "UTF-8";
 
-/* 各タブスタイル */
-#ktp-tabs > div {
-  flex: 1; /* 各タブが利用可能なスペースを均等に使用 */
-  min-width: 120px; /* 最小幅を設定 */
-  box-sizing: border-box;
-  padding: 10px;
-  border: 1px solid #ddd;
-  background-color: #f7f7f7;
-  text-align: center; /* タブのテキストを中央揃え */
-  margin-right: -1px; /* ボーダー重複を防ぐ */
-  margin-bottom: -1px; /* ボーダー重複を防ぐ */
-}
-
-/* アクティブなタブスタイル */
-#ktp-tabs > div.active {
-  background-color: #fff;
-  border-bottom: none;
-}
-
-/* タブのタイトル */
-#ktp-tabs > div > h1 {
-  font-size: 16px;
-  margin-top: 0;
-}
-
-/* タブのコンテンツスタイル */
-#tab-content > div {
-  display: none; /* 初期状態では全てのコンテンツを非表示 */
-}
-#tab-content > div.active {
-  display: block; /* アクティブなコンテンツのみ表示 */
-}
-
-
-/* レスポンシブ対応 */
-@media (max-width: 768px) {
-  #ktp-tabs > div {
-      flex-basis: 100%; /* スマートフォンでは1列に */
-  }
-}
-
-/* タブのコンテンツを隠す */
-#tab-content .content {
-  display: none;
-}
-
-/* アクティブなタブのコンテンツを表示 */
-#tab-content .content.active {
+/* リストと詳細 */
+.deta_contents {
+  display: flex;
+  flex-wrap: wrap;
+  text-align: center;
+ }
+ /* .clearfix::after {
+  content: "";
   display: block;
+  clear: both;
+} */
+
+ /* リストBOX */
+.data_list_box {
+  /* width: calc(100% / 2); */
+  width: 100%;
+  max-width: 673px;
+  min-width: 305px;
+  display: block;
+  float: left;
+  padding: 20px 20px 20px 20px;
+  margin: 10px;
+  text-align: left;
+  background-color: #f0ffff;
+ }
+
+.data_list_item {
+  width: auto;
+  line-height: 30px;
+  border-bottom: 1px solid #9da4a4;
+  margin-top: 15px;
+  margin-bottom: 0px;
 }
+
+/* 詳細BOX */
+.data_detail {
+  /* width: calc(100% / 2); */
+  width: 100%;
+  max-width: 673px;
+  min-width: 305px;
+  display: block;
+  float: left;
+  padding: 20px 20px 20px 20px;
+  margin: 10px;
+  text-align: left;
+  background-color: #edf3f3;
+ }
+
+
+ /* .ktform {
+    width: 100%;
+    padding: 20px 10px;
+    text-align: left;
+ } */
+
+ /* ヘッダー */
+ .ktp_header{
+   text-align: left;
+   border:  1px solid;
+   padding: 15px;
+   margin-bottom: 20px;
+ }
+
+ /* ページネーション */
+.pagination{
+  text-align: center;
+  padding: 15px;
+}
+
+/* ボタン */
+.box{
+  margin-bottom: 50px;
+}
+.submit_button{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* 前は次へ */
+.zengo {
+  display: block;
+  float: right;
+}
+.zengoButton {
+  font-size: 16px;
+  margin-right: 10px;
+  float: left;
+}
+
+/*タブ切り替え全体のスタイル*/
+.tabs {
+   margin-top: 50px;
+   padding-bottom: 0px;
+   background-color: #fff;
+   /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); */
+   width: 100%;
+   margin: 0 auto;
+}
+ 
+ /*タブのスタイル*/
+ .tab_item {
+   width: calc(100%/7);
+   height: 50px;
+   border-bottom: 5px solid #9da4a4;
+   background-color: #d9d9d9;
+   line-height: 50px;
+   font-size: 16px;
+   text-align: center;
+   color: #565656;
+   display: block;
+   float: left;
+   text-align: center;
+   font-weight: bold;
+   transition: all 0.2s ease;
+   overflow: hidden;
+   border-top-left-radius: 10px;
+   border-top-right-radius: 10px;
+ }
+ .tab_item:hover {
+   opacity: 0.75;
+ }
+ 
+ /*ラジオボタンを全て消す*/
+ input[name="tab_item"] {
+   display: none;
+ }
+ 
+ /*タブ切り替えの中身のスタイル*/
+ .tab_content {
+   display: none;
+   /* padding: 20px 20px 0px 20px; */
+   clear: both;
+   overflow: auto;
+   background-color: #cdd8d8;
+ }
+ 
+ /*選択されているタブのコンテンツのみを表示*/
+ #list:checked ~ #list_content,
+ #order:checked ~ #order_content,
+ #client:checked ~ #client_content,
+ #service:checked ~ #service_content,
+ #supplier:checked ~ #supplier_content,
+ #report:checked ~ #report_content,
+ #setting:checked ~ #setting_content  {
+   display: block;
+ }
+ 
+ /*選択されているタブのスタイルを変える*/
+ .tabs input:checked + .tab_item {
+   background-color: #9da4a4;
+   color: #fff;
+ }

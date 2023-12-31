@@ -1,33 +1,31 @@
 <?php
 
-class KTP_Tab_Setting {
+class Kntan_Setting_Class {
+
+    public $name;
+
     public function __construct() {
-        add_action('admin_menu', array($this, 'add_setting_menu'));
+        $this->$name;
+        // add_action('');
+        // add_filter('');
     }
+    
+    function Setting_Tab_View( $name ) {
 
-    public function display() {
-        // ここに表示する内容を実装します。
-        echo '<h3>設定</h3>';
-    }
+        // ログインユーザー情報を取得
+        global $current_user;
+        $login_user = $current_user->nickname;
 
-    public function add_setting_menu() {
-        add_submenu_page(
-            'ktp-main-menu', // 親メニューのスラッグ
-            '設定', // ページタイトル
-            '設定', // メニュータイトル
-            'manage_options', // 権限
-            'ktp-tab-setting', // メニュースラッグ
-            array($this, 'setting_page_content') // 表示内容を生成するコールバック関数
-        );
-    }
+        // ログアウトのリンク
+        $logout_link = wp_logout_url();
 
-    public function setting_page_content() {
-        echo '<h1>プラグイン設定</h1>';
-        echo '<p>ここにプラグインの設定オプションを表示します。</p>';
-        // ここに設定ページのフォームやオプションを管理するコードを追加
-        // 例えば、フォームを使って設定を保存し、WordPressのオプションテーブルに保存する
+        // 表示する内容
+        $content = <<<END
+        <h3>ここは [$name] です。</h3>
+        各種設定ができます。
+        END;
+        return $content;
     }
 }
 
-// インスタンス化
-new KTP_Tab_Setting();
+?>
