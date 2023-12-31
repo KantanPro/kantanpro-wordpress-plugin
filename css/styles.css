@@ -137,7 +137,7 @@ input[name="tab_item"] {
   color: #fff;
 }
 
-/* モバイル表示時のスタイル */
+/* モバイル表示時のスタイル
 @media screen and (max-width: 768px) {
     #client_content .data_list_box,
     #client_content .data_detail {
@@ -147,7 +147,7 @@ input[name="tab_item"] {
         margin: 0 auto;
         float: none;
     }
-}
+} */
 
 /* モバイル以外の表示時のスタイル */
 @media screen and (min-width: 769px) {
@@ -158,4 +158,31 @@ input[name="tab_item"] {
         padding: 15px;
         float: left;
     }
+}
+
+/* モバイル表示時のタブスタイル */
+@media screen and (max-width: 768px) {
+  .tab_item {
+      width: 100%; /* タブの幅を100%に設定 */
+      box-sizing: border-box; /* ボックスサイズの計算方法を変更 */
+      border-bottom: none; /* 下線を非表示に */
+      border-right: 1px solid #9da4a4; /* 右側に境界線を追加 */
+  }
+
+  /* 最後のタブの右側の境界線を非表示に */
+  .tab_item:last-child {
+      border-right: none;
+  }
+
+  /* タブコンテンツのスタイル */
+  .tab_content {
+      clear: both; /* クリアフィックス */
+  }
+}
+
+/* タブが縦に並ぶようにするための追加スタイル */
+@media screen and (max-width: 768px) {
+  .tabs {
+      display: block; /* タブをブロック要素として表示 */
+  }
 }
