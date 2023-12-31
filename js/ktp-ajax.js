@@ -14,9 +14,11 @@ jQuery(document).ready(function($) {
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
             }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            alert('AJAXリクエストエラー: ' + textStatus + ', ' + errorThrown);
         });
     });
-        
+                    
     // 顧客リストを更新する関数
     function updateClientList() {
         $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {

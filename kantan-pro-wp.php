@@ -112,16 +112,17 @@ function ktp_add_client_ajax() {
         return;
     }
 
+    // データベースへの挿入処理
     $result = $wpdb->insert(
         $wpdb->prefix . 'ktp_client',
         array('name' => $name, 'email' => $email),
         array('%s', '%s')
     );
 
-    if ($result) {
-        wp_send_json_success();
+    if ($result === false) {
+        wp_send_json_error(array('message' => 'データベースエラー: ' . $wpdb->last_error));
     } else {
-        wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
+        wp_send_json_success();
     }
 }
 add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');

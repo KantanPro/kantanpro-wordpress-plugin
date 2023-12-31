@@ -35,11 +35,13 @@ class KTP_Tab_Client {
         <?php
     }
 
-    // 顧客登録のAJAX処理
+    // 顧客登録の処理
     public function handle_add_client() {
-        check_ajax_referer('ktp_add_client_nonce', 'ktp_nonce');
-        global $wpdb;
+        if (!isset($_POST['ktp_nonce']) || !wp_verify_nonce($_POST['ktp_nonce'], 'ktp_add_client_nonce')) {
+            wp_die('不正なリクエストです。');
+        }
 
+        global $wpdb;
         $name = sanitize_text_field($_POST['name']);
         $email = sanitize_email($_POST['email']);
 
@@ -50,12 +52,18 @@ class KTP_Tab_Client {
         );
 
         if ($result) {
-            wp_send_json_success();
+            // 成功メッセージを表示
+            echo '顧客が正常に登録されました。';
         } else {
-            wp_send_json_error();
+            // エラーメッセージを表示
+            echo '顧客の登録に失敗しました。';
         }
-    }
 
+        // 必要に応じてリダイレクト
+        wp_redirect(home_url('/client-list'));
+        exit;
+    }
+    
     // 保存されている顧客データを表示
     private function display_clients() {
         global $wpdb;
