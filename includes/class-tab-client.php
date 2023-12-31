@@ -46,7 +46,7 @@ class KTP_Tab_Client {
         $email = sanitize_email($_POST['email']);
 
         $result = $wpdb->insert(
-            $table_name = $wpdb->prefix . 'ktp_client',
+            $wpdb->prefix . 'ktp_client',
             array('name' => $name, 'email' => $email),
             array('%s', '%s')
         );
@@ -61,10 +61,10 @@ class KTP_Tab_Client {
     // 保存されている顧客データを表示
     private function display_clients() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_client'; // テーブル名を修正
-    
+        $table_name = $wpdb->prefix . 'ktp_client';
+
         $clients = $wpdb->get_results("SELECT * FROM $table_name");
-    
+
         if ($clients) {
             echo '<table>';
             echo '<tr><th>ID</th><th>名前</th><th>メールアドレス</th><th>操作</th></tr>';

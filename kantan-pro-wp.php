@@ -6,25 +6,21 @@
  * Author: あなたの名前
  */
 
- add_action('wp_footer', 'activate_tab_based_on_url_parameter');
- function activate_tab_based_on_url_parameter() {
-     ?>
-     <script type="text/javascript">
-         jQuery(document).ready(function($) {
-             var urlParams = new URLSearchParams(window.location.search);
-             var activeTab = urlParams.get('tab');
- 
-             if (activeTab) {
-                 $('#tab-' + activeTab).click();
-             } else {
-                 // URLパラメータがない場合、デフォルトのタブをアクティブにする
-                 $('#default-tab').click();
-             }
-         });
-     </script>
-     <?php
- }
- 
+// ページがロードされたときにURLのパラメータをチェック
+add_action('wp_footer', 'activate_client_tab_in_plugin');
+function activate_client_tab_in_plugin() {
+    if (isset($_GET['tab']) && $_GET['tab'] == 'clients') {
+        echo '<script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    // 顧客タブをアクティブにする
+                    $(".tab").removeClass("active"); // すべてのタブからactiveクラスを削除
+                    $("#tab-client").addClass("active"); // 顧客タブにactiveクラスを追加
+                    $(".tab-content").hide(); // すべてのタブコンテンツを非表示
+                    $("#content-client").show(); // 顧客タブのコンテンツを表示
+                });
+              </script>';
+    }
+}
 // 定数の定義
 define('KTP_VERSION', '1.0');
 define('KTP_PATH', plugin_dir_path(__FILE__));
@@ -73,10 +69,10 @@ function kantan_all_tab_shortcode() {
 
     <div id="tab-content">
         <div class="content" id="content-list">
-            仕事リストのコンテンツ
+            <!-- 仕事リストのコンテンツ -->
         </div>
         <div class="content" id="content-order">
-            受注書のコンテンツ
+            <!-- 受注書のコンテンツ -->
         </div>
         <div class="content" id="content-client">
             <?php
@@ -85,16 +81,16 @@ function kantan_all_tab_shortcode() {
             ?>
         </div>
         <div class="content" id="content-service">
-            商品・サービスのコンテンツ
+            <!-- 商品・サービスのコンテンツ -->
         </div>
         <div class="content" id="content-supplier">
-            協力会社のコンテンツ
+            <!-- 協力会社のコンテンツ -->
         </div>
         <div class="content" id="content-report">
-            レポートのコンテンツ
+            <!-- レポートのコンテンツ -->
         </div>
         <div class="content" id="content-setting">
-            設定のコンテンツ
+            <!-- 設定のコンテンツ -->
         </div>
     </div>
     <?php
@@ -110,6 +106,12 @@ function ktp_add_client_ajax() {
     $name = sanitize_text_field($_POST['name']);
     $email = sanitize_email($_POST['email']);
 
+    // 入力値の検証
+    if (empty($name) || empty($email)) {
+        wp_send_json_error(array('message' => '名前とメールアドレスは必須です。'));
+        return;
+    }
+
     $result = $wpdb->insert(
         $wpdb->prefix . 'ktp_client',
         array('name' => $name, 'email' => $email),
@@ -117,10 +119,7 @@ function ktp_add_client_ajax() {
     );
 
     if ($result) {
-        // 成功時に顧客リストを更新するためのデータを返す
-        $new_client_id = $wpdb->insert_id;
-        $new_client = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}ktp_client WHERE id = $new_client_id");
-        wp_send_json_success(array('newClient' => $new_client));
+        wp_send_json_success();
     } else {
         wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
     }
