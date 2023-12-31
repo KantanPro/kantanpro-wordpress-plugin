@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    
+
     // 顧客登録フォームの送信処理
     $('#ktp-client-form').submit(function(e) {
         e.preventDefault();

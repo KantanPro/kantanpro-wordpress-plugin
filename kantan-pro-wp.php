@@ -98,35 +98,6 @@ function kantan_all_tab_shortcode() {
 }
 add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
-// // 顧客追加のAJAXリクエストのハンドリング
-// function ktp_add_client_ajax() {
-//     check_ajax_referer('ktp_nonce', 'nonce');
-//     global $wpdb;
-
-//     $name = sanitize_text_field($_POST['name']);
-//     $email = sanitize_email($_POST['email']);
-
-//     // 入力値の検証
-//     if (empty($name) || empty($email)) {
-//         wp_send_json_error(array('message' => '名前とメールアドレスは必須です。'));
-//         return;
-//     }
-
-//     $result = $wpdb->insert(
-//         $wpdb->prefix . 'ktp_client',
-//         array('name' => $name, 'email' => $email),
-//         array('%s', '%s')
-//     );
-
-//     if ($result) {
-//         wp_send_json_success();
-//     } else {
-//         wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
-//     }
-// }
-// add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');
-// add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
-
 // 顧客削除のAJAXリクエストのハンドリング
 function ktp_delete_client_ajax() {
     check_ajax_referer('ktp_nonce', 'nonce');
