@@ -48,7 +48,6 @@ class KTP_Tab_Client {
         <?php
     }
 
-
     // 顧客登録のAJAX処理
     public function handle_add_client() {
         check_ajax_referer('ktp_add_client_nonce', 'ktp_nonce');
