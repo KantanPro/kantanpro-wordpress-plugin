@@ -16,27 +16,23 @@ jQuery(document).ready(function($) {
         window.history.pushState(null, null, '?tab=' + tabId);
     });
     
-    // 顧客登録フォームの送信処理
-    $('#ktp-client-form').submit(function(e) {
+     // 顧客登録フォームの送信処理
+     $('#ktp-client-form').submit(function(e) {
         e.preventDefault();
         var formData = $(this).serialize();
-        formData += '&action=ktp_add_client&nonce=' + ktp_ajax_object.nonce;
 
         $.post(ktp_ajax_object.ajax_url, formData, function(response) {
             if (response.success) {
-                // 顧客リストを更新する関数を呼び出す
-                updateClientList();
-                // 顧客タブをアクティブにし、そのコンテンツを表示する
-                activateTab('tab-client');
-                // URLに顧客タブのパラメーターを追加
-                window.history.pushState(null, null, '?tab=tab-client');
+                // 登録成功後、ページをリフレッシュして顧客タブを表示
+                window.location.href = '?tab=tab-client';
             } else {
+                // エラー処理
                 var errorMessage = response.data && response.data.message ? response.data.message : '不明なエラーが発生しました';
                 alert('エラーが発生しました: ' + errorMessage);
             }
         });
     });
-
+    
     // 顧客リストを更新する関数
     function updateClientList() {
         $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {
