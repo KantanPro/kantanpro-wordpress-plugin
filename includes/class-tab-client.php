@@ -5,43 +5,36 @@ class Kntan_Client_Class{
     public $name;
 
     public function __construct() {
-        $this->$name;
-        // add_action( 'get_header', 'my_setcookie');
-        // add_action('');
-        // add_filter('');
+
     }
     
     // -----------------------------
     // テーブル作成
     // -----------------------------
 
-    function Create_Table( $name ){
-        
+    function Create_Table($name) {
         global $wpdb;
-        global $my_table_version;
-        $my_table_version = '1.0.1'; // 更新する場合はバージョンを変更
-        $table_name = $wpdb->prefix . 'ktp_' . $name; // テーブル名を設定
-        $charset_collate = $wpdb->get_charset_collate(); // 文字コードを設定
-
-        // テーブル名またはテーブルバージョンを変更した場合にdbDelta($sql)が実行される
+        $my_table_version = '1.0.1';
+        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        $charset_collate = $wpdb->get_charset_collate();
+    
         if ($wpdb->get_var("show tables like '$table_name'") != $table_name || get_option('my_table_version') !== $my_table_version) {
-            $sql = $wpdb->prepare("CREATE TABLE " . $table_name . " (
+            $sql = "CREATE TABLE $table_name (
                 id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
                 time BIGINT(11) DEFAULT '0' NOT NULL,
                 name TINYTEXT NOT NULL,
                 text TEXT NOT NULL,
                 url VARCHAR(55) NOT NULL,
                 UNIQUE KEY id (id)
-            ) $charset_collate;");
-
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql); // テーブル作成実行
-            add_option( 'ktp_'.$name.'_table_version', $my_table_version ); // wp_optionsにテーブルバージョンを登録する 
-            update_option( 'ktp_'.$name.'_table_version', $my_table_version ); // wp_optionsにテーブルバージョンをアップデートする
-        }
+            ) $charset_collate;";
     
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            add_option('ktp_' . $name . '_table_version', $my_table_version);
+            update_option('ktp_' . $name . '_table_version', $my_table_version);
+        }
     }
-
+    
     // -----------------------------
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
