@@ -34,8 +34,6 @@ include 'includes/class-tab-report.php';
 include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
 include "includes/class-view-tab.php"; // タブビュークラス
-include "js/view.js"; // JS
-include "js/ktp-ajax.js"; // JS
 include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 
