@@ -15,7 +15,7 @@ class KTP_Tab_Client {
         $this->display_client_form();
         echo '<br>';
         echo '<h2>顧客リスト</h2>';
-        
+
         // 保存されている顧客データを表示
         $this->display_clients();
 
@@ -39,11 +39,15 @@ class KTP_Tab_Client {
         <form id="ktp-client-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="ktp_add_client">
             <input type="hidden" name="ktp_nonce" value="<?php echo $nonce; ?>">
-            <!-- その他のフォームフィールド -->
+            <label for="name">名前：</label>
+            <input type="text" id="name" name="name" required><br>
+            <label for="email">メールアドレス：</label>
+            <input type="email" id="email" name="email" required><br>
             <input type="submit" value="登録">
         </form>
         <?php
     }
+
 
     // 顧客登録のAJAX処理
     public function handle_add_client() {
