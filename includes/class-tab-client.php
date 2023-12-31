@@ -34,29 +34,51 @@ class KTP_Tab_Client {
 
     // 顧客登録の処理
     public function handle_add_client() {
-
         // ノンスの検証
         check_admin_referer('ktp_add_client_nonce', 'ktp_nonce');
-
+    
         global $wpdb;
         $name = sanitize_text_field($_POST['name']);
         $email = sanitize_email($_POST['email']);
-
+    
         $result = $wpdb->insert(
-            $wpdb->prefix . 'ktp_client',
+            $wpdb->prefix . 'ktp_client', // テーブル名を確認
             array('name' => $name, 'email' => $email),
             array('%s', '%s')
         );
-
+    
+        // 結果に基づいてリダイレクト
         if ($result) {
-            // 成功メッセージを表示
             $_SESSION['ktp_client_add_success'] = '顧客が正常に登録されました。';
         } else {
-            // エラーメッセージを表示
             $_SESSION['ktp_client_add_error'] = '顧客の登録に失敗しました。';
         }
-
-        // リダイレクト先のURLを指定
+    
+        wp_redirect(home_url('/?tab=client'));
+        exit;
+    }
+    
+    // 顧客削除時の処理
+    public function handle_delete_client() {
+        // ノンスの検証
+        check_admin_referer('ktp_delete_client_nonce', 'ktp_nonce');
+    
+        global $wpdb;
+        $client_id = intval($_POST['client_id']);
+    
+        $result = $wpdb->delete(
+            $wpdb->prefix . 'ktp_client',
+            array('id' => $client_id),
+            array('%d')
+        );
+    
+        // 結果に基づいてリダイレクト
+        if ($result) {
+            $_SESSION['ktp_client_delete_success'] = '顧客が正常に削除されました。';
+        } else {
+            $_SESSION['ktp_client_delete_error'] = '顧客の削除に失敗しました。';
+        }
+    
         wp_redirect(home_url('/?tab=client'));
         exit;
     }
