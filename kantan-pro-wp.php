@@ -98,34 +98,34 @@ function kantan_all_tab_shortcode() {
 }
 add_shortcode('kantanAllTab', 'kantan_all_tab_shortcode');
 
-// 顧客追加のAJAXリクエストのハンドリング
-function ktp_add_client_ajax() {
-    check_ajax_referer('ktp_nonce', 'nonce');
-    global $wpdb;
+// // 顧客追加のAJAXリクエストのハンドリング
+// function ktp_add_client_ajax() {
+//     check_ajax_referer('ktp_nonce', 'nonce');
+//     global $wpdb;
 
-    $name = sanitize_text_field($_POST['name']);
-    $email = sanitize_email($_POST['email']);
+//     $name = sanitize_text_field($_POST['name']);
+//     $email = sanitize_email($_POST['email']);
 
-    // 入力値の検証
-    if (empty($name) || empty($email)) {
-        wp_send_json_error(array('message' => '名前とメールアドレスは必須です。'));
-        return;
-    }
+//     // 入力値の検証
+//     if (empty($name) || empty($email)) {
+//         wp_send_json_error(array('message' => '名前とメールアドレスは必須です。'));
+//         return;
+//     }
 
-    $result = $wpdb->insert(
-        $wpdb->prefix . 'ktp_client',
-        array('name' => $name, 'email' => $email),
-        array('%s', '%s')
-    );
+//     $result = $wpdb->insert(
+//         $wpdb->prefix . 'ktp_client',
+//         array('name' => $name, 'email' => $email),
+//         array('%s', '%s')
+//     );
 
-    if ($result) {
-        wp_send_json_success();
-    } else {
-        wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
-    }
-}
-add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');
-add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
+//     if ($result) {
+//         wp_send_json_success();
+//     } else {
+//         wp_send_json_error(array('message' => '顧客の追加に失敗しました。'));
+//     }
+// }
+// add_action('wp_ajax_ktp_add_client', 'ktp_add_client_ajax');
+// add_action('wp_ajax_nopriv_ktp_add_client', 'ktp_add_client_ajax');
 
 // 顧客削除のAJAXリクエストのハンドリング
 function ktp_delete_client_ajax() {
@@ -167,3 +167,41 @@ function ktp_get_client_list() {
         wp_send_json_error(['message' => '顧客リストの取得に失敗しました']);
     }
 }
+
+// 顧客追加の処理
+function ktp_handle_add_client() {
+    if (!isset($_POST['ktp_nonce']) || !wp_verify_nonce($_POST['ktp_nonce'], 'ktp_add_client_nonce')) {
+        // ノンスの検証に失敗した場合
+        wp_die('不正なリクエストです。');
+    }
+
+    global $wpdb;
+    $name = sanitize_text_field($_POST['name']);
+    $email = sanitize_email($_POST['email']);
+
+    // 入力値の検証
+    if (empty($name) || empty($email)) {
+        // エラーメッセージをセッションに保存
+        $_SESSION['ktp_client_add_error'] = '名前とメールアドレスは必須です。';
+    } else {
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'ktp_client',
+            array('name' => $name, 'email' => $email),
+            array('%s', '%s')
+        );
+
+        if ($result) {
+            // 成功メッセージをセッションに保存
+            $_SESSION['ktp_client_add_success'] = '顧客を追加しました。';
+        } else {
+            // エラーメッセージをセッションに保存
+            $_SESSION['ktp_client_add_error'] = '顧客の追加に失敗しました。';
+        }
+    }
+
+    // 顧客リストページにリダイレクト
+    wp_redirect(home_url('/client-list'));
+    exit;
+}
+add_action('admin_post_ktp_add_client', 'ktp_handle_add_client');
+add_action('admin_post_nopriv_ktp_add_client', 'ktp_handle_add_client');

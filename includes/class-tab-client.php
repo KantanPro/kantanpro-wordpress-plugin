@@ -15,24 +15,32 @@ class KTP_Tab_Client {
         $this->display_client_form();
         echo '<br>';
         echo '<h2>顧客リスト</h2>';
+        
         // 保存されている顧客データを表示
         $this->display_clients();
+
+        // フィードバックメッセージの表示
+        if (isset($_SESSION['ktp_client_add_success'])) {
+            echo '<div class="notice notice-success">' . esc_html($_SESSION['ktp_client_add_success']) . '</div>';
+            unset($_SESSION['ktp_client_add_success']);
+        }
+
+        if (isset($_SESSION['ktp_client_add_error'])) {
+            echo '<div class="notice notice-error">' . esc_html($_SESSION['ktp_client_add_error']) . '</div>';
+            unset($_SESSION['ktp_client_add_error']);
+        }
+
     }
 
     // 顧客データの送信フォームを表示
     private function display_client_form() {
         $nonce = wp_create_nonce('ktp_add_client_nonce');
         ?>
-        <form id="ktp-client-form" method="post">
+        <form id="ktp-client-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="ktp_add_client">
             <input type="hidden" name="ktp_nonce" value="<?php echo $nonce; ?>">
-            <label for="name">名前：</label>
-            <input type="text" id="name" name="name" required><br>
-            <label for="email">メールアドレス：</label>
-            <input type="email" id="email" name="email" required><br>
-            <br>
+            <!-- その他のフォームフィールド -->
             <input type="submit" value="登録">
-            <br>
         </form>
         <?php
     }
