@@ -5,16 +5,10 @@
   display: flex;
   flex-wrap: wrap;
   text-align: center;
- }
- /* .clearfix::after {
-  content: "";
-  display: block;
-  clear: both;
-} */
+}
 
- /* リストBOX */
+/* リストBOX */
 .data_list_box {
-  /* width: calc(100% / 2); */
   width: 100%;
   max-width: 673px;
   min-width: 305px;
@@ -24,7 +18,7 @@
   margin: 10px;
   text-align: left;
   background-color: #f0ffff;
- }
+}
 
 .data_list_item {
   width: auto;
@@ -36,7 +30,6 @@
 
 /* 詳細BOX */
 .data_detail {
-  /* width: calc(100% / 2); */
   width: 100%;
   max-width: 673px;
   min-width: 305px;
@@ -46,34 +39,27 @@
   margin: 10px;
   text-align: left;
   background-color: #edf3f3;
- }
+}
 
+/* ヘッダー */
+.ktp_header {
+  text-align: left;
+  border: 1px solid;
+  padding: 15px;
+  margin-bottom: 20px;
+}
 
- /* .ktform {
-    width: 100%;
-    padding: 20px 10px;
-    text-align: left;
- } */
-
- /* ヘッダー */
- .ktp_header{
-   text-align: left;
-   border:  1px solid;
-   padding: 15px;
-   margin-bottom: 20px;
- }
-
- /* ページネーション */
-.pagination{
+/* ページネーション */
+.pagination {
   text-align: center;
   padding: 15px;
 }
 
 /* ボタン */
-.box{
+.box {
   margin-bottom: 50px;
 }
-.submit_button{
+.submit_button {
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -91,64 +77,85 @@
 
 /*タブ切り替え全体のスタイル*/
 .tabs {
-   margin-top: 50px;
-   padding-bottom: 0px;
-   background-color: #fff;
-   /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); */
-   width: 100%;
-   margin: 0 auto;
+  margin-top: 50px;
+  padding-bottom: 0px;
+  background-color: #fff;
+  width: 100%;
+  margin: 0 auto;
 }
- 
- /*タブのスタイル*/
- .tab_item {
-   width: calc(100%/7);
-   height: 50px;
-   border-bottom: 5px solid #9da4a4;
-   background-color: #d9d9d9;
-   line-height: 50px;
-   font-size: 16px;
-   text-align: center;
-   color: #565656;
-   display: block;
-   float: left;
-   text-align: center;
-   font-weight: bold;
-   transition: all 0.2s ease;
-   overflow: hidden;
-   border-top-left-radius: 10px;
-   border-top-right-radius: 10px;
- }
- .tab_item:hover {
-   opacity: 0.75;
- }
- 
- /*ラジオボタンを全て消す*/
- input[name="tab_item"] {
-   display: none;
- }
- 
- /*タブ切り替えの中身のスタイル*/
- .tab_content {
-   display: none;
-   /* padding: 20px 20px 0px 20px; */
-   clear: both;
-   overflow: auto;
-   background-color: #cdd8d8;
- }
- 
- /*選択されているタブのコンテンツのみを表示*/
- #list:checked ~ #list_content,
- #order:checked ~ #order_content,
- #client:checked ~ #client_content,
- #service:checked ~ #service_content,
- #supplier:checked ~ #supplier_content,
- #report:checked ~ #report_content,
- #setting:checked ~ #setting_content  {
-   display: block;
- }
- 
- /*選択されているタブのスタイルを変える*/
- .tabs input:checked + .tab_item {
-   background-color: #9da4a4;
-   color: #fff;
- }
+
+/*タブのスタイル*/
+.tab_item {
+  width: calc(100%/7);
+  height: 50px;
+  border-bottom: 5px solid #9da4a4;
+  background-color: #d9d9d9;
+  line-height: 50px;
+  font-size: 16px;
+  text-align: center;
+  color: #565656;
+  display: block;
+  float: left;
+  text-align: center;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.tab_item:hover {
+  opacity: 0.75;
+}
+
+/*ラジオボタンを全て消す*/
+input[name="tab_item"] {
+  display: none;
+}
+
+/*タブ切り替えの中身のスタイル*/
+.tab_content {
+  display: none;
+  clear: both;
+  overflow: auto;
+  background-color: #cdd8d8;
+}
+
+/*選択されているタブのコンテンツのみを表示*/
+#list:checked ~ #list_content,
+#order:checked ~ #order_content,
+#client:checked ~ #client_content,
+#service:checked ~ #service_content,
+#supplier:checked ~ #supplier_content,
+#report:checked ~ #report_content,
+#setting:checked ~ #setting_content {
+  display: block;
+}
+
+/*選択されているタブのスタイルを変える*/
+.tabs input:checked + .tab_item {
+  background-color: #9da4a4;
+  color: #fff;
+}
+
+/* モバイル表示時のスタイル */
+@media screen and (max-width: 768px) {
+    #client_content .data_list_box,
+    #client_content .data_detail {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        margin: 0 auto;
+        float: none;
+    }
+}
+
+/* モバイル以外の表示時のスタイル */
+@media screen and (min-width: 769px) {
+    #client_content .data_list_box,
+    #client_content .data_detail {
+        width: 50%;
+        box-sizing: border-box;
+        padding: 15px;
+        float: left;
+    }
+}

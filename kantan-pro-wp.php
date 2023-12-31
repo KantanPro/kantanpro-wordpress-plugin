@@ -35,11 +35,55 @@ include 'includes/class-tab-setting.php';
 include 'includes/class-login-error.php'; // ログインエラークラス
 include "includes/class-view-tab.php"; // タブビュークラス
 include "js/view.js"; // JS
+include "js/ktp-ajax.js"; // JS
 include "includes/kpw-admin-form.php"; // 管理画面に追加
 
 
 // カンタンProをロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
+
+// // Ajaxによるタブインターフェイス実験
+// add_action('wp_ajax_ktp_fetch_tab_content', 'ktp_fetch_tab_content');
+// add_action('wp_ajax_nopriv_ktp_fetch_tab_content', 'ktp_fetch_tab_content');
+
+// function ktp_fetch_tab_content() {
+//     $tab = $_POST['tab'];
+//     $content = '';
+
+//     switch ($tab) {
+//         case 'client':
+//             $clientClass = new Kntan_Client_Class();
+//             $content = $clientClass->View_Table('client');
+//             break;
+//         case 'list':
+//             $listClass = new Kantan_List_Class();
+//             $content = $listClass->List_Tab_View('list');
+//             break;
+//         case 'order':
+//             $orderClass = new Kntan_Order_Class();
+//             $content = $orderClass->Order_Tab_View('order');
+//             break;
+//         case 'report':
+//             $reportClass = new Kntan_Report_Class();
+//             $content = $reportClass->Report_Tab_View('report');
+//             break;
+//         case 'service':
+//             $serviceClass = new Kntan_Service_Class();
+//             $content = $serviceClass->Service_Tab_View('service');
+//             break;
+//         case 'setting':
+//             $settingClass = new Kntan_Setting_Class();
+//             $content = $settingClass->Setting_Tab_View('setting');
+//             break;
+//         // 他のタブについても同様に処理を追加
+//         default:
+//             $content = '指定されたタブは存在しません。';
+//     }
+
+//     echo $content;
+//     wp_die();
+// }
+
 
 // スタイルシートを登録
 function register_ktpwp_styles() {
@@ -100,7 +144,7 @@ function KTPWP_Index(){
 				$tabs->Update_Table( $tab_name );
 				$view = $tabs->View_Table( $tab_name );
 				$client_content = $view;
-				
+
 				//商品・サービス
 				$tabs = new Kntan_Service_Class();
 				$service_content = $tabs->Service_Tab_View( 'service' );
