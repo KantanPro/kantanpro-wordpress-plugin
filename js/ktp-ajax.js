@@ -16,7 +16,7 @@ jQuery(document).ready(function($) {
             }
         });
     });
-    
+        
     // 顧客リストを更新する関数
     function updateClientList() {
         $.get(ktp_ajax_object.ajax_url, { action: 'ktp_get_client_list' }, function(response) {
