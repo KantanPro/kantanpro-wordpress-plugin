@@ -6,22 +6,25 @@
  * Author: あなたの名前
  */
 
-// ページがロードされたときにURLのパラメータをチェック
-add_action('wp_footer', 'activate_client_tab_in_plugin');
-function activate_client_tab_in_plugin() {
-    if (isset($_GET['tab']) && $_GET['tab'] == 'clients') {
-        echo '<script type="text/javascript">
-                jQuery(document).ready(function($) {
-                    // 顧客タブをアクティブにする
-                    $(".tab").removeClass("active"); // すべてのタブからactiveクラスを削除
-                    $("#tab-client").addClass("active"); // 顧客タブにactiveクラスを追加
-                    $(".tab-content").hide(); // すべてのタブコンテンツを非表示
-                    $("#content-client").show(); // 顧客タブのコンテンツを表示
-                });
-              </script>';
-    }
-}
-
+ add_action('wp_footer', 'activate_tab_based_on_url_parameter');
+ function activate_tab_based_on_url_parameter() {
+     ?>
+     <script type="text/javascript">
+         jQuery(document).ready(function($) {
+             var urlParams = new URLSearchParams(window.location.search);
+             var activeTab = urlParams.get('tab');
+ 
+             if (activeTab) {
+                 $('#tab-' + activeTab).click();
+             } else {
+                 // URLパラメータがない場合、デフォルトのタブをアクティブにする
+                 $('#default-tab').click();
+             }
+         });
+     </script>
+     <?php
+ }
+ 
 // 定数の定義
 define('KTP_VERSION', '1.0');
 define('KTP_PATH', plugin_dir_path(__FILE__));
