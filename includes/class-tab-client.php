@@ -15,21 +15,8 @@ class KTP_Tab_Client {
         $this->display_client_form();
         echo '<br>';
         echo '<h2>顧客リスト</h2>';
-
         // 保存されている顧客データを表示
         $this->display_clients();
-
-        // フィードバックメッセージの表示
-        if (isset($_SESSION['ktp_client_add_success'])) {
-            echo '<div class="notice notice-success">' . esc_html($_SESSION['ktp_client_add_success']) . '</div>';
-            unset($_SESSION['ktp_client_add_success']);
-        }
-
-        if (isset($_SESSION['ktp_client_add_error'])) {
-            echo '<div class="notice notice-error">' . esc_html($_SESSION['ktp_client_add_error']) . '</div>';
-            unset($_SESSION['ktp_client_add_error']);
-        }
-
     }
 
     // 顧客データの送信フォームを表示
