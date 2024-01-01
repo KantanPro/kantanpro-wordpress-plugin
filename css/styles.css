@@ -5,40 +5,47 @@
   display: flex;
   flex-wrap: wrap;
   text-align: center;
+  justify-content: center; /* 中央揃えにする */
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
 }
 
 /* リストBOX */
 .data_list_box {
   width: 100%;
-  max-width: 673px;
-  min-width: 305px;
-  display: block;
-  float: left;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
+  padding: 20px;
+  box-sizing: border-box;
   text-align: left;
-  background-color: #f0ffff;
-}
-
-.data_list_item {
-  width: auto;
-  line-height: 30px;
-  border-bottom: 1px solid #9da4a4;
-  margin-top: 15px;
-  margin-bottom: 0px;
+  box-sizing: border-box;
 }
 
 /* 詳細BOX */
-.data_detail {
+.data_detail_box {
   width: 100%;
-  max-width: 673px;
-  min-width: 305px;
-  display: block;
-  float: left;
-  padding: 20px 20px 20px 20px;
-  margin: 10px;
+  padding: 20px;
+  box-sizing: border-box;
   text-align: left;
-  background-color: #edf3f3;
+  box-sizing: border-box;
+}
+
+@media screen and (min-width: 767px) {
+  .data_list_box {
+    width: 50%;
+    float: left;
+  }
+  .data_detail_box {
+    width: 50%;
+    float: right;
+  }
+}
+
+/* リストのアイテム */
+.data_list_item {
+  line-height: 30px;
+  border-bottom: 1px solid #cdcccc;
+  margin-top: 15px;
+  margin-bottom: 0px;
 }
 
 /* ヘッダー */
@@ -88,12 +95,12 @@
 .tab_item {
   width: calc(100%/7);
   height: 50px;
-  border-bottom: 5px solid #9da4a4;
-  background-color: #d9d9d9;
+  border-bottom: 5px solid #cdcccc;
+  background-color: #eeeeee;
   line-height: 50px;
   font-size: 16px;
   text-align: center;
-  color: #565656;
+  color: #bbbbbb;
   display: block;
   float: left;
   text-align: center;
@@ -117,7 +124,7 @@ input[name="tab_item"] {
   display: none;
   clear: both;
   overflow: auto;
-  background-color: #cdd8d8;
+  background-color: #fcfcfc;
 }
 
 /*選択されているタブのコンテンツのみを表示*/
@@ -133,31 +140,8 @@ input[name="tab_item"] {
 
 /*選択されているタブのスタイルを変える*/
 .tabs input:checked + .tab_item {
-  background-color: #9da4a4;
-  color: #fff;
-}
-
-/* モバイル表示時のスタイル
-@media screen and (max-width: 768px) {
-    #client_content .data_list_box,
-    #client_content .data_detail {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 10px;
-        margin: 0 auto;
-        float: none;
-    }
-} */
-
-/* モバイル以外の表示時のスタイル */
-@media screen and (min-width: 769px) {
-    #client_content .data_list_box,
-    #client_content .data_detail {
-        width: 50%;
-        box-sizing: border-box;
-        padding: 15px;
-        float: left;
-    }
+  background-color: #cdcccc;
+  color: #3b3b3b;
 }
 
 /* モバイル表示時のタブスタイル */
@@ -166,7 +150,7 @@ input[name="tab_item"] {
       width: 100%; /* タブの幅を100%に設定 */
       box-sizing: border-box; /* ボックスサイズの計算方法を変更 */
       border-bottom: none; /* 下線を非表示に */
-      border-right: 1px solid #9da4a4; /* 右側に境界線を追加 */
+      border-right: 1px solid #cdcccc; /* 右側に境界線を追加 */
   }
 
   /* 最後のタブの右側の境界線を非表示に */
