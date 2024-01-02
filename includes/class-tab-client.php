@@ -438,37 +438,47 @@ class Kntan_Client_Class{
         ];
 
         // フォームの値を取得
-        $data_forms = '';
+        $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
+
         foreach (['update', 'insert'] as $action) {
-            $data_forms .= '<div class="box">';
+            $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
+
             if ($action === 'insert') {
-                $data_forms .= '<h3>■ 顧客追加</h3>';
+                $data_forms .= '<h3>■ 顧客追加</h3>'; // 顧客追加フォームの見出しを追加
             }
-            $data_forms .= "<form method=\"post\" action=\"\">";
+
+            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+
             foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : '';
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
-                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
+                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>";
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
                 } elseif ($field['type'] === 'select') {
                     $options = '';
+
                     foreach ($field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : '';
-                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>";
+                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
+                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
                     }
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>";
+
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>";
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                 }
             }
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">";
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
-            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
+
+            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
+            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
+            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>'; // 更新ボタンを追加
+
             if ($action === 'update') {
-                $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+                $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>"; // 削除ボタンを追加
             }
-            $data_forms .= '</div>';
+
+            $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
         }
 
         // DIV閉じ
