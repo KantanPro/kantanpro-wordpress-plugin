@@ -12,6 +12,27 @@ class Kntan_Client_Class{
     // テーブル作成
     // -----------------------------
 
+    // テーブルのカラム    
+    //id
+    //time
+    //name
+    //text
+    //url
+    //company_name
+    //representative_name
+    //email
+    //phone
+    //postal_code
+    //prefecture
+    //city
+    //address
+    //building
+    //closing_day
+    //payment_month
+    //payment_day
+    //payment_method
+    //tax_category
+
     function Create_Table($name) {
         global $wpdb;
         $my_table_version = '1.0.1';
@@ -49,7 +70,22 @@ class Kntan_Client_Class{
         $query_post = $_POST['query_post'];
         $data_name = $_POST['data_name'];
         $text = $_POST['text'];
-                
+        $email = $_POST['email'];
+        $url = $_POST['url'];
+        $company_name = $_POST['company_name'];
+        $representative_name = $_POST['representative_name'];
+        $phone = $_POST['phone'];
+        $postal_code = $_POST['postal_code'];
+        $prefecture = $_POST['prefecture'];
+        $city = $_POST['city'];
+        $address = $_POST['address'];
+        $building = $_POST['building'];
+        $closing_day = $_POST['closing_day'];
+        $payment_month = $_POST['payment_month'];
+        $payment_day = $_POST['payment_day'];
+        $payment_method = $_POST['payment_method'];
+        $tax_category = $_POST['tax_category'];
+                    
         // 更新
         if( $query_post == 'update' ){
             
@@ -58,11 +94,27 @@ class Kntan_Client_Class{
                 array( 
                     'name' => $data_name,
                     'text' => $text,
+                    'email' => $email,
+                    'url' => $url,
+                    'company_name' => $company_name,
+                    'representative_name' => $representative_name,
+                    'phone' => $phone,
+                    'postal_code' => $postal_code,
+                    'prefecture' => $prefecture,
+                    'city' => $city,
+                    'address' => $address,
+                    'building' => $building,
+                    'closing_day' => $closing_day,
+                    'payment_month' => $payment_month,
+                    'payment_day' => $payment_day,
+                    'payment_method' => $payment_method,
+                    'tax_category' => $tax_category,
                 ),
                 array( 'ID' => $data_id ), 
                 array( 
                     '%s',	// name
-                    '%s'	// text
+                    '%s',	// text
+                    '%s'	// email
                 ), 
                 array( '%d' ) 
             
@@ -74,10 +126,25 @@ class Kntan_Client_Class{
         elseif( $query_post == 'insert' ) {
             $wpdb->insert( 
                 $table_name, 
-                array( 
-                    'time' => current_time( 'mysql' ),
-                    'name' => $data_name,
-                    'text' => $text,
+                    array( 
+                        'time' => current_time( 'mysql' ),
+                        'name' => $data_name,
+                        'text' => $text,
+                        'email' => $email,
+                        'url' => $url,
+                        'company_name' => $company_name,
+                        'representative_name' => $representative_name,
+                        'phone' => $phone,
+                        'postal_code' => $postal_code,
+                        'prefecture' => $prefecture,
+                        'city' => $city,
+                        'address' => $address,
+                        'building' => $building,
+                        'closing_day' => $closing_day,
+                        'payment_month' => $payment_month,
+                        'payment_day' => $payment_day,
+                        'payment_method' => $payment_method,
+                        'tax_category' => $tax_category,
                 ) 
             );
         }
@@ -100,9 +167,9 @@ class Kntan_Client_Class{
             // $query_postがないよ
             // echo 'NG';
         }
-
+    
     }
-
+    
     // -----------------------------
     // テーブルの表示
     // -----------------------------
@@ -156,8 +223,23 @@ class Kntan_Client_Class{
                 $time = esc_html($row->time);
                 $data_name = esc_html($row->name);
                 $text = esc_html($row->text);
+                $email = esc_html($row->email);
+                $url = esc_html($row->url);
+                $company_name = esc_html($row->company_name);
+                $representative_name = esc_html($row->representative_name);
+                $phone = esc_html($row->phone);
+                $postal_code = esc_html($row->postal_code);
+                $prefecture = esc_html($row->prefecture);
+                $city = esc_html($row->city);
+                $address = esc_html($row->address);
+                $building = esc_html($row->building);
+                $closing_day = esc_html($row->closing_day);
+                $payment_month = esc_html($row->payment_month);
+                $payment_day = esc_html($row->payment_day);
+                $payment_method = esc_html($row->payment_method);
+                $tax_category = esc_html($row->tax_category);
                 $results[] = <<<END
-                <div class="data_list_item">$id : $time : $data_name : $text : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
+                <div class="data_list_item">$id : $time : $data_name : $text : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
                 END;
             }
             $query_max_num = $wpdb->num_rows;
@@ -263,7 +345,22 @@ class Kntan_Client_Class{
             $data_id = esc_html($row->id);
             $time = esc_html($row->time);
             $data_name = esc_html($row->name);
+            $email = esc_html($row->email);
             $text = esc_html($row->text);
+            $url = esc_html($row->url);
+            $company_name = esc_html($row->company_name);
+            $representative_name = esc_html($row->representative_name);
+            $phone = esc_html($row->phone);
+            $postal_code = esc_html($row->postal_code);
+            $prefecture = esc_html($row->prefecture);
+            $city = esc_html($row->city);
+            $address = esc_html($row->address);
+            $building = esc_html($row->building);
+            $closing_day = esc_html($row->closing_day);
+            $payment_month = esc_html($row->payment_month);
+            $payment_day = esc_html($row->payment_day);
+            $payment_method = esc_html($row->payment_method);
+            $tax_category = esc_html($row->tax_category);
         }
 
         // 表題
@@ -274,32 +371,61 @@ class Kntan_Client_Class{
 
         // フォーム表示
         $data_forms = <<<END
-                <div class="box">
-                    <form method="post" action="">
-                    <p><label> 名　　前：</label> <input type="text" name="data_name" value="$data_name"></p>
-                    <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
-                    <input type="hidden" name="query_post" value="update">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
-                    </form>
-                    <form method="post" action="">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <input type="hidden" name="query_post" value="delete">
-                    <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
-                    </form>
-                </div>
-                <div class="box">
-                    <h3>■ 顧客追加</h3>
-                    <form method="post" action="">
-                    <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
-                    <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
-                    <input type="hidden" name="query_post" value="insert">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
-                    </form>
-                </div>
-        END;
-
+        <div class="box">
+            <form method="post" action="">
+            <p><label> 名　　前：</label> <input type="text" name="data_name" value="$data_name"></p>
+            <p><label> メールアドレス：</label> <input type="email" name="email" value="$email"></p>
+            <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
+            <p><label> URL：</label> <input type="text" name="url" value="$url"></p>
+            <p><label> 会社名：</label> <input type="text" name="company_name" value="$company_name"></p>
+            <p><label> 代表者名：</label> <input type="text" name="representative_name" value="$representative_name"></p>
+            <p><label> 電話番号：</label> <input type="text" name="phone" value="$phone"></p>
+            <p><label> 郵便番号：</label> <input type="text" name="postal_code" value="$postal_code"></p>
+            <p><label> 都道府県：</label> <input type="text" name="prefecture" value="$prefecture"></p>
+            <p><label> 市区町村：</label> <input type="text" name="city" value="$city"></p>
+            <p><label> 番地：</label> <input type="text" name="address" value="$address"></p>
+            <p><label> 建物名：</label> <input type="text" name="building" value="$building"></p>
+            <p><label> 締め日：</label> <input type="text" name="closing_day" value="$closing_day"></p>
+            <p><label> 支払月：</label> <input type="text" name="payment_month" value="$payment_month"></p>
+            <p><label> 支払日：</label> <input type="text" name="payment_day" value="$payment_day"></p>
+            <p><label> 支払方法：</label> <input type="text" name="payment_method" value="$payment_method"></p>
+            <p><label> 税区分：</label> <input type="text" name="tax_category" value="$tax_category"></p>
+            <input type="hidden" name="query_post" value="update">
+            <input type="hidden" name="data_id" value="$data_id">
+            <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
+            </form>
+            <form method="post" action="">
+            <input type="hidden" name="data_id" value="$data_id">
+            <input type="hidden" name="query_post" value="delete">
+            <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
+            </form>
+        </div>
+        <div class="box">
+            <h3>■ 顧客追加</h3>
+            <form method="post" action="">
+            <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
+            <p><label> メールアドレス：</label> <input type="email" name="email" value=""></p>
+            <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
+            <p><label> URL：</label> <input type="text" name="url" value=""></p>
+            <p><label> 会社名：</label> <input type="text" name="company_name" value=""></p>
+            <p><label> 代表者名：</label> <input type="text" name="representative_name" value=""></p>
+            <p><label> 電話番号：</label> <input type="text" name="phone" value=""></p>
+            <p><label> 郵便番号：</label> <input type="text" name="postal_code" value=""></p>
+            <p><label> 都道府県：</label> <input type="text" name="prefecture" value=""></p>
+            <p><label> 市区町村：</label> <input type="text" name="city" value=""></p>
+            <p><label> 番地：</label> <input type="text" name="address" value=""></p>
+            <p><label> 建物名：</label> <input type="text" name="building" value=""></p>
+            <p><label> 締め日：</label> <input type="text" name="closing_day" value=""></p>
+            <p><label> 支払月：</label> <input type="text" name="payment_month" value=""></p>
+            <p><label> 支払日：</label> <input type="text" name="payment_day" value=""></p>
+            <p><label> 支払方法：</label> <input type="text" name="payment_method" value=""></p>
+            <p><label> 税区分：</label> <input type="text" name="tax_category" value=""></p>
+            <input type="hidden" name="query_post" value="insert">
+            <input type="hidden" name="data_id" value="$data_id">
+            <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
+            </form>
+        </div>
+    END;
         // DIV閉じ
         $div_end = <<<END
             </div>
