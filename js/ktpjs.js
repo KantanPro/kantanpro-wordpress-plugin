@@ -26,3 +26,13 @@ document.addEventListener('DOMContentLoaded', function() {
         defaultContent.classList.add('active');
     }
 });
+
+// フォームの表示・非表示を切り替えるボタン
+document.querySelectorAll('.toggle-button').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var form = this.parentNode.nextElementSibling;
+        var isFormVisible = form.style.display !== 'none';
+        form.style.display = isFormVisible ? 'none' : 'block';
+        this.textContent = isFormVisible ? '+' : '-';
+    });
+});

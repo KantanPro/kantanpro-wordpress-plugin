@@ -170,3 +170,20 @@ input[name="tab_item"] {
       display: block; /* タブをブロック要素として表示 */
   }
 }
+
+/* フォーム */
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.form-group label {
+  width: 20%;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.form-group input {
+  width: 70%;
+}

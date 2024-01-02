@@ -32,6 +32,8 @@ class Kntan_Client_Class{
     //payment_day
     //payment_method
     //tax_category
+    //memo
+    //UNIQUE KEY id (id)
 
     function Create_Table($name) {
         global $wpdb;
@@ -39,23 +41,49 @@ class Kntan_Client_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $name;
         $charset_collate = $wpdb->get_charset_collate();
     
-        if ($wpdb->get_var("show tables like '$table_name'") != $table_name || get_option('my_table_version') !== $my_table_version) {
-            $sql = "CREATE TABLE $table_name (
-                id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
-                time BIGINT(11) DEFAULT '0' NOT NULL,
-                name TINYTEXT NOT NULL,
-                text TEXT NOT NULL,
-                url VARCHAR(55) NOT NULL,
-                UNIQUE KEY id (id)
-            ) $charset_collate;";
+        $columns = [
+            "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
+            "time BIGINT(11) DEFAULT '0' NOT NULL",
+            "name TINYTEXT",
+            "text TEXT",
+            "url VARCHAR(55)",
+            "company_name VARCHAR(100) NOT NULL DEFAULT '初めてのお客様'",
+            "representative_name TINYTEXT",
+            "email VARCHAR(100)",
+            "phone VARCHAR(20)",
+            "postal_code VARCHAR(10)",
+            "prefecture TINYTEXT",
+            "city TINYTEXT",
+            "address TEXT",
+            "building TINYTEXT",
+            "closing_day TINYTEXT",
+            "payment_month TINYTEXT",
+            "payment_day TINYTEXT",
+            "payment_method TINYTEXT",
+            "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
+            "memo TEXT",
+            "UNIQUE KEY id (id)"
+        ];
     
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-            add_option('ktp_' . $name . '_table_version', $my_table_version);
-            update_option('ktp_' . $name . '_table_version', $my_table_version);
+        try {
+            if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+                $sql = "CREATE TABLE $table_name (" . implode(", ", $columns) . ") $charset_collate;";
+                require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+                dbDelta($sql);
+                add_option('ktp_' . $name . '_table_version', $my_table_version);
+            } else {
+                $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
+                $missing_columns = array_diff($columns, $existing_columns);
+                foreach ($missing_columns as $missing_column) {
+                    $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
+                }
+                update_option('ktp_' . $name . '_table_version', $my_table_version);
+            }
+        } catch (Exception $e) {
+            error_log("Error occurred while creating/updating the table: " . $e->getMessage());
         }
     }
-    
+
     // -----------------------------
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
@@ -68,11 +96,10 @@ class Kntan_Client_Class{
         // POSTデーター受信
         $data_id = $_POST['data_id'];
         $query_post = $_POST['query_post'];
-        $data_name = $_POST['data_name'];
-        $text = $_POST['text'];
+        $company_name = $_POST['company_name'];
+        $user_name = $_POST['user_name'];
         $email = $_POST['email'];
         $url = $_POST['url'];
-        $company_name = $_POST['company_name'];
         $representative_name = $_POST['representative_name'];
         $phone = $_POST['phone'];
         $postal_code = $_POST['postal_code'];
@@ -85,6 +112,8 @@ class Kntan_Client_Class{
         $payment_day = $_POST['payment_day'];
         $payment_method = $_POST['payment_method'];
         $tax_category = $_POST['tax_category'];
+        $memo = $_POST['memo'];
+        $text = $_POST['text'];
                     
         // 更新
         if( $query_post == 'update' ){
@@ -92,11 +121,10 @@ class Kntan_Client_Class{
             $wpdb->update( 
                 $table_name, 
                 array( 
-                    'name' => $data_name,
-                    'text' => $text,
+                    'company_name' => $company_name,
+                    'name' => $user_name,
                     'email' => $email,
                     'url' => $url,
-                    'company_name' => $company_name,
                     'representative_name' => $representative_name,
                     'phone' => $phone,
                     'postal_code' => $postal_code,
@@ -109,15 +137,31 @@ class Kntan_Client_Class{
                     'payment_day' => $payment_day,
                     'payment_method' => $payment_method,
                     'tax_category' => $tax_category,
+                    'memo' => $memo,
+                    'text' => $text,
                 ),
                 array( 'ID' => $data_id ), 
                 array( 
-                    '%s',	// name
-                    '%s',	// text
-                    '%s'	// email
-                ), 
+                    '%s',  // name
+                    '%s',  // text
+                    '%s',  // email
+                    '%s',  // url
+                    '%s',  // company_name
+                    '%s',  // representative_name
+                    '%s',  // phone
+                    '%s',  // postal_code
+                    '%s',  // prefecture
+                    '%s',  // city
+                    '%s',  // address
+                    '%s',  // building
+                    '%s',  // closing_day
+                    '%s',  // payment_month
+                    '%s',  // payment_day
+                    '%s',  // payment_method
+                    '%s',  // tax_category
+                    '%s',  // memo
+                ),
                 array( '%d' ) 
-            
             );
             
         }
@@ -128,11 +172,10 @@ class Kntan_Client_Class{
                 $table_name, 
                     array( 
                         'time' => current_time( 'mysql' ),
-                        'name' => $data_name,
-                        'text' => $text,
+                        'company_name' => $company_name,
+                        'name' => $user_name,
                         'email' => $email,
                         'url' => $url,
-                        'company_name' => $company_name,
                         'representative_name' => $representative_name,
                         'phone' => $phone,
                         'postal_code' => $postal_code,
@@ -145,6 +188,8 @@ class Kntan_Client_Class{
                         'payment_day' => $payment_day,
                         'payment_method' => $payment_method,
                         'tax_category' => $tax_category,
+                        'memo' => $memo,
+                        'text' => $text,
                 ) 
             );
         }
@@ -164,8 +209,8 @@ class Kntan_Client_Class{
         
         // エラー処理
         else {
-            // $query_postがないよ
-            // echo 'NG';
+            $query_post = 'error';
+            echo 'NG';
         }
     
     }
@@ -221,11 +266,10 @@ class Kntan_Client_Class{
             foreach ($post_row as $row){
                 $id = esc_html($row->id);
                 $time = esc_html($row->time);
-                $data_name = esc_html($row->name);
-                $text = esc_html($row->text);
+                $company_name = esc_html($row->company_name);
+                $user_name = esc_html($row->name);
                 $email = esc_html($row->email);
                 $url = esc_html($row->url);
-                $company_name = esc_html($row->company_name);
                 $representative_name = esc_html($row->representative_name);
                 $phone = esc_html($row->phone);
                 $postal_code = esc_html($row->postal_code);
@@ -238,12 +282,13 @@ class Kntan_Client_Class{
                 $payment_day = esc_html($row->payment_day);
                 $payment_method = esc_html($row->payment_method);
                 $tax_category = esc_html($row->tax_category);
+                $memo = esc_html($row->memo);
+                $text = esc_html($row->text);
                 $results[] = <<<END
-                <div class="data_list_item">$id : $time : $data_name : $text : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
+                <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
                 END;
             }
             $query_max_num = $wpdb->num_rows;
-            // $post_num = count($post_row);
         } else {
             $results[] = <<<END
             <div class="data_list_item">NO DATA！</div>
@@ -344,11 +389,10 @@ class Kntan_Client_Class{
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
             $time = esc_html($row->time);
-            $data_name = esc_html($row->name);
-            $email = esc_html($row->email);
-            $text = esc_html($row->text);
-            $url = esc_html($row->url);
             $company_name = esc_html($row->company_name);
+            $user_name = esc_html($row->name);
+            $email = esc_html($row->email);
+            $url = esc_html($row->url);
             $representative_name = esc_html($row->representative_name);
             $phone = esc_html($row->phone);
             $postal_code = esc_html($row->postal_code);
@@ -361,6 +405,8 @@ class Kntan_Client_Class{
             $payment_day = esc_html($row->payment_day);
             $payment_method = esc_html($row->payment_method);
             $tax_category = esc_html($row->tax_category);
+            $memo = esc_html($row->memo);
+            $text = esc_html($row->text);
         }
 
         // 表題
@@ -370,62 +416,61 @@ class Kntan_Client_Class{
         END;
 
         // フォーム表示
-        $data_forms = <<<END
-        <div class="box">
-            <form method="post" action="">
-            <p><label> 名　　前：</label> <input type="text" name="data_name" value="$data_name"></p>
-            <p><label> メールアドレス：</label> <input type="email" name="email" value="$email"></p>
-            <p><label> テキスト：</label> <input type="text" name="text" value="$text"></p>
-            <p><label> URL：</label> <input type="text" name="url" value="$url"></p>
-            <p><label> 会社名：</label> <input type="text" name="company_name" value="$company_name"></p>
-            <p><label> 代表者名：</label> <input type="text" name="representative_name" value="$representative_name"></p>
-            <p><label> 電話番号：</label> <input type="text" name="phone" value="$phone"></p>
-            <p><label> 郵便番号：</label> <input type="text" name="postal_code" value="$postal_code"></p>
-            <p><label> 都道府県：</label> <input type="text" name="prefecture" value="$prefecture"></p>
-            <p><label> 市区町村：</label> <input type="text" name="city" value="$city"></p>
-            <p><label> 番地：</label> <input type="text" name="address" value="$address"></p>
-            <p><label> 建物名：</label> <input type="text" name="building" value="$building"></p>
-            <p><label> 締め日：</label> <input type="text" name="closing_day" value="$closing_day"></p>
-            <p><label> 支払月：</label> <input type="text" name="payment_month" value="$payment_month"></p>
-            <p><label> 支払日：</label> <input type="text" name="payment_day" value="$payment_day"></p>
-            <p><label> 支払方法：</label> <input type="text" name="payment_method" value="$payment_method"></p>
-            <p><label> 税区分：</label> <input type="text" name="tax_category" value="$tax_category"></p>
-            <input type="hidden" name="query_post" value="update">
-            <input type="hidden" name="data_id" value="$data_id">
-            <div class="submit_button"><input type="submit" name="send_post" value="更新"></div>
-            </form>
-            <form method="post" action="">
-            <input type="hidden" name="data_id" value="$data_id">
-            <input type="hidden" name="query_post" value="delete">
-            <div class="submit_button"><input type="submit" name="send_post" value="削除"></div>
-            </form>
-        </div>
-        <div class="box">
-            <h3>■ 顧客追加</h3>
-            <form method="post" action="">
-            <p><label> 名　　前：</label> <input type="text" name="data_name" value=""></p>
-            <p><label> メールアドレス：</label> <input type="email" name="email" value=""></p>
-            <p><label> テキスト：</label> <input type="text" name="text" value=""></p>
-            <p><label> URL：</label> <input type="text" name="url" value=""></p>
-            <p><label> 会社名：</label> <input type="text" name="company_name" value=""></p>
-            <p><label> 代表者名：</label> <input type="text" name="representative_name" value=""></p>
-            <p><label> 電話番号：</label> <input type="text" name="phone" value=""></p>
-            <p><label> 郵便番号：</label> <input type="text" name="postal_code" value=""></p>
-            <p><label> 都道府県：</label> <input type="text" name="prefecture" value=""></p>
-            <p><label> 市区町村：</label> <input type="text" name="city" value=""></p>
-            <p><label> 番地：</label> <input type="text" name="address" value=""></p>
-            <p><label> 建物名：</label> <input type="text" name="building" value=""></p>
-            <p><label> 締め日：</label> <input type="text" name="closing_day" value=""></p>
-            <p><label> 支払月：</label> <input type="text" name="payment_month" value=""></p>
-            <p><label> 支払日：</label> <input type="text" name="payment_day" value=""></p>
-            <p><label> 支払方法：</label> <input type="text" name="payment_method" value=""></p>
-            <p><label> 税区分：</label> <input type="text" name="tax_category" value=""></p>
-            <input type="hidden" name="query_post" value="insert">
-            <input type="hidden" name="data_id" value="$data_id">
-            <div class="submit_button"><input type="submit" name="send_post" value="追加"></div>
-            </form>
-        </div>
-    END;
+        $fields = [
+            '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true],
+            '名前' => ['type' => 'text', 'name' => 'user_name'],
+            'メールアドレス' => ['type' => 'email', 'name' => 'email'],
+            'URL' => ['type' => 'text', 'name' => 'url'],
+            '代表者名' => ['type' => 'text', 'name' => 'representative_name'],
+            '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\d*'],
+            '郵便番号' => ['type' => 'text', 'name' => 'postal_code'],
+            '都道府県' => ['type' => 'text', 'name' => 'prefecture'],
+            '市区町村' => ['type' => 'text', 'name' => 'city'],
+            '番地' => ['type' => 'text', 'name' => 'address'],
+            '建物名' => ['type' => 'text', 'name' => 'building'],
+            '締め日' => ['type' => 'date', 'name' => 'closing_day'],
+            '支払月' => ['type' => 'date', 'name' => 'payment_month'],
+            '支払日' => ['type' => 'date', 'name' => 'payment_day'],
+            '支払方法' => ['type' => 'text', 'name' => 'payment_method'],
+            '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税']],
+            'メモ' => ['type' => 'textarea', 'name' => 'memo'],
+            'テキスト' => ['type' => 'text', 'name' => 'text'],
+        ];
+
+        // フォームの値を取得
+        $data_forms = '';
+        foreach (['update', 'insert'] as $action) {
+            $data_forms .= '<div class="box">';
+            if ($action === 'insert') {
+                $data_forms .= '<h3>■ 顧客追加</h3>';
+            }
+            $data_forms .= "<form method=\"post\" action=\"\">";
+            foreach ($fields as $label => $field) {
+                $value = $action === 'update' ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                if ($field['type'] === 'textarea') {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>";
+                } elseif ($field['type'] === 'select') {
+                    $options = '';
+                    foreach ($field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>";
+                    }
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>";
+                } else {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>";
+                }
+            }
+            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">";
+            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
+            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
+            if ($action === 'update') {
+                $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+            }
+            $data_forms .= '</div>';
+        }
+
         // DIV閉じ
         $div_end = <<<END
             </div>

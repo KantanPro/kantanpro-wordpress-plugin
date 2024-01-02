@@ -68,7 +68,7 @@ add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
 // テーブル用の関数を登録
 register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
 register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
-register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
+// register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
 
 
 function KTPWP_Index(){
