@@ -89,7 +89,7 @@ function KTPWP_Index(){
 				$login_user = $current_user->nickname;
 				$front_message = <<<END
 				<div class="ktp_header">
-				ログイン中：$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
+				$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
 					<div id="zengo" class="zengo">
 					<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
 					</div>
