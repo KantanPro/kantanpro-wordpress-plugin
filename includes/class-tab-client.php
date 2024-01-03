@@ -478,8 +478,27 @@ class Kntan_Client_Class{
                 $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>"; // 削除ボタンを追加
             }
 
+            // 削除ボタン、追加ボタン、更新ボタンを日本語化
+            $data_buttons = '';
+            foreach (['delete', 'insert', 'update'] as $action) {
+                $button_name = '';
+                switch ($action) {
+                    case 'delete':
+                        $button_name = '削除';
+                        break;
+                    case 'insert':
+                        $button_name = '追加';
+                        break;
+                    case 'update':
+                        $button_name = '更新';
+                        break;
+                }
+                $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
+            }
+
             $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
         }
+        
 
         // DIV閉じ
         $div_end = <<<END
