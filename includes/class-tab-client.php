@@ -498,7 +498,6 @@ class Kntan_Client_Class{
 
             $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
         }
-        
 
         // DIV閉じ
         $div_end = <<<END
