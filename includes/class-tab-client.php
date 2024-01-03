@@ -114,9 +114,23 @@ class Kntan_Client_Class{
         $tax_category = $_POST['tax_category'];
         $memo = $_POST['memo'];
         $text = $_POST['text'];
-                    
+        
+        // 削除
+        if( $query_post == 'delete' ) {
+            $wpdb->delete(
+                $table_name,
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%d'
+                )
+            );
+            $data_id = $data_id - 1;
+        }    
+        
         // 更新
-        if( $query_post == 'update' ){
+        elseif( $query_post == 'update' ){
             
             $wpdb->update( 
                 $table_name, 
@@ -194,21 +208,7 @@ class Kntan_Client_Class{
             );
         }
         
-        // 削除
-        elseif( $query_post == 'delete' ) {
-            $wpdb->delete(
-                $table_name,
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%d'
-                )
-            );
-        }
         
-        
-    
     }
     
     // -----------------------------
@@ -373,13 +373,18 @@ class Kntan_Client_Class{
         $results_f .= '</div>';
         $data_list = $results_h . implode( $results ) . $results_f;
 
+        //
         // 詳細表示(GET)
+        //
+
+        // 現在表示中の詳細
         if(isset( $_GET['data_id'] )){
             $query_id = $_GET['data_id'];
         } else {
             $query_id = $wpdb->insert_id;
         }
         
+        // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
         $post_row = $wpdb->get_results($query);
         foreach ($post_row as $row){
@@ -405,13 +410,7 @@ class Kntan_Client_Class{
             $text = esc_html($row->text);
         }
 
-        // 表題
-        $data_title = <<<END
-        <div class="data_detail_box">
-            <h3>■ 顧客の詳細（ID: $data_id  TIME: $time ）</h3>
-        END;
-
-        // フォーム表示
+        // 表示するフォームを定義
         $fields = [
             '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true],
             '名前' => ['type' => 'text', 'name' => 'user_name'],
@@ -434,16 +433,65 @@ class Kntan_Client_Class{
         ];
 
         // フォームの値を取得
+        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';
+        
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
+        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
-        foreach (['update', 'insert'] as $action) {
-            $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
+        // 追加なら追加フォームだけを表示
+        if ($action === 'insert') {
+            // 表題
+            $data_title = <<<END
+            <div class="data_detail_box">
+                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
+            END;
 
-            if ($action === 'insert') {
-                $data_forms .= '<h3>■ 顧客追加</h3>'; // 顧客追加フォームの見出しを追加
-            }
-
+            // $data_id = $data_id + 1;
+            $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+
+            // フォームフィールドの生成部分
+            foreach ($fields as $label => $field) {
+                $value = $action === 'insert' ? '' : ${$field['name']}; // フォームフィールドの値を取得
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
+                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+
+                if ($field['type'] === 'textarea') {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                } elseif ($field['type'] === 'select') {
+                    $options = '';
+
+                    foreach ($field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
+                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                    }
+
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                } else {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
+                }
+            }
+            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
+            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
+            // 追加実行ボタン
+            // 最後に追加されたデータのIDを取得
+            $data_id = $data_id + 1;
+            $action = 'insert';
+            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"$data_id\"><input type=\"hidden\" name=\"query_post\" value=\"$action\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"追加実行\"></div></form>";
+            $data_forms .= '</div>';
+
+        }
+        
+        // 追加以外なら更新フォームだけを表示
+        else if ($action === 'update' || $action === '' || $action === 'delete') {
+            $data_forms .= "<div class=\"add\">";
+            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+            // 表題
+            $data_title = <<<END
+            <div class="data_detail_box">
+                <h3>■ 顧客の詳細（ 更新・削除：$action ID: $data_id ）</h3>
+            END;
+            
 
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
@@ -468,48 +516,77 @@ class Kntan_Client_Class{
 
             $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
             $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
-            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>'; // 更新ボタンを追加
+            // 更新ボタンを追加
+            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
+            // 削除ボタン
+            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+            // 追加モードボタン
+            $action = 'insert';
+            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"\"><input type=\"hidden\" name=\"query_post\" value=\"$action\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"追加モード\"></div></form>";
+            $data_forms .= '</div>';
+        }
 
-            if ($action === 'update') {
-                $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>"; // 削除ボタンを追加
-            }
-
-            // 削除ボタン、追加ボタン、更新ボタンを日本語化
-            $data_buttons = '';
-            foreach (['delete', 'insert', 'update'] as $action) {
-                $button_name = '';
-                switch ($action) {
-                    case 'delete':
-                        $button_name = '削除';
-                        break;
+        
+        
+        // ボタンを日本語化
+        $data_buttons = '';
+        foreach (['delete', 'insert', 'update'] as $action) {
+            $button_name = '';
+            switch ($action) {
+                case 'delete':
+                    $button_name = '削除';
+                    break;
                     case 'insert':
                         $button_name = '追加';
                         break;
-                    case 'update':
-                        $button_name = '更新';
-                        break;
+                        case 'update':
+                            $button_name = '更新';
+                            break;
+                        }
+                        $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
+                    }
+                    
+                    $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
+                    
+                    // DIV閉じ
+                    $div_end = <<<END
+                    </div>
+                    </div>
+                    END;
+                    
+                    // 表示するもの
+                    $content = $data_list . $data_title . $data_forms . $div_end;
+                    return $content;
+                    
                 }
-                $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
+
+                
             }
 
-            $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
-        }
+            
+// URLパラメーターでリダイレクト
 
-        // DIV閉じ
-        $div_end = <<<END
-            </div>
-        </div>
-        END;
+//JavaScriptアラート
+// echo "<script>alert('$url');</script>";    
 
-        // 表示するもの
-        $content = $data_list . $data_title . $data_forms . $div_end;
-        return $content;
+$data_id = $_POST['data_id'];
+$tab_name = $_POST['tab_name'];
+$action = $_POST['query_post'];
+// $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+// echo "<script>alert('$url');</script>";
 
-        // POSTデータをクリア
-        unset($_POST);
-
-    }
-
+function Redirect() {
+    $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+    header("Location: {$url}");
+    // POSTデータをクリア
+    // unset($_POST);
+    // unset ($_GET);
+    // unset ($_REQUEST);
+    // unset ($_SERVER);
+    // unset ($_ENV);
+    // unset ($_COOKIE);
+    // unset ($_SESSION);
+    // unset ($_FILES);
+    exit;
 }
-
 ?>

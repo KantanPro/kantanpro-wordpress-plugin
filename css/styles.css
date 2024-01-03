@@ -187,3 +187,7 @@ input[name="tab_item"] {
 .form-group input {
   width: 70%;
 }
+
+.hide {
+  display: none;
+}
