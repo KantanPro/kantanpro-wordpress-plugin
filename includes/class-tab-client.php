@@ -207,11 +207,7 @@ class Kntan_Client_Class{
             );
         }
         
-        // エラー処理
-        else {
-            $query_post = 'error';
-            echo 'NG';
-        }
+        
     
     }
     
