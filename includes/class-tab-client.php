@@ -12,29 +12,6 @@ class Kntan_Client_Class{
     // テーブル作成
     // -----------------------------
 
-    // テーブルのカラム    
-    //id
-    //time
-    //name
-    //text
-    //url
-    //company_name
-    //representative_name
-    //email
-    //phone
-    //postal_code
-    //prefecture
-    //city
-    //address
-    //building
-    //closing_day
-    //payment_month
-    //payment_day
-    //payment_method
-    //tax_category
-    //memo
-    //UNIQUE KEY id (id)
-
     function Create_Table($name) {
         global $wpdb;
         $my_table_version = '1.0.1';
@@ -127,6 +104,12 @@ class Kntan_Client_Class{
                 )
             );
             $data_id = $data_id - 1;
+            $action = 'update';
+
+            // リダイレクト
+            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
         }    
         
         // 更新
@@ -206,9 +189,17 @@ class Kntan_Client_Class{
                         'text' => $text,
                 ) 
             );
+
+            // 追加後に更新モードにする
+            $action = 'update';
+
+            // リダイレクト
+            $data_id = $wpdb->insert_id;
+            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
+            
         }
-        
-        
     }
     
     // -----------------------------
@@ -223,7 +214,10 @@ class Kntan_Client_Class{
 
         global $wpdb;
 
+        // -----------------------------
         // ログインユーザー情報を取得
+        // -----------------------------
+
         global $current_user;
         $login_user = $current_user->nickname;
 
@@ -237,9 +231,9 @@ class Kntan_Client_Class{
         <h3>■ 顧客リスト</h3>
         END;
         
-        //
+        // -----------------------------
         // リスト表示
-        //
+        // -----------------------------
 
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
@@ -291,7 +285,10 @@ class Kntan_Client_Class{
             END;
         }
         
+        // -----------------------------
         // ページネーションリンク
+        // -----------------------------
+
         $post_num = count($post_row); // 現在の項目数（可変）
         $page_buck = ''; // 前のスタート位置
         $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
@@ -301,7 +298,7 @@ class Kntan_Client_Class{
         } else {
             $data_id = $wpdb->insert_id;
         }
-        
+        // ページステージ移動
         if( !$page_stage || $page_stage == 1 ){
             if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
             $page_start ++;
@@ -369,13 +366,13 @@ class Kntan_Client_Class{
             </div>
             END;
         }
-
         $results_f .= '</div>';
         $data_list = $results_h . implode( $results ) . $results_f;
 
-        //
+
+        // -----------------------------
         // 詳細表示(GET)
-        //
+        // -----------------------------
 
         // 現在表示中の詳細
         if(isset( $_GET['data_id'] )){
@@ -410,11 +407,11 @@ class Kntan_Client_Class{
             $text = esc_html($row->text);
         }
 
-        // 表示するフォームを定義
+        // 表示するフォーム要素を定義
         $fields = [
             '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true],
             '名前' => ['type' => 'text', 'name' => 'user_name'],
-            'メールアドレス' => ['type' => 'email', 'name' => 'email'],
+            'メール' => ['type' => 'email', 'name' => 'email'],
             'URL' => ['type' => 'text', 'name' => 'url'],
             '代表者名' => ['type' => 'text', 'name' => 'representative_name'],
             '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\d*'],
@@ -432,27 +429,24 @@ class Kntan_Client_Class{
             'テキスト' => ['type' => 'text', 'name' => 'text'],
         ];
 
-        // フォームの値を取得
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';
-        
+        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
-        // 追加なら追加フォームだけを表示
-        if ($action === 'insert') {
+        // 空のフォームを表示
+        if ($action === 'istmode') {
+            $data_id = $data_id + 1;
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
                 <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
             END;
 
-            // $data_id = $data_id + 1;
             $data_forms .= "<div class=\"add\">";
-            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
-
-            // フォームフィールドの生成部分
+            // 空のフォームフィールドを生成
+            $data_forms = '<form method="post" action="">';
             foreach ($fields as $label => $field) {
-                $value = $action === 'insert' ? '' : ${$field['name']}; // フォームフィールドの値を取得
+                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
                 $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                 $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
 
@@ -471,17 +465,36 @@ class Kntan_Client_Class{
                     $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                 }
             }
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
+
             // 追加実行ボタン
-            // 最後に追加されたデータのIDを取得
-            $data_id = $data_id + 1;
             $action = 'insert';
-            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"$data_id\"><input type=\"hidden\" name=\"query_post\" value=\"$action\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"追加実行\"></div></form>";
+            $data_id = $data_id + 1;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='data_id' value='$data_id'>
+            <div class='submit_button'>
+            <input type='submit' name='send_post' value='追加実行'></div>
+            </form>
+            END;
+
+            // キャンセルボタン
+            $action = 'update';
+            $data_id = $data_id - 1;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='data_id' value=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='data_id' value='$data_id'>
+            <div class='submit_button'>
+            <input type='submit' name='send_post' value='キャンセル'></div>
+            </form>
+            END;
+
             $data_forms .= '</div>';
 
         }
-        
+
         // 追加以外なら更新フォームだけを表示
         else if ($action === 'update' || $action === '' || $action === 'delete') {
             $data_forms .= "<div class=\"add\">";
@@ -520,14 +533,22 @@ class Kntan_Client_Class{
             $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
             // 削除ボタン
             $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+
             // 追加モードボタン
-            $action = 'insert';
-            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"\"><input type=\"hidden\" name=\"query_post\" value=\"$action\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"追加モード\"></div></form>";
+            $action = 'istmode';
+            $data_id = $data_id + 1;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='data_id' value=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='data_id' value='$data_id'>
+            <div class='submit_button'>
+            <input type='submit' name='send_post' value='追加モード'></div>
+            </form>
+            END;
             $data_forms .= '</div>';
         }
 
-        
-        
         // ボタンを日本語化
         $data_buttons = '';
         foreach (['delete', 'insert', 'update'] as $action) {
@@ -560,33 +581,6 @@ class Kntan_Client_Class{
                     
                 }
 
-                
-            }
-
-            
-// URLパラメーターでリダイレクト
-
-//JavaScriptアラート
-// echo "<script>alert('$url');</script>";    
-
-$data_id = $_POST['data_id'];
-$tab_name = $_POST['tab_name'];
-$action = $_POST['query_post'];
-// $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-// echo "<script>alert('$url');</script>";
-
-function Redirect() {
-    $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-    header("Location: {$url}");
-    // POSTデータをクリア
-    // unset($_POST);
-    // unset ($_GET);
-    // unset ($_REQUEST);
-    // unset ($_SERVER);
-    // unset ($_ENV);
-    // unset ($_COOKIE);
-    // unset ($_SESSION);
-    // unset ($_FILES);
-    exit;
 }
+        
 ?>
