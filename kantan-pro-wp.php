@@ -24,6 +24,7 @@ if ( ! defined( 'MY_PLUGIN_URL' ) ) {
 	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
 }
 
+
 // ファイルをインクルード
 include 'includes/class-tab-list.php';
 include 'includes/class-tab-order.php';
