@@ -208,10 +208,6 @@ class Kntan_Client_Class{
 
     function View_Table( $name ) {
 
-        // echo $name;
-        // exit;
-
-
         global $wpdb;
 
         // -----------------------------
@@ -224,17 +220,18 @@ class Kntan_Client_Class{
         // ログアウトのリンク
         $logout_link = wp_logout_url();
 
-        // リストヘッダ表示
+        
+        // -----------------------------
+        // リスト表示
+        // -----------------------------
+
+        // リストヘッダ
         $results_h = <<<END
         <div class="data_contents">
         <div class="data_list_box">
         <h3>■ 顧客リスト</h3>
         END;
         
-        // -----------------------------
-        // リスト表示
-        // -----------------------------
-
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
         //表示範囲
@@ -281,8 +278,8 @@ class Kntan_Client_Class{
             $query_max_num = $wpdb->num_rows;
         } else {
             $results[] = <<<END
-            <div class="data_list_item">NO DATA！</div>
-            END;
+            <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
+            END;            
         }
         
         // -----------------------------
@@ -358,8 +355,6 @@ class Kntan_Client_Class{
             }
         } elseif( $page_stage == 3 ) {
             if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
-            // $page_buck = $page_start - $post_num;
-            // $page_stage = 2;
             $results_f = <<<END
             <div class="pagination">
             <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
@@ -433,6 +428,16 @@ class Kntan_Client_Class{
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
+        // データー量を取得
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $data_num = $wpdb->get_results($query);
+        $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
+
+        // データーがな0の場合は追加モードにする
+        if( $data_num == 0 ){
+            $action = 'istmode';
+        }
+
         // 空のフォームを表示
         if ($action === 'istmode') {
             $data_id = $data_id + 1;
@@ -497,6 +502,7 @@ class Kntan_Client_Class{
 
         // 追加以外なら更新フォームだけを表示
         else if ($action === 'update' || $action === '' || $action === 'delete') {
+
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
             // 表題
