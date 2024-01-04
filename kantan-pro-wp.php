@@ -24,24 +24,29 @@ if ( ! defined( 'MY_PLUGIN_URL' ) ) {
 	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
 }
 
-
 // ファイルをインクルード
-include 'includes/class-tab-list.php';
-include 'includes/class-tab-order.php';
-include 'includes/class-tab-client.php';
-include 'includes/class-tab-service.php';
-include 'includes/class-tab-supplier.php';
-include 'includes/class-tab-report.php';
-include 'includes/class-tab-setting.php';
-include 'includes/class-login-error.php'; // ログインエラークラス
-include "includes/class-view-tab.php"; // タブビュークラス
-include "includes/kpw-admin-form.php"; // 管理画面に追加
+$includes = [
+    'class-tab-list.php',
+    'class-tab-order.php',
+    'class-tab-client.php',
+    'class-tab-service.php',
+    'class-tab-supplier.php',
+    'class-tab-report.php',
+    'class-tab-setting.php',
+    'class-login-error.php', // ログインエラークラス
+    'class-view-tab.php', // タブビュークラス
+    'kpw-admin-form.php', // 管理画面に追加
+];
+
+foreach ($includes as $file) {
+    include 'includes/' . $file;
+}
 
 // カンタンProをロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
-// JavaScriptを登録
-function enqueue_ktp_scripts() {
+// JavaScriptとスタイルシートを登録
+function ktpwp_scripts_and_styles() {
 	wp_enqueue_script(
 		'ktp-js',
 		plugins_url( 'js/ktp-ajax.js' , __FILE__),
@@ -50,11 +55,7 @@ function enqueue_ktp_scripts() {
 		true
 	);
 	wp_enqueue_style( 'ktp-js' );
-}
-add_action( 'wp_enqueue_scripts', 'enqueue_ktp_scripts' );
-
-// スタイルシートを登録
-function register_ktpwp_styles() {
+	
 	wp_register_style(
 		'ktpwp-css',
 		plugins_url( '/css/styles.css' , __FILE__),
@@ -64,11 +65,15 @@ function register_ktpwp_styles() {
 	);
 	wp_enqueue_style( 'ktpwp-css' );
 }
-add_action( 'wp_enqueue_scripts', 'register_ktpwp_styles' );
+add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 
 // テーブル用の関数を登録
-register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
-register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
+function ktpwp_table_setup() {
+    Create_Table(); // テーブル作成
+    Update_Table(); // テーブル更新
+}
+register_activation_hook( __FILE__, 'ktpwp_table_setup' );
+
 // register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
 
 
