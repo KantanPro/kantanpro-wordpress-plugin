@@ -291,7 +291,7 @@ class Kntan_Client_Class{
         $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
         // 現在表示中の詳細
         if(isset( $_GET['data_id'] )){
-            $data_id = $_GET['data_id'];
+            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
             $data_id = $wpdb->insert_id;
         }
@@ -371,7 +371,7 @@ class Kntan_Client_Class{
 
         // 現在表示中の詳細
         if(isset( $_GET['data_id'] )){
-            $query_id = $_GET['data_id'];
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
             $query_id = $wpdb->insert_id;
         }
