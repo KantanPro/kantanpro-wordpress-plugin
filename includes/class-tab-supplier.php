@@ -5,23 +5,17 @@ class Kantan_Supplier_Class{
     public $name;
 
     public function __construct() {
+        $this->name = 'supplier';
+    }
 
-    }
-    
-    // $nameをアラートし終了
-    public function alert_name() {
-        echo '<script type="text/javascript">alert("'.$this->name.'");</script>';
-        exit;
-    }
-    
     // -----------------------------
     // テーブル作成
     // -----------------------------
 
-    function Create_Table($name) {
+    function Create_Table() {
         global $wpdb;
         $my_table_version = '1.0.1';
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        $table_name = $wpdb->prefix . 'ktp_' . $this->name;
         $charset_collate = $wpdb->get_charset_collate();
     
         $columns = [
@@ -43,9 +37,6 @@ class Kantan_Supplier_Class{
             "payment_month TINYTEXT",
             "payment_day TINYTEXT",
             "payment_method TINYTEXT",
-            "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
-            "memo TEXT",
-            "UNIQUE KEY id (id)"
         ];
     
         try {
@@ -71,10 +62,10 @@ class Kantan_Supplier_Class{
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
 
-    function Update_Table( $name ) {
+    function Update_Table( $table_name ) {
 
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        $table_name = $wpdb->prefix . 'ktp_' . $this->name;
         
         // POSTデーター受信
         $data_id = $_POST['data_id'];
@@ -596,3 +587,4 @@ class Kantan_Supplier_Class{
 }
         
 ?>
+

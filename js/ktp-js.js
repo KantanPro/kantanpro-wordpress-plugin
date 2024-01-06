@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var tabs = document.querySelectorAll('#ktp-tabs > div.tab');
-    var contents = document.querySelectorAll('#tab-content > div.content');
+    var tabs = document.querySelectorAll('.tab_item');
+    var contents = document.querySelectorAll('.tab_content');
 
     // タブのクリックイベントハンドラー
     tabs.forEach(function(tab) {
