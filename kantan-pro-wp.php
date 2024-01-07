@@ -9,6 +9,20 @@ Version: 1.0
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+// プラグインを管理画面に登録
+function ktpwp_register_plugin() {
+    add_menu_page(
+        'Kantan Pro WP Settings', // ページタイトル
+        'Kantan Pro', // メニュータイトル
+        'manage_options', // 必要な権限
+        'ktpwp-settings', // メニュースラッグ
+        'ktpwp_settings_page', // 表示する関数
+        'dashicons-admin-generic', // アイコン
+        6 // メニュー位置
+    );
+}
+add_action('admin_menu', 'ktpwp_register_plugin');
+
 
 /*
  必要な定数を定義

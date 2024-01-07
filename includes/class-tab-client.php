@@ -508,7 +508,7 @@ class Kntan_Client_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 更新・削除：$action ID: $data_id ）</h3>
+                <h3>■ 顧客の詳細（ 更新・削除：$action ID: $data_id OK ）</h3>
             END;
             
 
