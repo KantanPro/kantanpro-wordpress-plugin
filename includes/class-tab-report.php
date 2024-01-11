@@ -5,9 +5,7 @@ class Kntan_Report_Class {
     public $name;
 
     public function __construct() {
-        $this->$name;
-        // add_action('');
-        // add_filter('');
+        $this->name = 'report';
     }
     
     function Report_Tab_View( $name ) {

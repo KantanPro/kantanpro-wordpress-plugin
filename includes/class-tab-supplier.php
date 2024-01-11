@@ -51,7 +51,7 @@ class Kantan_Supplier_Class{
                 foreach ($missing_columns as $missing_column) {
                     $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
                 }
-                update_option('ktp_' . $name . '_table_version', $my_table_version);
+                update_option('ktp_supplier_table_version', $my_table_version);
             }
         } catch (Exception $e) {
             error_log("Error occurred while creating/updating the table: " . $e->getMessage());
@@ -104,7 +104,7 @@ class Kantan_Supplier_Class{
             $action = 'update';
 
             // リダイレクト
-            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name=supplier&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
         }    
@@ -192,7 +192,7 @@ class Kantan_Supplier_Class{
 
             // リダイレクト
             $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name=supplier&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
             

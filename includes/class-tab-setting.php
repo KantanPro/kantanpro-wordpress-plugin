@@ -4,13 +4,11 @@ class Kntan_Setting_Class {
 
     public $name;
 
-    public function __construct() {
-        $this->$name;
-        // add_action('');
-        // add_filter('');
+    public function __construct($name) {
+        $this->name = 'setting';
     }
     
-    function Setting_Tab_View( $name ) {
+    function Setting_Tab_View() {
 
         // ログインユーザー情報を取得
         global $current_user;
@@ -21,7 +19,7 @@ class Kntan_Setting_Class {
 
         // 表示する内容
         $content = <<<END
-        <h3>ここは [$name] です。</h3>
+        <h3>ここは [{$this->name}] です。</h3>
         各種設定ができます。
         END;
         return $content;

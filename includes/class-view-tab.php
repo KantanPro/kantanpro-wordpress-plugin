@@ -2,10 +2,10 @@
 
 class view_tabs_Class{
 
-    public $name;
+    // public $name;
     
     public function __construct() {
-      $this->$name;
+        // $this->name = 'tabs';
     }
     
     // 指定された内容でタブを表示するメソッド

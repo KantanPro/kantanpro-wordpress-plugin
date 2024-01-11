@@ -23,7 +23,6 @@ function ktpwp_register_plugin() {
 }
 add_action('admin_menu', 'ktpwp_register_plugin');
 
-
 /*
  必要な定数を定義
 */
@@ -88,85 +87,95 @@ function ktpwp_table_setup() {
 }
 register_activation_hook( __FILE__, 'ktpwp_table_setup' );
 
-// register_activation_hook( __FILE__, 'my_wpcf7_mail_sent' ); // コンタクト７
-
-
 function KTPWP_Index(){
 
 	//すべてのタブのショートコード[kantanAllTab]
 	function kantanAllTab(){
 
 		//ログイン中なら
-		if( is_user_logged_in() ){
+		if (is_user_logged_in()) {
 
-				// ログインユーザー情報を取得
-				global $current_user;
+			// ログインユーザー情報を取得
+			global $current_user;
 
-				// ログアウトのリンク
-				$logout_link = wp_logout_url();
+			// ログアウトのリンク
+			$logout_link = wp_logout_url();
 
-				// ヘッダー表示ログインユーザー名など
-				$login_user = $current_user->nickname;
-				$front_message = <<<END
-				<div class="ktp_header">
-				$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
-					<div id="zengo" class="zengo">
-					<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
-					</div>
+			// ヘッダー表示ログインユーザー名など
+			$login_user = $current_user->nickname;
+			$front_message = <<<END
+			<div class="ktp_header">
+			$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
+				<div id="zengo" class="zengo">
+				<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
 				</div>
-				END;
-		
-				//仕事リスト
-				$list = new Kantan_List_Class();
-				$list_content = $list->List_Tab_View( 'list' );
+			</div>
+			END;
 
-				//受注書
-				$tabs = new Kntan_Order_Class();
-				$order_content = $tabs->Order_Tab_View( 'order' );
-				
-				//クライアント				
-				$tabs = new Kntan_Client_Class();
-				$tab_name = 'client';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$client_content = $view;
+			//仕事リスト
+			$list = new Kantan_List_Class();
+			$tab_name = 'list';
+			$list_content = $list->List_Tab_View('list');
+			$view = $clientTabs->View_Table($tab_name);
+			$list_content = $view;
 
-				//商品・サービス
-				$tabs = new Kntan_Service_Class();
-				$service_content = $tabs->Service_Tab_View( 'service' );
-				
-				//協力会社
-				$tabs = new Kantan_Supplier_Class();
-				$tab_name = 'supplier';
-				$tabs->Create_Table( $tab_name );
-				$tabs->Update_Table( $tab_name );
-				$view = $tabs->View_Table( $tab_name );
-				$supplier_content = $view;
+			//受注書
+			$orderTabs = new Kntan_Order_Class();
+			$tab_name = 'order';
+			$order_content = $orderTabs->Order_Tab_View('order');
+			$view = $clientTabs->View_Table($tab_name);
+			$order_content = $view;
 
-				//レポート
-				$tabs = new Kntan_Report_Class();
-				$report_content = $tabs->Report_Tab_View( 'report' );
-				
-				//設定
-				$tabs = new Kntan_Setting_Class();
-				$setting_content = $tabs->Setting_Tab_View( 'setting' );
+			//クライアント
+			$clientTabs = new Kntan_Client_Class();
+			$tab_name = 'client';
+			$clientTabs->Create_Table($tab_name);
+			$clientTabs->Update_Table($tab_name);
+			$view = $clientTabs->View_Table($tab_name);
+			$client_content = $view;
 
-				// view
-				$view = new view_tabs_Class();
-				$tab_view = $view ->TabsView( $list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content );
-				return $front_message . $tab_view;
+			//商品・サービス
+			$productTabs = new Kantan_Product_Class();
+			$product_content = $productTabs->Product_Tab_View('product');
+			$view = $clientTabs->View_Table($tab_name);
+			$client_content = $view;
 
+			//協力会社
+			$supplierTabs = new Kantan_Supplier_Class();
+			$tab_name = 'supplier';
+			$supplierTabs->Create_Table($tab_name);
+			$supplierTabs->Update_Table($tab_name);
+			$view = $supplierTabs->View_Table($tab_name);
+			$supplier_content = $view;
 
+			//レポート
+			$tabs = new Kntan_Report_Class();
+			$tab_name = 'report';
+			$tabs->Create_Table($tab_name);
+			$tabs->Update_Table($tab_name);
+			$report_content = $tabs->Report_Tab_View('report');
+			$view = $tabs->View_Table($tab_name);
+			$report_content = $view;
+
+			//設定
+			$tabs = new Kntan_Setting_Class();
+			$tab_name = 'setting';
+			$tabs->Create_Table($tab_name);
+			$setting_content = $tabs->Setting_Tab_View('setting');
+			$view = $tabs->View_Table($tab_name);
+			$setting_content = $view;
+
+			// view
+			$view = new view_tabs_Class();
+			$tab_view = $view->TabsView($list_content, $order_content, $client_content, $product_content, $supplier_content, $report_content, $setting_content);
+			$return_value = $front_message . $tab_view;
+			return $return_value;
+
+		} else {
+			$login_error = new Kantan_Login_Error();
+			$error = $login_error->Error_View();
+			return $error;
 		}
-
-		//ログアウト中なら
-		else{
-				$login_error = new Kantan_Login_Error();
-				$error = $login_error->Error_View();
-				return $error;
-		}
-
 	}
 	add_shortcode('kantanAllTab','kantanAllTab');
 

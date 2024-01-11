@@ -4,10 +4,8 @@ class Kantan_List_Class{
 
     public $name;
 
-    public function __construct() {
-        $this->$name;
-        // add_action('');
-        // add_filter('');
+    public function __construct($name) {
+        $this->name = 'list';
     }
     
     function List_Tab_View( $name ) {

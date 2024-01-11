@@ -5,9 +5,7 @@ class Kntan_Service_Class{
     public $name;
 
     public function __construct() {
-        $this->$name;
-        // add_action('');
-        // add_filter('');
+        $this->name = 'service';
     }
     
     function Service_Tab_View( $name ) {
