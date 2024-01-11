@@ -2,11 +2,11 @@
 
 class Kantan_Login_Error{
 
-    public $name;
+    // public $name;
 
     public function __construct() {
-        $name = "example"; // Assign a value to the variable $name
-        $this->$name;
+        // $name = "example"; // Assign a value to the variable $name
+        // $this->$name;
         // add_action('');
         // add_filter('');
     }

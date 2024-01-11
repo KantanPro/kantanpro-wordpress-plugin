@@ -2,20 +2,20 @@
 
 class Kantan_Supplier_Class{
 
-    public $name;
+    // public $name;
 
     public function __construct() {
-        $this->name = 'supplier';
+        // $tab_name = 'supplier';
     }
 
     // -----------------------------
     // テーブル作成
     // -----------------------------
 
-    function Create_Table() {
+    function Create_Table( $tab_name ) {
         global $wpdb;
         $my_table_version = '1.0.1';
-        $table_name = $wpdb->prefix . 'ktp_' . $this->name;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
     
         $columns = [
@@ -62,10 +62,10 @@ class Kantan_Supplier_Class{
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
 
-    function Update_Table( $table_name ) {
+    function Update_Table( $tab_name ) {
 
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $this->name;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         
         // POSTデーター受信
         $data_id = $_POST['data_id'];

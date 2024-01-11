@@ -2,7 +2,7 @@
 
 class Kntan_Client_Class{
 
-    public $name;
+    // public $name;
 
     public function __construct() {
 
@@ -12,10 +12,10 @@ class Kntan_Client_Class{
     // テーブル作成
     // -----------------------------
 
-    function Create_Table($name) {
+    function Create_Table($tab_name) {
         global $wpdb;
         $my_table_version = '1.0.1';
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
     
         $columns = [
@@ -54,7 +54,7 @@ class Kntan_Client_Class{
                 foreach ($missing_columns as $missing_column) {
                     $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
                 }
-                update_option('ktp_' . $name . '_table_version', $my_table_version);
+                update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
             }
         } catch (Exception $e) {
             error_log("Error occurred while creating/updating the table: " . $e->getMessage());
@@ -65,10 +65,10 @@ class Kntan_Client_Class{
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
 
-    function Update_Table( $name ) {
+    function Update_Table( $tab_name) {
 
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         
         // POSTデーター受信
         $data_id = $_POST['data_id'];
@@ -107,7 +107,7 @@ class Kntan_Client_Class{
             $action = 'update';
 
             // リダイレクト
-            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
         }    
@@ -195,7 +195,7 @@ class Kntan_Client_Class{
 
             // リダイレクト
             $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
             
@@ -444,7 +444,7 @@ class Kntan_Client_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id）</h3>
+                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
             END;
 
             $data_forms .= "<div class=\"add\">";

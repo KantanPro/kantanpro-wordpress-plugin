@@ -115,55 +115,41 @@ function KTPWP_Index(){
 			//仕事リスト
 			$list = new Kantan_List_Class();
 			$tab_name = 'list';
-			$list_content = $list->List_Tab_View('list');
-			$view = $clientTabs->View_Table($tab_name);
-			$list_content = $view;
+			$list_content = $list->List_Tab_View($tab_name);
 
 			//受注書
-			$orderTabs = new Kntan_Order_Class();
+			$order = new Kntan_Order_Class();
 			$tab_name = 'order';
-			$order_content = $orderTabs->Order_Tab_View('order');
-			$view = $clientTabs->View_Table($tab_name);
-			$order_content = $view;
+			$order_content = $order->Order_Tab_View($tab_name);
 
 			//クライアント
-			$clientTabs = new Kntan_Client_Class();
+			$client = new Kntan_Client_Class();
 			$tab_name = 'client';
-			$clientTabs->Create_Table($tab_name);
-			$clientTabs->Update_Table($tab_name);
-			$view = $clientTabs->View_Table($tab_name);
-			$client_content = $view;
+			$client->Create_Table($tab_name);
+			$client->Update_Table($tab_name);
+			$client_content = $client->View_Table($tab_name);
 
 			//商品・サービス
-			$productTabs = new Kantan_Product_Class();
-			$product_content = $productTabs->Product_Tab_View('product');
-			$view = $clientTabs->View_Table($tab_name);
-			$client_content = $view;
+			$product = new kntan_Service_Class();
+			$tab_name = 'product';
+			$product_content = $product->Service_Tab_View($tab_name);
 
 			//協力会社
-			$supplierTabs = new Kantan_Supplier_Class();
+			$supplier = new Kantan_Supplier_Class();
 			$tab_name = 'supplier';
-			$supplierTabs->Create_Table($tab_name);
-			$supplierTabs->Update_Table($tab_name);
-			$view = $supplierTabs->View_Table($tab_name);
-			$supplier_content = $view;
+			$supplier->Create_Table($tab_name);
+			$supplier->Update_Table($tab_name);
+			$supplier_content = $supplier->View_Table($tab_name);
 
 			//レポート
 			$tabs = new Kntan_Report_Class();
 			$tab_name = 'report';
-			$tabs->Create_Table($tab_name);
-			$tabs->Update_Table($tab_name);
-			$report_content = $tabs->Report_Tab_View('report');
-			$view = $tabs->View_Table($tab_name);
-			$report_content = $view;
+			$report_content = $tabs->Report_Tab_View($tab_name);
 
 			//設定
 			$tabs = new Kntan_Setting_Class();
 			$tab_name = 'setting';
-			$tabs->Create_Table($tab_name);
 			$setting_content = $tabs->Setting_Tab_View('setting');
-			$view = $tabs->View_Table($tab_name);
-			$setting_content = $view;
 
 			// view
 			$view = new view_tabs_Class();
