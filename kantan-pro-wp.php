@@ -122,6 +122,13 @@ function KTPWP_Index(){
 			$tab_name = 'order';
 			$order_content = $order->Order_Tab_View($tab_name);
 
+			//協力会社
+			$supplier = new Kantan_Supplier_Class();
+			$tab_name = 'supplier';
+			$supplier->Create_Table($tab_name);
+			$supplier->Update_Table($tab_name);
+			$supplier_content = $supplier->View_Table($tab_name);
+			
 			//クライアント
 			$client = new Kntan_Client_Class();
 			$tab_name = 'client';
@@ -130,16 +137,10 @@ function KTPWP_Index(){
 			$client_content = $client->View_Table($tab_name);
 
 			//商品・サービス
-			$product = new kntan_Service_Class();
-			$tab_name = 'product';
-			$product_content = $product->Service_Tab_View($tab_name);
+			$service = new kntan_Service_Class();
+			$tab_name = 'service';
+			$service_content = $service->Service_Tab_View($tab_name);
 
-			//協力会社
-			$supplier = new Kantan_Supplier_Class();
-			$tab_name = 'supplier';
-			$supplier->Create_Table($tab_name);
-			$supplier->Update_Table($tab_name);
-			$supplier_content = $supplier->View_Table($tab_name);
 
 			//レポート
 			$tabs = new Kntan_Report_Class();
@@ -153,7 +154,7 @@ function KTPWP_Index(){
 
 			// view
 			$view = new view_tabs_Class();
-			$tab_view = $view->TabsView($list_content, $order_content, $client_content, $product_content, $supplier_content, $report_content, $setting_content);
+			$tab_view = $view->TabsView($list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content);
 			$return_value = $front_message . $tab_view;
 			return $return_value;
 
