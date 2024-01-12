@@ -112,46 +112,47 @@ function KTPWP_Index(){
 			</div>
 			END;
 
-			//仕事リスト
-			$list = new Kantan_List_Class();
-			$tab_name = 'list';
-			$list_content = $list->List_Tab_View($tab_name);
+			$tab_name = $_GET['tab_name']; // URLパラメータからtab_nameを取得
 
-			//受注書
-			$order = new Kntan_Order_Class();
-			$tab_name = 'order';
-			$order_content = $order->Order_Tab_View($tab_name);
-
-			//協力会社
-			$supplier = new Kantan_Supplier_Class();
-			$tab_name = 'supplier';
-			$supplier->Create_Table($tab_name);
-			$supplier->Update_Table($tab_name);
-			$supplier_content = $supplier->View_Table($tab_name);
-			
-			//クライアント
-			$client = new Kntan_Client_Class();
-			$tab_name = 'client';
-			$client->Create_Table($tab_name);
-			$client->Update_Table($tab_name);
-			$client_content = $client->View_Table($tab_name);
-
-			//商品・サービス
-			$service = new kntan_Service_Class();
-			$tab_name = 'service';
-			$service_content = $service->Service_Tab_View($tab_name);
-
-
-			//レポート
-			$tabs = new Kntan_Report_Class();
-			$tab_name = 'report';
-			$report_content = $tabs->Report_Tab_View($tab_name);
-
-			//設定
-			$tabs = new Kntan_Setting_Class();
-			$tab_name = 'setting';
-			$setting_content = $tabs->Setting_Tab_View('setting');
-
+			switch ($tab_name) {
+				case 'list':
+					$list = new Kantan_List_Class();
+					$list_content = $list->List_Tab_View($tab_name);
+					break;
+				case 'order':
+					$order = new Kntan_Order_Class();
+					$order_content = $order->Order_Tab_View($tab_name);
+					break;
+				case 'supplier':
+					$supplier = new Kantan_Supplier_Class();
+					$supplier->Create_Table($tab_name);
+					$supplier->Update_Table($tab_name);
+					$supplier_content = $supplier->View_Table($tab_name);
+					break;
+				case 'client':
+					$client = new Kntan_Client_Class();
+					$client->Create_Table($tab_name);
+					$client->Update_Table($tab_name);
+					$client_content = $client->View_Table($tab_name);
+					break;
+				case 'service':
+					$service = new kntan_Service_Class();
+					$service_content = $service->Service_Tab_View($tab_name);
+					break;
+				case 'report':
+					$report = new Kntan_Report_Class();
+					$report_content = $report->Report_Tab_View($tab_name);
+					break;
+				case 'setting':
+					$setting = new Kntan_Setting_Class();
+					$setting_content = $setting->Setting_Tab_View($tab_name);
+					break;
+				default:
+					// デフォルトの処理
+					$list = new Kantan_List_Class();
+					$content = $list->List_Tab_View($tab_name);
+					break;
+			}
 			// view
 			$view = new view_tabs_Class();
 			$tab_view = $view->TabsView($list_content, $order_content, $client_content, $service_content, $supplier_content, $report_content, $setting_content);
