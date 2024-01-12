@@ -226,7 +226,7 @@ class Kantan_Supplier_Class{
         $results_h = <<<END
         <div class="data_contents">
         <div class="data_list_box">
-        <h3>■ 顧客リスト</h3>
+        <h3>■ 協力会社リスト</h3>
         END;
         
         $table_name = $wpdb->prefix . 'ktp_' . $name;
@@ -430,8 +430,9 @@ class Kantan_Supplier_Class{
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 
-        // データーがな0の場合は追加モードにする
+        // データーが0の場合は追加モードにする
         if( $data_num == 0 ){
+            $wpdb->query("ALTER TABLE $table_name AUTO_INCREMENT = 1");
             $action = 'istmode';
         }
 
@@ -441,7 +442,7 @@ class Kantan_Supplier_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
+                <h3>■ 協力会社の詳細（ 追加：$action ID: $data_id ）</h3>
             END;
 
             $data_forms .= "<div class=\"add\">";
@@ -505,7 +506,7 @@ class Kantan_Supplier_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 更新・削除：$action ID: $data_id ）</h3>
+                <h3>■ 協力会社の詳細（ ID: $data_id ）</h3>
             END;
             
 

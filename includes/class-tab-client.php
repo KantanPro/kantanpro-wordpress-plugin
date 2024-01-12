@@ -433,8 +433,9 @@ class Kntan_Client_Class{
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 
-        // データーがな0の場合は追加モードにする
+        // データーが0の場合は追加モードにする
         if( $data_num == 0 ){
+            $wpdb->query("ALTER TABLE $table_name AUTO_INCREMENT = 1");
             $action = 'istmode';
         }
 
@@ -508,7 +509,7 @@ class Kntan_Client_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 更新・削除：$action ID: $data_id OK ）</h3>
+                <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
             END;
             
 
