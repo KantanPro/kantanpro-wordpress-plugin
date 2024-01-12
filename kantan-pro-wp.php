@@ -123,12 +123,6 @@ function KTPWP_Index(){
 					$order = new Kntan_Order_Class();
 					$order_content = $order->Order_Tab_View($tab_name);
 					break;
-				case 'supplier':
-					$supplier = new Kantan_Supplier_Class();
-					$supplier->Create_Table($tab_name);
-					$supplier->Update_Table($tab_name);
-					$supplier_content = $supplier->View_Table($tab_name);
-					break;
 				case 'client':
 					$client = new Kntan_Client_Class();
 					$client->Create_Table($tab_name);
@@ -138,6 +132,12 @@ function KTPWP_Index(){
 				case 'service':
 					$service = new kntan_Service_Class();
 					$service_content = $service->Service_Tab_View($tab_name);
+					break;
+				case 'supplier':
+					$supplier = new Kantan_Supplier_Class();
+					$supplier->Create_Table($tab_name);
+					$supplier->Update_Table($tab_name);
+					$supplier_content = $supplier->View_Table($tab_name);
 					break;
 				case 'report':
 					$report = new Kntan_Report_Class();
@@ -150,7 +150,8 @@ function KTPWP_Index(){
 				default:
 					// デフォルトの処理
 					$list = new Kantan_List_Class();
-					$content = $list->List_Tab_View($tab_name);
+					$tab_name = 'list';
+					$list_content = $list->List_Tab_View($tab_name);
 					break;
 			}
 			// view
