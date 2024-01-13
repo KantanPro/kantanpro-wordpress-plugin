@@ -472,6 +472,8 @@ class Kntan_Client_Class{
                 }
             }
 
+            $data_forms .= "<div class='button'>";
+
             // 追加実行ボタン
             $action = 'insert';
             $data_id = $data_id + 1;
@@ -479,8 +481,12 @@ class Kntan_Client_Class{
             <form method='post' action=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='追加実行'></div>
+            <button type='submit' name='send_post' title="追加を実行">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+            <span class="material-symbols-outlined">
+            select_check_box
+            </span>
+            </button>
             </form>
             END;
 
@@ -492,14 +498,16 @@ class Kntan_Client_Class{
             <input type='hidden' name='data_id' value=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='キャンセル'></div>
+            <button type='submit' name='send_post' title="キャンセル">
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+            <span class="material-symbols-outlined">
+            disabled_by_default
+            </span>            
+            </button>
             </form>
             END;
 
-            $data_forms .= '</div>';
-
-        }
+            $data_forms .= '</div>';        }
 
         // 追加以外なら更新フォームだけを表示
         else if ($action === 'update' || $action === '' || $action === 'delete') {
@@ -536,23 +544,52 @@ class Kntan_Client_Class{
 
             $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
             $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
+
+            $data_forms .= "<div class='button'>";
+
             // 更新ボタンを追加
-            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <button type="submit" name="send_post" title="更新する">
+                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+                    <span class="material-symbols-outlined">
+                    cached
+                    </span>
+                </button>
+            </form>
+            END;
+
             // 削除ボタン
-            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <input type="hidden" name="data_id" value="{$data_id}">
+                <input type="hidden" name="query_post" value="delete">
+                <button type="submit" name="send_post" title="削除する">
+                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+                    <span class="material-symbols-outlined">
+                    delete
+                    </span>
+                </button>
+            </form>
+            END;
 
             // 追加モードボタン
             $action = 'istmode';
             $data_id = $data_id + 1;
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='追加モード'></div>
+                <input type='hidden' name='data_id' value=''>
+                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='data_id' value='$data_id'>
+                <button type='submit' name='send_post' title="追加する">
+                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+                    <span class="material-symbols-outlined">
+                    add
+                    </span>
+                </button>
             </form>
             END;
+
             $data_forms .= '</div>';
         }
 
