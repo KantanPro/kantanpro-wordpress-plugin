@@ -83,10 +83,10 @@ function check_activation_key() {
 
 	if ( empty( $activation_key ) ) {
 		// 有効化キーが設定されていない場合の処理
-		$act_key = '有効化キーが設定されていません';
+		$act_key = '';
 	} else {
 		// 有効化キーが設定されている場合の処理
-		$act_key = '有効化キーが設定されています';
+		$act_key = '';
 	}
 
 	return $act_key;

@@ -15,6 +15,9 @@ class Kntan_Client_Class{
         $my_table_version = '1.0.1';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
+
+        // // テーブル名にロックをかける
+        // $wpdb->query("LOCK TABLES {$table_name} WRITE;");
     
         $columns = [
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
@@ -41,22 +44,32 @@ class Kntan_Client_Class{
         ];
     
         try {
+            // テーブルが存在するかどうかをチェック
             if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+                // テーブルが存在しない場合、新たにテーブルを作成
                 $sql = "CREATE TABLE $table_name (" . implode(", ", $columns) . ") $charset_collate;";
                 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
                 dbDelta($sql);
+                // テーブルのバージョン情報をオプションに保存
                 add_option('ktp_' . $name . '_table_version', $my_table_version);
             } else {
+                // テーブルが存在する場合、必要なカラムが存在するかをチェック
                 $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
                 $missing_columns = array_diff($columns, $existing_columns);
+                // 必要なカラムが存在しない場合、カラムを追加
                 foreach ($missing_columns as $missing_column) {
                     $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
                 }
+                // テーブルのバージョン情報を更新
                 update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
             }
         } catch (Exception $e) {
+            // エラーが発生した場合、エラーメッセージをログに出力
             error_log("Error occurred while creating/updating the table: " . $e->getMessage());
         }
+        // // ロックを解除する
+        // $wpdb->query("UNLOCK TABLES;");
+
     }
 
     // -----------------------------
@@ -67,6 +80,9 @@ class Kntan_Client_Class{
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+
+        // テーブル名にロックをかける
+        $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
         // POSTデーター受信
         $data_id = $_POST['data_id'];
@@ -101,10 +117,13 @@ class Kntan_Client_Class{
                     '%d'
                 )
             );
-            $data_id = $data_id - 1;
-            $action = 'update';
+
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
 
             // リダイレクト
+            $data_id = $data_id - 1;
+            $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
@@ -158,6 +177,9 @@ class Kntan_Client_Class{
                 ),
                 array( '%d' ) 
             );
+
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
             
         }
         
@@ -188,10 +210,12 @@ class Kntan_Client_Class{
                 ) 
             );
 
-            // 追加後に更新モードにする
-            $action = 'update';
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
 
+            // 追加後に更新モードにする
             // リダイレクト
+            $action = 'update';
             $data_id = $wpdb->insert_id;
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
@@ -216,15 +240,25 @@ class Kntan_Client_Class{
             // データを挿入
             $wpdb->insert($table_name, $data);
 
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+            
             // 追加後に更新モードにする
-            $action = 'update';
-
             // リダイレクト
+            $action = 'update';
             $data_id = $wpdb->insert_id;
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
         }
+
+        // どの処理にも当てはまらない場合はロック解除
+        else {
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+        }
+
+
     }
     
     // -----------------------------
