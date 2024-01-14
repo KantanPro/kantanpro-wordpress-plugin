@@ -200,6 +200,33 @@ class Kntan_Client_Class{
             exit;
             
         }
+        
+        // 複製
+        elseif( $query_post == 'duplication' ) {
+            // データのIDを取得
+            $data_id = $_POST['data_id'];
+
+            // データを取得
+            $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
+
+            // 会社名の最後に#を追加
+            $data['company_name'] .= '#';
+
+            // IDを削除
+            unset($data['id']);
+
+            // データを挿入
+            $wpdb->insert($table_name, $data);
+
+            // 追加後に更新モードにする
+            $action = 'update';
+
+            // リダイレクト
+            $data_id = $wpdb->insert_id;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
+        }
     }
     
     // -----------------------------
@@ -482,7 +509,6 @@ class Kntan_Client_Class{
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
             <button type='submit' name='send_post' title="追加を実行">
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
             <span class="material-symbols-outlined">
             select_check_box
             </span>
@@ -499,7 +525,6 @@ class Kntan_Client_Class{
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
             <button type='submit' name='send_post' title="キャンセル">
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
             <span class="material-symbols-outlined">
             disabled_by_default
             </span>            
@@ -551,7 +576,7 @@ class Kntan_Client_Class{
             $data_forms .= <<<END
             <form method="post" action="">
                 <button type="submit" name="send_post" title="更新する">
-                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+                
                     <span class="material-symbols-outlined">
                     cached
                     </span>
@@ -565,9 +590,21 @@ class Kntan_Client_Class{
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="delete">
                 <button type="submit" name="send_post" title="削除する">
-                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
                     <span class="material-symbols-outlined">
                     delete
+                    </span>
+                </button>
+            </form>
+            END;
+
+            // 複製ボタン
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <input type="hidden" name="data_id" value="{$data_id}">
+                <input type="hidden" name="query_post" value="duplication">
+                <button type="submit" name="send_post" title="複製する">
+                    <span class="material-symbols-outlined">
+                    content_copy
                     </span>
                 </button>
             </form>
@@ -582,7 +619,6 @@ class Kntan_Client_Class{
                 <input type='hidden' name='query_post' value='$action'>
                 <input type='hidden' name='data_id' value='$data_id'>
                 <button type='submit' name='send_post' title="追加する">
-                <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
                     <span class="material-symbols-outlined">
                     add
                     </span>

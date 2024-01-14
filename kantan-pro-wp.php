@@ -77,6 +77,12 @@ function ktpwp_scripts_and_styles() {
 		'all'
 	);
 	wp_enqueue_style( 'ktpwp-css' );
+
+	// Google FontsのMaterial Symbols Outlinedを追加
+	wp_enqueue_style(
+		'material-symbols-outlined',
+		'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0'
+	);
 }
 add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 
