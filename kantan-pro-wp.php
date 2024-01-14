@@ -9,24 +9,8 @@ Version: 1.0
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-// プラグインを管理画面に登録
-function ktpwp_register_plugin() {
-    add_menu_page(
-        'Kantan Pro WP Settings', // ページタイトル
-        'Kantan Pro', // メニュータイトル
-        'manage_options', // 必要な権限
-        'ktpwp-settings', // メニュースラッグ
-        'ktpwp_settings_page', // 表示する関数
-        'dashicons-admin-generic', // アイコン
-        6 // メニュー位置
-    );
-}
-add_action('admin_menu', 'ktpwp_register_plugin');
 
-/*
- 必要な定数を定義
-*/
-
+// 定数を定義
 if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
 	define( 'MY_PLUGIN_VERSION', '1.0' );
 }
@@ -39,28 +23,27 @@ if ( ! defined( 'MY_PLUGIN_URL' ) ) {
 
 // ファイルをインクルード
 $includes = [
-    'class-tab-list.php',
-    'class-tab-order.php',
-    'class-tab-client.php',
-    'class-tab-service.php',
-    'class-tab-supplier.php',
-    'class-tab-report.php',
-    'class-tab-setting.php',
+    'class-tab-list.php', // リストタブクラス
+    'class-tab-order.php', // 注文タブクラス
+    'class-tab-client.php', // 顧客タブクラス
+    'class-tab-service.php', // サービスタブクラス
+    'class-tab-supplier.php', // 仕入先タブクラス
+    'class-tab-report.php', // 報告タブクラス
+    'class-tab-setting.php', // 設定タブクラス
     'class-login-error.php', // ログインエラークラス
     'class-view-tab.php', // タブビュークラス
-    'kpw-admin-form.php', // 管理画面に追加
+    'ktp-admin-form.php', // 管理画面に追加
 ];
 
 foreach ($includes as $file) {
     include 'includes/' . $file;
 }
 
-// カンタンProをロード
+// カンタンProWPをロード
 add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
 // JavaScriptとスタイルシートを登録
 function ktpwp_scripts_and_styles() {
-
 	// js
 	wp_enqueue_script(
 		'ktp-js',
@@ -70,7 +53,6 @@ function ktpwp_scripts_and_styles() {
 		true
 	);
 	wp_enqueue_style( 'ktp-js' );
-	
 	// css
 	wp_register_style(
 		'ktp-css',
@@ -80,7 +62,6 @@ function ktpwp_scripts_and_styles() {
 		'all'
 	);
 	wp_enqueue_style( 'ktp-css' );
-
 	// Google Fonts
 	wp_enqueue_style(
 		'material-symbols-outlined',
@@ -90,11 +71,32 @@ function ktpwp_scripts_and_styles() {
 add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 
 // テーブル用の関数を登録
-function ktpwp_table_setup() {
+function ktp_table_setup() {
     Create_Table(); // テーブル作成
     Update_Table(); // テーブル更新
 }
-register_activation_hook( __FILE__, 'ktpwp_table_setup' );
+register_activation_hook( __FILE__, 'ktp_table_setup' );
+
+// 有効化関数を登録
+function ktp_activation() {
+	// 有効化キーを設定
+	add_site_option( 'activation_key', 'okokok' );
+}
+
+// 有効化キーが設定されているかチェック
+function check_activation_key() {
+	$activation_key = get_site_option( 'activation_key' );
+
+	if ( empty( $activation_key ) ) {
+		// 有効化キーが設定されていない場合の処理
+		$act_key = '有効化キーが設定されていません';
+		return $act_key;
+	} else {
+		// 有効化キーが設定されている場合の処理
+		$act_key = '有効化キーが設定されています';
+		return $act_key;
+	}
+}
 
 function KTPWP_Index(){
 
@@ -114,7 +116,7 @@ function KTPWP_Index(){
 			$login_user = $current_user->nickname;
 			$front_message = <<<END
 			<div class="ktp_header">
-			$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　
+			$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
 				<div id="zengo" class="zengo">
 				<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
 				</div>
