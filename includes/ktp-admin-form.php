@@ -8,17 +8,19 @@ function add_general_custom_fields() {
         'カンタンProWP', // menu_title
         'administrator', // capability
         'ktp-admin', // menu_slug
-        'display_plugin_admin_page' // function
+        'display_plugin_admin_page', // function
+        '', // icon_url
+        3 // position
     );
     register_setting(
         'ktp-group', // option_group
-        'activation_key' // option_name
+        'ktp_activation_key' // option_name
     );
 }
 
 function active_ktp_validation( $input ) {
     $input = (int) $input;
-    $activation_key = get_site_option( 'activation_key' );
+    $activation_key = get_site_option( 'ktp_activation_key' );
 
     // 有効化キーが正しい場合のみ、入力を受け付ける
     if ( $activation_key === 'your_activation_key' && ( $input === 0 || $input === 1 ) ) {
@@ -34,6 +36,7 @@ function active_ktp_validation( $input ) {
 }
 
 function display_plugin_admin_page() {
+    $activation_key = get_site_option( 'ktp_activation_key' );
     $checked = get_site_option( 'active_ktp' );
     if( empty( $checked ) ){
         $checked = '';
@@ -49,16 +52,16 @@ function display_plugin_admin_page() {
 <form method="post" action="options.php">
 
 <?php
-settings_fields( 'ktp-group' ); // ここを修正
+settings_fields( 'ktp-group' );
 do_settings_sections( 'default' );
 ?>
 
 <table class="form-table">
 <tbody>
 <tr>
-<th scope="row"><label for="activation_key">有効化キー</label></th>
+<th scope="row"><label for="ktp_activation_key">有効化キー</label></th>
 <td>
-<input type="text" id="activation_key" name="activation_key" value="<?php echo esc_attr( $activation_key ); ?>" />
+<input type="text" id="ktp_activation_key" name="ktp_activation_key" value="<?php echo esc_attr( $activation_key ); ?>" />
 </td>
 </tr>
 </tbody>

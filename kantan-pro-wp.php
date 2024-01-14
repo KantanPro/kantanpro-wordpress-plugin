@@ -77,25 +77,19 @@ function ktp_table_setup() {
 }
 register_activation_hook( __FILE__, 'ktp_table_setup' );
 
-// 有効化関数を登録
-function ktp_activation() {
-	// 有効化キーを設定
-	add_site_option( 'activation_key', 'okokok' );
-}
-
 // 有効化キーが設定されているかチェック
 function check_activation_key() {
-	$activation_key = get_site_option( 'activation_key' );
+	$activation_key = get_site_option( 'ktp_activation_key' );
 
 	if ( empty( $activation_key ) ) {
 		// 有効化キーが設定されていない場合の処理
 		$act_key = '有効化キーが設定されていません';
-		return $act_key;
 	} else {
 		// 有効化キーが設定されている場合の処理
 		$act_key = '有効化キーが設定されています';
-		return $act_key;
 	}
+
+	return $act_key;
 }
 
 function KTPWP_Index(){
@@ -114,6 +108,7 @@ function KTPWP_Index(){
 
 			// ヘッダー表示ログインユーザー名など
 			$login_user = $current_user->nickname;
+			$act_key = check_activation_key();
 			$front_message = <<<END
 			<div class="ktp_header">
 			$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
@@ -122,6 +117,10 @@ function KTPWP_Index(){
 				</div>
 			</div>
 			END;
+
+			// // 関数を呼び出して結果を表示
+			// $act_key = check_activation_key();
+			// $flont_message .= $act_key;
 
 			$tab_name = $_GET['tab_name']; // URLパラメータからtab_nameを取得
 
