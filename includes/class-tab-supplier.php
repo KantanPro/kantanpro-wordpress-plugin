@@ -2,17 +2,15 @@
 
 class Kantan_Supplier_Class{
 
-    // public $name;
-
     public function __construct() {
-        // $tab_name = 'supplier';
+
     }
 
     // -----------------------------
     // テーブル作成
     // -----------------------------
 
-    function Create_Table( $tab_name ) {
+    function Create_Table($tab_name) {
         global $wpdb;
         $my_table_version = '1.0.1';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
@@ -37,6 +35,9 @@ class Kantan_Supplier_Class{
             "payment_month TINYTEXT",
             "payment_day TINYTEXT",
             "payment_method TINYTEXT",
+            "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
+            "memo TEXT",
+            "UNIQUE KEY id (id)"
         ];
     
         try {
@@ -51,7 +52,7 @@ class Kantan_Supplier_Class{
                 foreach ($missing_columns as $missing_column) {
                     $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
                 }
-                update_option('ktp_supplier_table_version', $my_table_version);
+                update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
             }
         } catch (Exception $e) {
             error_log("Error occurred while creating/updating the table: " . $e->getMessage());
@@ -62,7 +63,7 @@ class Kantan_Supplier_Class{
     // テーブルの操作（更新・追加・削除）
     // -----------------------------
 
-    function Update_Table( $tab_name ) {
+    function Update_Table( $tab_name) {
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
@@ -104,7 +105,7 @@ class Kantan_Supplier_Class{
             $action = 'update';
 
             // リダイレクト
-            $url = '?tab_name=supplier&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
         }    
@@ -192,10 +193,37 @@ class Kantan_Supplier_Class{
 
             // リダイレクト
             $data_id = $wpdb->insert_id;
-            $url = '?tab_name=supplier&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
             
+        }
+        
+        // 複製
+        elseif( $query_post == 'duplication' ) {
+            // データのIDを取得
+            $data_id = $_POST['data_id'];
+
+            // データを取得
+            $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
+
+            // 会社名の最後に#を追加
+            $data['company_name'] .= '#';
+
+            // IDを削除
+            unset($data['id']);
+
+            // データを挿入
+            $wpdb->insert($table_name, $data);
+
+            // 追加後に更新モードにする
+            $action = 'update';
+
+            // リダイレクト
+            $data_id = $wpdb->insert_id;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
         }
     }
     
@@ -226,7 +254,7 @@ class Kantan_Supplier_Class{
         $results_h = <<<END
         <div class="data_contents">
         <div class="data_list_box">
-        <h3>■ 協力会社リスト</h3>
+        <h3>■ 顧客リスト</h3>
         END;
         
         $table_name = $wpdb->prefix . 'ktp_' . $name;
@@ -442,7 +470,7 @@ class Kantan_Supplier_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ 追加：$action ID: $data_id ）</h3>
+                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
             END;
 
             $data_forms .= "<div class=\"add\">";
@@ -469,6 +497,8 @@ class Kantan_Supplier_Class{
                 }
             }
 
+            $data_forms .= "<div class='button'>";
+
             // 追加実行ボタン
             $action = 'insert';
             $data_id = $data_id + 1;
@@ -476,8 +506,11 @@ class Kantan_Supplier_Class{
             <form method='post' action=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='追加実行'></div>
+            <button type='submit' name='send_post' title="追加を実行">
+            <span class="material-symbols-outlined">
+            select_check_box
+            </span>
+            </button>
             </form>
             END;
 
@@ -489,14 +522,15 @@ class Kantan_Supplier_Class{
             <input type='hidden' name='data_id' value=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='キャンセル'></div>
+            <button type='submit' name='send_post' title="キャンセル">
+            <span class="material-symbols-outlined">
+            disabled_by_default
+            </span>            
+            </button>
             </form>
             END;
 
-            $data_forms .= '</div>';
-
-        }
+            $data_forms .= '</div>';        }
 
         // 追加以外なら更新フォームだけを表示
         else if ($action === 'update' || $action === '' || $action === 'delete') {
@@ -506,7 +540,7 @@ class Kantan_Supplier_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ ID: $data_id ）</h3>
+                <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
             END;
             
 
@@ -533,23 +567,63 @@ class Kantan_Supplier_Class{
 
             $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
             $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
+
+            $data_forms .= "<div class='button'>";
+
             // 更新ボタンを追加
-            $data_forms .= '<div class="submit_button"><input type="submit" name="send_post" value="更新"></div></form>';
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <button type="submit" name="send_post" title="更新する">
+                
+                    <span class="material-symbols-outlined">
+                    cached
+                    </span>
+                </button>
+            </form>
+            END;
+
             // 削除ボタン
-            $data_forms .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\"><input type=\"hidden\" name=\"query_post\" value=\"delete\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"削除\"></div></form>";
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <input type="hidden" name="data_id" value="{$data_id}">
+                <input type="hidden" name="query_post" value="delete">
+                <button type="submit" name="send_post" title="削除する">
+                    <span class="material-symbols-outlined">
+                    delete
+                    </span>
+                </button>
+            </form>
+            END;
+
+            // 複製ボタン
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <input type="hidden" name="data_id" value="{$data_id}">
+                <input type="hidden" name="query_post" value="duplication">
+                <button type="submit" name="send_post" title="複製する">
+                    <span class="material-symbols-outlined">
+                    content_copy
+                    </span>
+                </button>
+            </form>
+            END;
 
             // 追加モードボタン
             $action = 'istmode';
             $data_id = $data_id + 1;
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <div class='submit_button'>
-            <input type='submit' name='send_post' value='追加モード'></div>
+                <input type='hidden' name='data_id' value=''>
+                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='data_id' value='$data_id'>
+                <button type='submit' name='send_post' title="追加する">
+                    <span class="material-symbols-outlined">
+                    add
+                    </span>
+                </button>
             </form>
             END;
+
             $data_forms .= '</div>';
         }
 
@@ -588,4 +662,3 @@ class Kantan_Supplier_Class{
 }
         
 ?>
-

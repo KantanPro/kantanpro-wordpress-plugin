@@ -60,6 +60,8 @@ add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
 
 // JavaScriptとスタイルシートを登録
 function ktpwp_scripts_and_styles() {
+
+	// js
 	wp_enqueue_script(
 		'ktp-js',
 		plugins_url( 'js/ktp-ajax.js' , __FILE__),
@@ -69,16 +71,17 @@ function ktpwp_scripts_and_styles() {
 	);
 	wp_enqueue_style( 'ktp-js' );
 	
+	// css
 	wp_register_style(
-		'ktpwp-css',
+		'ktp-css',
 		plugins_url( '/css/styles.css' , __FILE__),
 		array(),
 		'1.0.0',
 		'all'
 	);
-	wp_enqueue_style( 'ktpwp-css' );
+	wp_enqueue_style( 'ktp-css' );
 
-	// Google FontsのMaterial Symbols Outlinedを追加
+	// Google Fonts
 	wp_enqueue_style(
 		'material-symbols-outlined',
 		'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0'
