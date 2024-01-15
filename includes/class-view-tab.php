@@ -1,11 +1,9 @@
 <?php
 
 class view_tabs_Class{
-
-    // public $name;
     
     public function __construct() {
-        // $this->name = 'tabs';
+
     }
     
     // 指定された内容でタブを表示するメソッド
@@ -22,13 +20,13 @@ class view_tabs_Class{
         $position = $_GET['tab_name'] ?? 'list';
 
         $tabs = [
-          'list' => 'list',
-          'order' => 'order',
-          'client' => 'client',
-          'service' => 'service',
-          'supplier' => 'supplier',
-          'report' => 'report',
-          'setting' => 'setting'
+          'list' => '仕事リスト',
+          'order' => '伝票処理',
+          'client' => '顧客',
+          'service' => '商品・サービス',
+          'supplier' => '協力会社',
+          'report' => 'レポート',
+          'setting' => '設定'
         ];
 
         $view = "<div class=\"tabs\">";
