@@ -28,7 +28,7 @@ class Kntan_Report_Class {
             return $content;
         } else {
             $content .= <<<END
-            カンタンProWPの有効化ありがとうございます！<br />
+            <span style='color:red;'>カンタンProWPの有効化ありがとうございます！</span><br />
             売上などのレポートを表示できます。<br />
             今、開発中なので、しばらくお待ちください。
             END;

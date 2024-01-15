@@ -29,6 +29,7 @@
   box-sizing: border-box;
 }
 
+/* リストBOXと詳細BOXのレスポンシブ */
 @media screen and (min-width: 767px) {
   .data_list_box {
     width: 50%;
@@ -178,20 +179,22 @@ input[name="tab_item"] {
   margin-bottom: 10px;
 }
 
+/* ラベル */
 .form-group label {
   width: 20%;
   text-align: right;
   margin-right: 10px;
 }
 
+/* 入力フォーム */
 .form-group input {
   width: 70%;
 }
 
+/* テキストエリア */
 .hide {
   display: none;
 }
-
 
 /* ボタン */
 .button {
@@ -200,6 +203,7 @@ input[name="tab_item"] {
   justify-content: flex-end;
 }
 
+/* ボタンのスタイル */
 .button button {
   margin-right: 10px;
   padding: 4px 5px; /* 上下のパディングを3px、左右のパディングを0pxに設定 */
