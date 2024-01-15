@@ -35,7 +35,8 @@ class view_tabs_Class{
         foreach ($tabs as $key => $value) {
           $checked = $position === $key ? ' checked' : '';
           $view .= "<input id=\"$key\" type=\"radio\" name=\"tab_item\"$checked>";
-          $view .= "<label class=\"tab_item\" for=\"$key\"><a href=\"?tab_name=$key\">$value</a></label>";
+          $view .= "<label class=\"tab_item\"><a href=\"?tab_name=$key\">$value</a></label>";
+          // $view .= "<label class=\"tab_item\" for=\"$key\"><a href=\"?tab_name=$key\">$value</a></label>";
         }
         $view .= <<<EOF
               <div class="tab_content" id="list_content">
