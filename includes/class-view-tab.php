@@ -17,8 +17,10 @@ class view_tabs_Class{
       $setting_content
       ) {
         
+        // タブの位置を取得
         $position = $_GET['tab_name'] ?? 'list';
 
+        // タブの内容を配列で定義
         $tabs = [
           'list' => '仕事リスト',
           'order' => '伝票処理',
@@ -29,6 +31,7 @@ class view_tabs_Class{
           'setting' => '設定'
         ];
 
+        // タブの内容を作成
         $view = "<div class=\"tabs\">";
         foreach ($tabs as $key => $value) {
           $checked = $position === $key ? ' checked' : '';
