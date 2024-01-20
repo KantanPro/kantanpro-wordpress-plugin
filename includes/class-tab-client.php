@@ -648,16 +648,6 @@ class Kntan_Client_Class{
                 </button>
                 </form>
                 END;
-            // }
-            // // 検索ならIDを取得
-            // elseif( $action === 'search' ){
-                
-            //     // 表題
-            //     $data_title = <<<END
-            //     <div class="data_detail_box">
-            //         <h3>■ 顧客の詳細（ 検索：$action ID: $data_id ）</h3>
-            //     END;
-            // }
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
