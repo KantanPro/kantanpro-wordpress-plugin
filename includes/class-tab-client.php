@@ -185,47 +185,36 @@ class Kntan_Client_Class{
 
         // 検索
         elseif( $query_post == 'search' ){
-        // echo $query_post;
-        // exit;
 
         // SQLクエリを準備（会社名を検索）
         $search_query = $_POST['search_query'];
         $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
-        // $search_query
-        // echo '$search_query＝'.$search_query;
-        // exit;
-
+            // 検索結果がある場合の処理
             if (count($results) > 0) {
 
-                // 検索結果がある場合の処理
+                // 検索結果のIDを取得
                 $id = $results[0]->id;
-
-                // テスト
-                // echo 'IDは'. $id .'です。';
-                // echo '検索クエリは'. $search_query .'です。';
-                // exit;
-
-                // ロックを解除する
-                $wpdb->query("UNLOCK TABLES;");
 
                 // 検索後に更新モードにする
                 $action = 'update';
                 $data_id = $id;
                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
                 header("Location: {$url}");
-                exit;
             }
+
+            // 検索結果がない場合の処理
             else {
-                // 検索結果がない場合の処理
                 // 検索後に更新モードにする
                 $action = 'update';
                 $data_id = $wpdb->get_var("SELECT id FROM $table_name ORDER BY id DESC LIMIT 1");
                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
                 header("Location: {$url}");
-                exit;
             }
 
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+            exit;
         }
 
         // 追加
@@ -551,7 +540,7 @@ class Kntan_Client_Class{
                 // 表題
                 $data_title = <<<END
                 <div class="data_detail_box">
-                    <h3>■ 顧客の詳細（ モード：$action ID: $data_id ）</h3>
+                    <h3>■ 顧客の詳細（ 追加モード ）</h3>
                 END;
 
                 // 空のフォームフィールドを生成
@@ -638,7 +627,7 @@ class Kntan_Client_Class{
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ モード：$action ）</h3>
+                <h3>■ 顧客の詳細（ 検索モード ）</h3>
             END;
 
             // 検索フォームを生成
