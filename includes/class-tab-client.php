@@ -183,46 +183,56 @@ class Kntan_Client_Class{
             
         }
 
-        // 検索
+        // 検索実行
         elseif( $query_post == 'search' ){
 
-            // 検索フォームが送信されたときにデータベースを検索
-            if (isset($_POST['search_query'])) {
-                global $wpdb;
-                $search_query = $_POST['search_query'];
+            // global $wpdb;
+            $search_query = $_POST['search_query'];
 
-                // SQLクエリを準備（会社名とメールアドレスの両方を検索）
-                $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s OR email LIKE %s", '%' . $wpdb->esc_like($search_query) . '%', '%' . $wpdb->esc_like($search_query) . '%'));
+            // SQLクエリを準備（会社名を検索）
+            $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
+            // if( count($results) > 0){
+            //     $results[] = <<<END
+            //     <div class="data_list_item">検索結果：$search_query</div>
+            //     END;
+            // } else {
+            //     $results[] = <<<END
+            //     <div class="data_list_item">検索結果：$search_query</div>
+            //     <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
+            //     END;
+            // }
+            // $results = array_reverse($results);
 
-                // 検索結果を表示
-                foreach ($results as $row) {
+            // 検索結果を表示
+            foreach ($results as $row) {
                 // ここで$rowの各フィールドを表示
                 $id = esc_html($row->id);
-                $time = esc_html($row->time);
-                $company_name = esc_html($row->company_name);
-                $user_name = esc_html($row->name);
-                $email = esc_html($row->email);
-                $url = esc_html($row->url);
-                $representative_name = esc_html($row->representative_name);
-                $phone = esc_html($row->phone);
-                $postal_code = esc_html($row->postal_code);
-                $prefecture = esc_html($row->prefecture);
-                $city = esc_html($row->city);
-                $address = esc_html($row->address);
-                $building = esc_html($row->building);
-                $closing_day = esc_html($row->closing_day);
-                $payment_month = esc_html($row->payment_month);
-                $payment_day = esc_html($row->payment_day);
-                $payment_method = esc_html($row->payment_method);
-                $tax_category = esc_html($row->tax_category);
-                $memo = esc_html($row->memo);
-                $text = esc_html($row->text);
-                $results[] = <<<END
-                <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id"> → </a></div>
-                END;
-
-                }
+                // $time = esc_html($row->time);
+                // $company_name = esc_html($row->company_name);
+                // $user_name = esc_html($row->name);
+                // $email = esc_html($row->email);
+                // $url = esc_html($row->url);
+                // $representative_name = esc_html($row->representative_name);
+                // $phone = esc_html($row->phone);
+                // $postal_code = esc_html($row->postal_code);
+                // $prefecture = esc_html($row->prefecture);
+                // $city = esc_html($row->city);
+                // $address = esc_html($row->address);
+                // $building = esc_html($row->building);
+                // $closing_day = esc_html($row->closing_day);
+                // $payment_month = esc_html($row->payment_month);
+                // $payment_day = esc_html($row->payment_day);
+                // $payment_method = esc_html($row->payment_method);
+                // $tax_category = esc_html($row->tax_category);
+                // $memo = esc_html($row->memo);
+                // $text = esc_html($row->text);
+                // $results[] = <<<END
+                // <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id"> → </a></div>
+                // END;
             }
+
+            // デバッグ：$idを出力
+            // echo $id;
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -230,7 +240,8 @@ class Kntan_Client_Class{
             // 検索後に更新モードにする
             // リダイレクト
             $action = 'update';
-            $data_id = $wpdb->insert_id;
+            $data_id = $id;
+            // $data_id = $wpdb->insert_id;
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
@@ -304,16 +315,6 @@ class Kntan_Client_Class{
             header("Location: {$url}");
             exit;
         }
-
-        // $query_postが'search'のときに検索フォームを表示
-        if ($query_post == 'search') {
-            ?>
-            <form method="post">
-                <input type="text" name="search_query" placeholder="Search...">
-                <input type="submit" value="Search">
-            </form>
-            <?php
-        } 
 
         // どの処理にも当てはまらない場合はロック解除
         else {
@@ -580,23 +581,25 @@ class Kntan_Client_Class{
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-    
+
+                    // 検索モードの場合、会社名フィールドのname属性を'search_query'に設定
+                    $fieldName = $action === 'search' && $field['name'] === 'company_name' ? 'search_query' : $field['name'];
+
                     if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
                     } elseif ($field['type'] === 'select') {
                         $options = '';
-    
+
                         foreach ($field['options'] as $option) {
                             $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
                             $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
                         }
-    
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
                     } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                     }
-                }
-    
+                }    
                 $data_forms .= "<div class='button'>";
 
                 if( $action === 'istmode'){
