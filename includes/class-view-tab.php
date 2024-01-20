@@ -24,7 +24,7 @@ class view_tabs_Class{
         $tabs = [
           'list' => '仕事リスト',
           'order' => '伝票処理',
-          'client' => '顧客',
+          'client' => '得意先',
           'service' => '商品・サービス',
           'supplier' => '協力会社',
           'report' => 'レポート',
