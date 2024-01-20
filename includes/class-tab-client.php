@@ -73,7 +73,7 @@ class Kntan_Client_Class{
     }
 
     // -----------------------------
-    // テーブルの操作（更新・追加・削除）
+    // テーブルの操作（更新・追加・削除・検索）
     // -----------------------------
 
     function Update_Table( $tab_name) {
@@ -183,68 +183,49 @@ class Kntan_Client_Class{
             
         }
 
-        // 検索実行
+        // 検索
         elseif( $query_post == 'search' ){
+        // echo $query_post;
+        // exit;
 
-            // global $wpdb;
-            $search_query = $_POST['search_query'];
+        // SQLクエリを準備（会社名を検索）
+        $search_query = $_POST['search_query'];
+        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
-            // SQLクエリを準備（会社名を検索）
-            $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
-            // if( count($results) > 0){
-            //     $results[] = <<<END
-            //     <div class="data_list_item">検索結果：$search_query</div>
-            //     END;
-            // } else {
-            //     $results[] = <<<END
-            //     <div class="data_list_item">検索結果：$search_query</div>
-            //     <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
-            //     END;
-            // }
-            // $results = array_reverse($results);
+        // $search_query
+        // echo '$search_query＝'.$search_query;
+        // exit;
 
-            // 検索結果を表示
-            foreach ($results as $row) {
-                // ここで$rowの各フィールドを表示
-                $id = esc_html($row->id);
-                // $time = esc_html($row->time);
-                // $company_name = esc_html($row->company_name);
-                // $user_name = esc_html($row->name);
-                // $email = esc_html($row->email);
-                // $url = esc_html($row->url);
-                // $representative_name = esc_html($row->representative_name);
-                // $phone = esc_html($row->phone);
-                // $postal_code = esc_html($row->postal_code);
-                // $prefecture = esc_html($row->prefecture);
-                // $city = esc_html($row->city);
-                // $address = esc_html($row->address);
-                // $building = esc_html($row->building);
-                // $closing_day = esc_html($row->closing_day);
-                // $payment_month = esc_html($row->payment_month);
-                // $payment_day = esc_html($row->payment_day);
-                // $payment_method = esc_html($row->payment_method);
-                // $tax_category = esc_html($row->tax_category);
-                // $memo = esc_html($row->memo);
-                // $text = esc_html($row->text);
-                // $results[] = <<<END
-                // <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id"> → </a></div>
-                // END;
+            if (count($results) > 0) {
+
+                // 検索結果がある場合の処理
+                $id = $results[0]->id;
+
+                // テスト
+                // echo 'IDは'. $id .'です。';
+                // echo '検索クエリは'. $search_query .'です。';
+                // exit;
+
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
+
+                // 検索後に更新モードにする
+                $action = 'update';
+                $data_id = $id;
+                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
+            }
+            else {
+                // 検索結果がない場合の処理
+                // 検索後に更新モードにする
+                $action = 'update';
+                $data_id = $wpdb->get_var("SELECT id FROM $table_name ORDER BY id DESC LIMIT 1");
+                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
             }
 
-            // デバッグ：$idを出力
-            // echo $id;
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            // 検索後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $id;
-            // $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            exit;
         }
 
         // 追加
@@ -562,11 +543,9 @@ class Kntan_Client_Class{
             $action = 'istmode';
         }
 
-        // 空のフォームを表示(追加モードか検索モードの場合)
-        if ($action === 'istmode' || $action === 'srcmode') {
+        // 空のフォームを表示(追加モード場合)
+        if ($action === 'istmode') {
 
-            // 追加ならIDを取得
-            // if( $action === 'istmode' || $action === 'srcmode'){
                 $data_id = $wpdb->insert_id;
 
                 // 表題
@@ -581,10 +560,7 @@ class Kntan_Client_Class{
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-
-                    // 検索モードの場合、会社名フィールドのname属性を'search_query'に設定
-                    $fieldName = $action === 'search' && $field['name'] === 'company_name' ? 'search_query' : $field['name'];
-
+                    $fieldName = $field['name'];
                     if ($field['type'] === 'textarea') {
                         $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
                     } elseif ($field['type'] === 'select') {
@@ -599,7 +575,8 @@ class Kntan_Client_Class{
                     } else {
                         $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                     }
-                }    
+                }
+
                 $data_forms .= "<div class='button'>";
 
                 if( $action === 'istmode'){
@@ -620,13 +597,12 @@ class Kntan_Client_Class{
                 }
                 
                 elseif( $action === 'srcmode'){
+
                     // 検索実行ボタン
                     $action = 'search';
-                    $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
                     <button type='submit' name='send_post' title="検索実行">
                     <span class="material-symbols-outlined">
                     select_check_box
@@ -655,6 +631,53 @@ class Kntan_Client_Class{
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
         }
+
+        // 空のフォームを表示(検索モード場合)
+        elseif ($action === 'srcmode') {
+
+            // 表題
+            $data_title = <<<END
+            <div class="data_detail_box">
+                <h3>■ 顧客の詳細（ モード：$action ）</h3>
+            END;
+
+            // 検索フォームを生成
+            $data_forms = '<form method="post" action="">';
+            $data_forms .= "<div class=\"form-group\"><label>会社名：</label> <input type=\"text\" name=\"search_query\" value=\"\" required></div>"; // その他のフォームフィールドを追加
+            $data_forms .= "<div class='button'>";
+
+            // 検索実行ボタン
+            $action = 'search';
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <button type='submit' name='send_post' title="検索実行">
+            <span class="material-symbols-outlined">
+            select_check_box
+            </span>
+            </button>
+            </form>
+            END;
+
+            // キャンセルボタン
+            $action = 'update';
+            $data_id = $data_id - 1;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='data_id' value=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='data_id' value='$data_id'>
+            <button type='submit' name='send_post' title="キャンセル">
+            <span class="material-symbols-outlined">
+            disabled_by_default
+            </span>            
+            </button>
+            </form>
+            END;
+
+            $data_forms .= "<div class=\"add\">";
+            $data_forms .= '</div>';
+        }            
 
         // 追加以外なら更新フォームだけを表示
         elseif ($action === 'update' || $action === '' || $action === 'delete') {
