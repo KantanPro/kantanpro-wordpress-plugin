@@ -562,16 +562,16 @@ class Kntan_Client_Class{
         }
 
         // 空のフォームを表示(追加モードか検索モードの場合)
-        if ($action === 'istmode' || $action === 'search') {
+        if ($action === 'istmode' || $action === 'srcmode') {
 
             // 追加ならIDを取得
-            if( $action === 'istmode' ){
+            // if( $action === 'istmode' || $action === 'srcmode'){
                 $data_id = $wpdb->insert_id;
 
                 // 表題
                 $data_title = <<<END
                 <div class="data_detail_box">
-                    <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
+                    <h3>■ 顧客の詳細（ モード：$action ID: $data_id ）</h3>
                 END;
 
                 // 空のフォームフィールドを生成
@@ -598,21 +598,40 @@ class Kntan_Client_Class{
                 }
     
                 $data_forms .= "<div class='button'>";
-    
-                // 追加実行ボタン
-                $action = 'insert';
-                $data_id = $data_id + 1;
-                $data_forms .= <<<END
-                <form method='post' action=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="追加を実行">
-                <span class="material-symbols-outlined">
-                select_check_box
-                </span>
-                </button>
-                </form>
-                END;
+
+                if( $action === 'istmode'){
+                    // 追加実行ボタン
+                    $action = 'insert';
+                    $data_id = $data_id + 1;
+                    $data_forms .= <<<END
+                    <form method='post' action=''>
+                    <input type='hidden' name='query_post' value='$action'>
+                    <input type='hidden' name='data_id' value='$data_id'>
+                    <button type='submit' name='send_post' title="追加実行">
+                    <span class="material-symbols-outlined">
+                    select_check_box
+                    </span>
+                    </button>
+                    </form>
+                    END;
+                }
+                
+                elseif( $action === 'srcmode'){
+                    // 検索実行ボタン
+                    $action = 'search';
+                    $data_id = $data_id + 1;
+                    $data_forms .= <<<END
+                    <form method='post' action=''>
+                    <input type='hidden' name='query_post' value='$action'>
+                    <input type='hidden' name='data_id' value='$data_id'>
+                    <button type='submit' name='send_post' title="検索実行">
+                    <span class="material-symbols-outlined">
+                    select_check_box
+                    </span>
+                    </button>
+                    </form>
+                    END;
+                }
     
                 // キャンセルボタン
                 $action = 'update';
@@ -629,24 +648,23 @@ class Kntan_Client_Class{
                 </button>
                 </form>
                 END;
-            }
-            // 検索ならIDを取得
-            elseif( $action === 'search' ){
+            // }
+            // // 検索ならIDを取得
+            // elseif( $action === 'search' ){
                 
-                // 表題
-                $data_title = <<<END
-                <div class="data_detail_box">
-                    <h3>■ 顧客の詳細（ 検索：$action ID: $data_id ）</h3>
-                END;
-            }
+            //     // 表題
+            //     $data_title = <<<END
+            //     <div class="data_detail_box">
+            //         <h3>■ 顧客の詳細（ 検索：$action ID: $data_id ）</h3>
+            //     END;
+            // }
 
             $data_forms .= "<div class=\"add\">";
-            
-
-            $data_forms .= '</div>';        }
+            $data_forms .= '</div>';
+        }
 
         // 追加以外なら更新フォームだけを表示
-        else if ($action === 'update' || $action === '' || $action === 'delete') {
+        elseif ($action === 'update' || $action === '' || $action === 'delete') {
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
@@ -655,7 +673,6 @@ class Kntan_Client_Class{
             <div class="data_detail_box">
                 <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
             END;
-            
 
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
@@ -738,7 +755,7 @@ class Kntan_Client_Class{
             END;
 
             // 検索モードボタン
-            $action = 'search';
+            $action = 'srcmode';
             $data_id = $data_id;
             $data_forms .= <<<END
             <form method='post' action=''>
