@@ -182,7 +182,60 @@ class Kntan_Client_Class{
             $wpdb->query("UNLOCK TABLES;");
             
         }
-        
+
+        // 検索
+        elseif( $query_post == 'search' ){
+
+            // 検索フォームが送信されたときにデータベースを検索
+            if (isset($_POST['search_query'])) {
+                global $wpdb;
+                $search_query = $_POST['search_query'];
+
+                // SQLクエリを準備（会社名とメールアドレスの両方を検索）
+                $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s OR email LIKE %s", '%' . $wpdb->esc_like($search_query) . '%', '%' . $wpdb->esc_like($search_query) . '%'));
+
+                // 検索結果を表示
+                foreach ($results as $row) {
+                // ここで$rowの各フィールドを表示
+                $id = esc_html($row->id);
+                $time = esc_html($row->time);
+                $company_name = esc_html($row->company_name);
+                $user_name = esc_html($row->name);
+                $email = esc_html($row->email);
+                $url = esc_html($row->url);
+                $representative_name = esc_html($row->representative_name);
+                $phone = esc_html($row->phone);
+                $postal_code = esc_html($row->postal_code);
+                $prefecture = esc_html($row->prefecture);
+                $city = esc_html($row->city);
+                $address = esc_html($row->address);
+                $building = esc_html($row->building);
+                $closing_day = esc_html($row->closing_day);
+                $payment_month = esc_html($row->payment_month);
+                $payment_day = esc_html($row->payment_day);
+                $payment_method = esc_html($row->payment_method);
+                $tax_category = esc_html($row->tax_category);
+                $memo = esc_html($row->memo);
+                $text = esc_html($row->text);
+                $results[] = <<<END
+                <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id"> → </a></div>
+                END;
+
+                }
+            }
+
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+
+            // 検索後に更新モードにする
+            // リダイレクト
+            $action = 'update';
+            $data_id = $wpdb->insert_id;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
+        }
+
         // 追加
         elseif( $query_post == 'insert' ) {
             $wpdb->insert( 
@@ -251,6 +304,16 @@ class Kntan_Client_Class{
             header("Location: {$url}");
             exit;
         }
+
+        // $query_postが'search'のときに検索フォームを表示
+        if ($query_post == 'search') {
+            ?>
+            <form method="post">
+                <input type="text" name="search_query" placeholder="Search...">
+                <input type="submit" value="Search">
+            </form>
+            <?php
+        } 
 
         // どの処理にも当てはまらない場合はロック解除
         else {
@@ -498,71 +561,87 @@ class Kntan_Client_Class{
             $action = 'istmode';
         }
 
-        // 空のフォームを表示
-        if ($action === 'istmode') {
-            $data_id = $data_id + 1;
-            // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
-            END;
+        // 空のフォームを表示(追加モードか検索モードの場合)
+        if ($action === 'istmode' || $action === 'search') {
 
-            $data_forms .= "<div class=\"add\">";
-            // 空のフォームフィールドを生成
-            $data_forms = '<form method="post" action="">';
-            foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+            // 追加ならIDを取得
+            if( $action === 'istmode' ){
+                $data_id = $wpdb->insert_id;
 
-                if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
-                } elseif ($field['type'] === 'select') {
-                    $options = '';
+                // 表題
+                $data_title = <<<END
+                <div class="data_detail_box">
+                    <h3>■ 顧客の詳細（ 追加：$action ID: $data_id ）</h3>
+                END;
 
-                    foreach ($field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                // 空のフォームフィールドを生成
+                $data_forms = '<form method="post" action="">';
+                foreach ($fields as $label => $field) {
+                    $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
+                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
+                    $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+    
+                    if ($field['type'] === 'textarea') {
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                    } elseif ($field['type'] === 'select') {
+                        $options = '';
+    
+                        foreach ($field['options'] as $option) {
+                            $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
+                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                        }
+    
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                    } else {
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                     }
-
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
-                } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
                 }
+    
+                $data_forms .= "<div class='button'>";
+    
+                // 追加実行ボタン
+                $action = 'insert';
+                $data_id = $data_id + 1;
+                $data_forms .= <<<END
+                <form method='post' action=''>
+                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='data_id' value='$data_id'>
+                <button type='submit' name='send_post' title="追加を実行">
+                <span class="material-symbols-outlined">
+                select_check_box
+                </span>
+                </button>
+                </form>
+                END;
+    
+                // キャンセルボタン
+                $action = 'update';
+                $data_id = $data_id - 1;
+                $data_forms .= <<<END
+                <form method='post' action=''>
+                <input type='hidden' name='data_id' value=''>
+                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='data_id' value='$data_id'>
+                <button type='submit' name='send_post' title="キャンセル">
+                <span class="material-symbols-outlined">
+                disabled_by_default
+                </span>            
+                </button>
+                </form>
+                END;
+            }
+            // 検索ならIDを取得
+            elseif( $action === 'search' ){
+                
+                // 表題
+                $data_title = <<<END
+                <div class="data_detail_box">
+                    <h3>■ 顧客の詳細（ 検索：$action ID: $data_id ）</h3>
+                END;
             }
 
-            $data_forms .= "<div class='button'>";
-
-            // 追加実行ボタン
-            $action = 'insert';
-            $data_id = $data_id + 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="追加を実行">
-            <span class="material-symbols-outlined">
-            select_check_box
-            </span>
-            </button>
-            </form>
-            END;
-
-            // キャンセルボタン
-            $action = 'update';
-            $data_id = $data_id - 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="キャンセル">
-            <span class="material-symbols-outlined">
-            disabled_by_default
-            </span>            
-            </button>
-            </form>
-            END;
+            $data_forms .= "<div class=\"add\">";
+            
 
             $data_forms .= '</div>';        }
 
@@ -658,40 +737,62 @@ class Kntan_Client_Class{
             </form>
             END;
 
+            // 検索モードボタン
+            $action = 'search';
+            $data_id = $data_id;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+                <input type='hidden' name='data_id' value=''>
+                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='data_id' value='$data_id'>
+                <button type='submit' name='send_post' title="検索する">
+                    <span class="material-symbols-outlined">
+                    search
+                    </span>
+                </button>
+            </form>
+            END;
+
+            // 検索ボタンが押されたときに検索モードにする
+            if (isset($_POST['search_button'])) {
+                $query_post = 'search';
+            }
+
+
             $data_forms .= '</div>';
         }
 
         // ボタンを日本語化
-        $data_buttons = '';
-        foreach (['delete', 'insert', 'update'] as $action) {
-            $button_name = '';
-            switch ($action) {
-                case 'delete':
-                    $button_name = '削除';
-                    break;
-                    case 'insert':
-                        $button_name = '追加';
-                        break;
-                        case 'update':
-                            $button_name = '更新';
-                            break;
-                        }
-                        $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
-                    }
+        // $data_buttons = '';
+        // foreach (['delete', 'insert', 'update'] as $action) {
+        //     $button_name = '';
+        //     switch ($action) {
+        //         case 'delete':
+        //             $button_name = '削除';
+        //             break;
+        //             case 'insert':
+        //                 $button_name = '追加';
+        //                 break;
+        //                 case 'update':
+        //                     $button_name = '更新';
+        //                     break;
+        //                 }
+        //                 $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
+        // }
                     
-                    $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
-                    
-                    // DIV閉じ
-                    $div_end = <<<END
-                    </div>
-                    </div>
-                    END;
-                    
-                    // 表示するもの
-                    $content = $data_list . $data_title . $data_forms . $div_end;
-                    return $content;
-                    
-                }
+        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
+        
+        // DIV閉じ
+        $div_end = <<<END
+        </div>
+        </div>
+        END;
+        
+        // 表示するもの
+        $content = $data_list . $data_title . $data_forms . $div_end;
+        return $content;
+        
+    }
 
 }
         
