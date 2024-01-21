@@ -52,7 +52,6 @@ function ktpwp_scripts_and_styles() {
 		'1.0.0',
 		true
 	);
-	wp_enqueue_style( 'ktp-js' );
 	// css
 	wp_register_style(
 		'ktp-css',
@@ -66,6 +65,14 @@ function ktpwp_scripts_and_styles() {
 	wp_enqueue_style(
 		'material-symbols-outlined',
 		'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0'
+	);
+	// jQuery
+	wp_enqueue_script(
+		'jquery',
+		'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js',
+		array(),
+		'3.5.1',
+		true
 	);
 }
 add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );

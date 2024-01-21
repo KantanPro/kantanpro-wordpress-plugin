@@ -330,6 +330,10 @@ class Kntan_Client_Class{
         //表示範囲
         $query_limit = '11';
 
+        // -----------------------------
+        // ページネーションリンク
+        // -----------------------------
+
         //スタート位置を決める
         $page_stage = $_GET['page_stage'];
         $page_start = $_GET['page_start'];
@@ -374,10 +378,6 @@ class Kntan_Client_Class{
             <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
             END;            
         }
-        
-        // -----------------------------
-        // ページネーションリンク
-        // -----------------------------
 
         $post_num = count($post_row); // 現在の項目数（可変）
         $page_buck = ''; // 前のスタート位置
@@ -783,25 +783,7 @@ class Kntan_Client_Class{
 
             $data_forms .= '</div>';
         }
-
-        // ボタンを日本語化
-        // $data_buttons = '';
-        // foreach (['delete', 'insert', 'update'] as $action) {
-        //     $button_name = '';
-        //     switch ($action) {
-        //         case 'delete':
-        //             $button_name = '削除';
-        //             break;
-        //             case 'insert':
-        //                 $button_name = '追加';
-        //                 break;
-        //                 case 'update':
-        //                     $button_name = '更新';
-        //                     break;
-        //                 }
-        //                 $data_buttons .= "<form method=\"post\" action=\"\"><input type=\"hidden\" name=\"query_post\" value=\"{$action}\"><div class=\"submit_button\"><input type=\"submit\" name=\"send_post\" value=\"{$button_name}\"></div></form>";
-        // }
-                    
+                            
         $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
         
         // DIV閉じ
