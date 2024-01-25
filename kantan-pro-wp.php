@@ -99,6 +99,12 @@ function check_activation_key() {
 	return $act_key;
 }
 
+// ヘッダーにhtmxを追加
+function add_htmx_to_head() {
+	echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
+}
+add_action('wp_head', 'add_htmx_to_head');
+
 function KTPWP_Index(){
 
 	//すべてのタブのショートコード[kantanAllTab]
