@@ -10,3 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
         defaultContent.classList.add('active');
     }
 });
+
+// 削除ボタンを押したときの確認ダイアログ
+function confirmDelete(id) {
+    var tab_name = "your_tab_name"; // Replace "your_tab_name" with the actual tab name
+    var query_post = "your_query_post"; // Replace "your_query_post" with the actual query post
+    if (confirm("Are you sure you want to delete this item?")) {
+        window.location.href = "?tab_name=" + tab_name + "&data_id=" + id + "&query_post=" + query_post;
+    }
+}

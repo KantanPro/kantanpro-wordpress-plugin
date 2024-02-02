@@ -709,7 +709,6 @@ class Kntan_Client_Class{
             $data_forms .= <<<END
             <form method="post" action="">
                 <button type="submit" name="send_post" title="更新する">
-                
                     <span class="material-symbols-outlined">
                     cached
                     </span>
@@ -722,9 +721,9 @@ class Kntan_Client_Class{
             <form method="post" action="">
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="delete">
-                <button type="submit" name="send_post" title="削除する">
+                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
                     <span class="material-symbols-outlined">
-                    delete
+                        delete
                     </span>
                 </button>
             </form>
