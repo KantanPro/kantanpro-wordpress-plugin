@@ -113,6 +113,24 @@ function KTPWP_Index(){
 		//ログイン中なら
 		if (is_user_logged_in()) {
 
+			add_action('wp_ajax_get_logged_in_users', 'get_logged_in_users');
+			add_action('wp_ajax_nopriv_get_logged_in_users', 'get_logged_in_users');
+
+			function get_logged_in_users() {
+				$logged_in_users = get_users(array(
+					'meta_key' => 'session_tokens',
+					'meta_compare' => 'EXISTS'
+				));
+
+				$users_names = array();
+				foreach ( $logged_in_users as $user ) {
+					$users_names[] = $user->nickname . 'さん';
+				}
+
+				echo json_encode($users_names);
+				wp_die();
+			}
+
 			// ログインユーザー情報を取得
 			global $current_user;
 

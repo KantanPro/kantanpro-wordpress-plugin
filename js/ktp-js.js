@@ -19,3 +19,18 @@ function confirmDelete(id) {
         window.location.href = "?tab_name=" + tab_name + "&data_id=" + id + "&query_post=" + query_post;
     }
 }
+
+// ログアウト時にログイン中のユーザーを表示する
+jQuery(document).ready(function($) {
+    $('#logout_link').click(function(e) {
+        e.preventDefault();
+
+        $.post(ajaxurl, { action: 'get_logged_in_users' }, function(response) {
+            var users = JSON.parse(response);
+            var users_html = users.join('、');
+            $('.ktp_header').html(users_html);
+        });
+
+        window.location.href = $(this).attr('href');
+    });
+});
