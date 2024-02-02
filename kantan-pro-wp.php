@@ -120,11 +120,32 @@ function KTPWP_Index(){
 			$logout_link = wp_logout_url();
 
 			// ヘッダー表示ログインユーザー名など
-			$login_user = $current_user->nickname;
 			$act_key = check_activation_key();
+
+			// ログイン中の全てのユーザーを取得
+			$logged_in_users = get_users(array(
+				'meta_key' => 'session_tokens',
+				'meta_compare' => 'EXISTS'
+			));
+
+			// ログイン中の全てのユーザー名を連結
+			$current_user_name = '';
+			$other_users_names = array();
+			foreach ( $logged_in_users as $user ) {
+				// 現在ログインしているユーザーの場合は名前を太字にする
+				if ($user->ID == $current_user->ID) {
+					$current_user_name = '<strong>' . $user->nickname . 'さん</strong>';
+				} else {
+					$other_users_names[] = $user->nickname . 'さん';
+				}
+			}
+			$other_users_html = count($other_users_names) > 0 ? '（他：' . implode('、', $other_users_names) . '）' : '';
+			$logged_in_users_html = $current_user_name . $other_users_html;
+
 			$front_message = <<<END
 			<div class="ktp_header">
-			$login_user さん　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
+			$logged_in_users_html
+			<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
 				<div id="zengo" class="zengo">
 				<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
 				</div>
