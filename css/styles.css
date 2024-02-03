@@ -217,3 +217,19 @@ input[name="tab_item"] {
   'GRAD' 0,
   'opsz' 24
 }
+
+.parent {
+  display: flex;
+  align-items: flex-end; /* バージョンを下端に揃える */
+}
+
+.title {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.version {
+  font-size: 20px;
+  vertical-align: bottom;
+  margin-left: 10px;
+}

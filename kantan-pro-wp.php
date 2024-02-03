@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+
 // 定数を定義
 if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
 	define( 'MY_PLUGIN_VERSION', '1.0' );
@@ -20,6 +21,10 @@ if ( ! defined( 'MY_PLUGIN_PATH' ) ) {
 if ( ! defined( 'MY_PLUGIN_URL' ) ) {
 	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
 }
+
+// プログラムのバージョン番号を$versionに格納
+// $version_num = '1.0';
+// $my_program_name = '<div class="title">KantanProWP</div><div class="version">' . $version_num . '</div>';
 
 // ファイルをインクルード
 $includes = [
@@ -113,6 +118,7 @@ function KTPWP_Index(){
 		//ログイン中なら
 		if (is_user_logged_in()) {
 
+			// ユーザーのログインログアウト状況を取得するためのAjaxを登録
 			add_action('wp_ajax_get_logged_in_users', 'get_logged_in_users');
 			add_action('wp_ajax_nopriv_get_logged_in_users', 'get_logged_in_users');
 
@@ -131,7 +137,7 @@ function KTPWP_Index(){
 				wp_die();
 			}
 
-			// ログインユーザー情報を取得
+			// 現在メインのログインユーザー情報を取得
 			global $current_user;
 
 			// ログアウトのリンク
@@ -162,6 +168,7 @@ function KTPWP_Index(){
 
 			$front_message = <<<END
 			<div class="ktp_header">
+			<div class="parent"><div class="title">KantanProWP</div><div class="version">v1.0</div></div>
 			$logged_in_users_html
 			<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
 				<div id="zengo" class="zengo">
