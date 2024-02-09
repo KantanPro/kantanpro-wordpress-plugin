@@ -190,8 +190,8 @@ class Kntan_Client_Class{
         $search_query = $_POST['search_query'];
         $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
-            // 検索結果がある場合の処理
-            if (count($results) > 0) {
+            // 検索結果が1つある場合の処理
+            if (count($results) == 1) {
 
                 // 検索結果のIDを取得
                 $id = $results[0]->id;
@@ -201,14 +201,44 @@ class Kntan_Client_Class{
                 $data_id = $id;
                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
                 header("Location: {$url}");
+
             }
 
             // 検索結果がない場合の処理
-            else {
+            elseif (count($results) == 0) {
                 // 検索後に更新モードにする
                 $action = 'update';
                 $data_id = $wpdb->get_var("SELECT id FROM $table_name ORDER BY id DESC LIMIT 1");
                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+            }
+
+            // 検索結果が複数ある場合の処理
+            elseif (count($results) > 1) {
+                $search_results_h = <<<END
+                <div class="data_contents">
+                <div class="search_list_box">
+                <h3>■ 顧客リスト</h3>
+                END;
+                $search_results = [];
+                foreach ($results as $row) {
+                    $id = esc_html($row->id);
+                    $company_name = esc_html($row->company_name);
+                    $user_name = esc_html($row->name);
+                    $email = esc_html($row->email);
+                    $search_results[] = <<<END
+                    <div class="search_list_item"><a href="?tab_name=$name&data_id=$id">$id : $company_name : $user_name : $email</a></div>
+                    END;
+                }
+
+                // リストを表示
+                $search_results_list = $search_results_h . implode("", $search_results) . '</div></div>';
+                // echo $search_results_list;
+
+                // 検索後に検索モードにする
+                $action = 'search';
+                $search_results_list = count($results);
+                $url = '?tab_name='. $tab_name . '&query_post=' . $action . '&search_results_list=' . $search_results_list;
                 header("Location: {$url}");
             }
 
@@ -493,6 +523,7 @@ class Kntan_Client_Class{
             $tax_category = esc_html($row->tax_category);
             $memo = esc_html($row->memo);
             $text = esc_html($row->text);
+            $search_results_list = esc_html($row->search_results_list);
         }
 
         // 表示するフォーム要素を定義
@@ -527,12 +558,12 @@ class Kntan_Client_Class{
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 
         // データーが0の場合は追加モードにする
-        if( $data_num == 0 ){
-            $wpdb->query("ALTER TABLE $table_name AUTO_INCREMENT = 1");
-            $action = 'istmode';
-        }
+        // if( $data_num == 0 ){
+        //     $wpdb->query("ALTER TABLE $table_name AUTO_INCREMENT = 1");
+        //     $action = 'istmode';
+        // }
 
-        // 空のフォームを表示(追加モード場合)
+        // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
 
                 $data_id = $wpdb->insert_id;
@@ -621,7 +652,7 @@ class Kntan_Client_Class{
             $data_forms .= '</div>';
         }
 
-        // 空のフォームを表示(検索モード場合)
+        // 空のフォームを表示(検索モードの場合)
         elseif ($action === 'srcmode') {
 
             // 表題
@@ -632,9 +663,14 @@ class Kntan_Client_Class{
 
             // 検索フォームを生成
             $data_forms = '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><label>会社名：</label> <input type=\"text\" name=\"search_query\" value=\"\" required></div>"; // その他のフォームフィールドを追加
-            $data_forms .= "<div class='button'>";
+            $data_forms .= "<div class=\"form-group\"><label>会社名：</label> <input type=\"text\" name=\"search_query\" value=\"\" required></div>";
+            
+            // 検索リストを生成
+            $data_forms .= $search_results_list;
 
+            // ボタン<div>タグを追加
+            $data_forms .= "<div class='button'>";
+            
             // 検索実行ボタン
             $action = 'search';
             $data_forms .= <<<END
@@ -668,8 +704,8 @@ class Kntan_Client_Class{
             $data_forms .= '</div>';
         }            
 
-        // 追加以外なら更新フォームだけを表示
-        elseif ($action === 'update' || $action === '' || $action === 'delete') {
+        // 追加・検索 以外なら更新フォームを表示
+        elseif ($action !== 'srcmode' || $action !== 'istmode') {
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
@@ -702,7 +738,9 @@ class Kntan_Client_Class{
 
             $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
             $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
-
+            
+            // 検索リストを生成
+            $data_forms .= $search_results_list;
             $data_forms .= "<div class='button'>";
 
             // 更新ボタンを追加
@@ -760,12 +798,10 @@ class Kntan_Client_Class{
 
             // 検索モードボタン
             $action = 'srcmode';
-            $data_id = $data_id;
+            // $data_id = $data_id;
             $data_forms .= <<<END
             <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
                 <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
                 <button type='submit' name='send_post' title="検索する">
                     <span class="material-symbols-outlined">
                     search
@@ -774,10 +810,10 @@ class Kntan_Client_Class{
             </form>
             END;
 
-            // 検索ボタンが押されたときに検索モードにする
-            if (isset($_POST['search_button'])) {
-                $query_post = 'search';
-            }
+            // // 検索ボタンが押されたときに検索モードにする
+            // if (isset($_POST['search_button'])) {
+            //     $query_post = 'search';
+            // }
 
 
             $data_forms .= '</div>';
@@ -792,7 +828,7 @@ class Kntan_Client_Class{
         END;
         
         // 表示するもの
-        $content = $data_list . $data_title . $data_forms . $div_end;
+        $content = $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
     }
