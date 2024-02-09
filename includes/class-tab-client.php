@@ -204,44 +204,30 @@ class Kntan_Client_Class{
 
             }
 
-            // 検索結果がない場合の処理
-            elseif (count($results) == 0) {
-                // 検索後に更新モードにする
-                $action = 'update';
-                $data_id = $wpdb->get_var("SELECT id FROM $table_name ORDER BY id DESC LIMIT 1");
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-                header("Location: {$url}");
-            }
-
             // 検索結果が複数ある場合の処理
             elseif (count($results) > 1) {
-                $search_results_h = <<<END
-                <div class="data_contents">
-                <div class="search_list_box">
-                <h3>■ 顧客リスト</h3>
-                END;
-                $search_results = [];
+                // 検索結果を表示するHTMLを初期化
+                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果</h3><ul>";
+
+                // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
                     $company_name = esc_html($row->company_name);
                     $user_name = esc_html($row->name);
                     $email = esc_html($row->email);
-                    $search_results[] = <<<END
-                    <div class="search_list_item"><a href="?tab_name=$name&data_id=$id">$id : $company_name : $user_name : $email</a></div>
-                    END;
+                    // 各検索結果に対してリンクを設定
+                    $search_results_html .= "<li><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update'>{$id} : {$company_name} : {$user_name} : {$email}</a></li>";
                 }
 
-                // リストを表示
-                $search_results_list = $search_results_h . implode("", $search_results) . '</div></div>';
-                // echo $search_results_list;
+                // HTMLを閉じる
+                $search_results_html .= "</ul></div></div>";
 
-                // 検索後に検索モードにする
-                $action = 'search';
-                $search_results_list = count($results);
-                $url = '?tab_name='. $tab_name . '&query_post=' . $action . '&search_results_list=' . $search_results_list;
-                header("Location: {$url}");
+                // 検索結果のHTMLを直接表示
+                echo $search_results_html;
+
+                // ここで処理を終了し、リダイレクトを行わない
+                return;
             }
-
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             exit;
