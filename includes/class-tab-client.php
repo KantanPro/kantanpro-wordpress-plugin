@@ -257,7 +257,16 @@ class Kntan_Client_Class{
                 });
                 </script>";
             }
-            
+
+            // 検索結果が0件の場合の処理
+            else {
+                // JavaScriptを使用してポップアップ警告を表示
+                echo "<script>
+                alert('検索結果がありません！');
+                window.location.href='?tab_name={$tab_name}&query_post=search';
+                </script>";
+            }
+
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             exit;
