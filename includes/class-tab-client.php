@@ -207,7 +207,7 @@ class Kntan_Client_Class{
             // 検索結果が複数ある場合の処理
             elseif (count($results) > 1) {
                 // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果</h3><ul>";
+                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
 
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
@@ -222,12 +222,42 @@ class Kntan_Client_Class{
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
 
-                // 検索結果のHTMLを直接表示
-                echo $search_results_html;
+                // JavaScriptに渡すために、検索結果のHTMLをエスケープ
+                $search_results_html_js = json_encode($search_results_html);
 
-                // ここで処理を終了し、リダイレクトを行わない
-                return;
+                // JavaScriptでポップアップを表示
+                echo "<script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var searchResultsHtml = $search_results_html_js;
+                    var popup = document.createElement('div');
+                    popup.innerHTML = searchResultsHtml;
+                    popup.style.position = 'fixed';
+                    popup.style.top = '50%';
+                    popup.style.left = '50%';
+                    popup.style.transform = 'translate(-50%, -50%)';
+                    popup.style.backgroundColor = '#fff';
+                    popup.style.padding = '20px';
+                    popup.style.zIndex = '1000';
+                    popup.style.width = '80%';
+                    popup.style.maxWidth = '600px';
+                    popup.style.border = '1px solid #ccc';
+                    popup.style.borderRadius = '5px';
+                    popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                    document.body.appendChild(popup);
+ƒ
+                    // ポップアップを閉じるためのボタンを追加
+                    var closeButton = document.createElement('button');
+                    closeButton.textContent = '閉じる';
+                    closeButton.onclick = function() {
+                        document.body.removeChild(popup);
+                        // 元の検索モードに戻るために特定のURLにリダイレクト
+                        location.href = '?tab_name={$tab_name}&query_post=search';
+                    };
+                    popup.appendChild(closeButton);
+                });
+                </script>";
             }
+            
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             exit;
