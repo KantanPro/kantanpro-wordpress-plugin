@@ -225,7 +225,7 @@ class Kntan_Client_Class{
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
 
-                // JavaScriptでポップアップを表示
+                // JavaScriptでクールなスタイルのポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -244,7 +244,6 @@ class Kntan_Client_Class{
                     popup.style.borderRadius = '5px';
                     popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
                     document.body.appendChild(popup);
-ƒ
                     // ポップアップを閉じるためのボタンを追加
                     var closeButton = document.createElement('button');
                     closeButton.textContent = '閉じる';
@@ -260,7 +259,7 @@ class Kntan_Client_Class{
 
             // 検索結果が0件の場合の処理
             else {
-                // JavaScriptを使用してポップアップ警告を表示
+                // JavaScriptでクールなスタイルのポップアップを表示
                 echo "<script>
                 alert('検索結果がありません！');
                 window.location.href='?tab_name={$tab_name}&query_post=search';

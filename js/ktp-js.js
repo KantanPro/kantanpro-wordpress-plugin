@@ -34,3 +34,20 @@ jQuery(document).ready(function($) {
         window.location.href = $(this).attr('href');
     });
 });
+
+// ポップアップのスタイルを設定する
+popupElement.style.position = 'fixed';
+popupElement.style.top = '50%';
+popupElement.style.left = '50%';
+popupElement.style.transform = 'translate(-50%, -50%)';
+popupElement.style.backgroundColor = 'rgba(0,0,0,0.8)';
+popupElement.style.color = '#fff';
+popupElement.style.padding = '40px';
+popupElement.style.zIndex = '1500';
+popupElement.style.width = '90%';
+popupElement.style.maxWidth = '650px';
+popupElement.style.border = '2px solid #444';
+popupElement.style.borderRadius = '10px';
+popupElement.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
+popupElement.style.textAlign = 'center';
+popupElement.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
