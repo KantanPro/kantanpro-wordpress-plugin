@@ -5,108 +5,63 @@ Description: カンタンProWP
 Version: 1.0
 */
 
-// wp-config.phpが存在しているか？
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+if (!defined('ABSPATH')) {
+    exit;
 }
-
 
 // 定数を定義
-if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
-	define( 'MY_PLUGIN_VERSION', '1.0' );
+if (!defined('MY_PLUGIN_VERSION')) {
+    define('MY_PLUGIN_VERSION', '1.0');
 }
-if ( ! defined( 'MY_PLUGIN_PATH' ) ) {
-	define( 'MY_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+if (!defined('MY_PLUGIN_PATH')) {
+    define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
 }
-if ( ! defined( 'MY_PLUGIN_URL' ) ) {
-	define( 'MY_PLUGIN_URL', plugins_url( '/', __FILE__ ) );
+if (!defined('MY_PLUGIN_URL')) {
+    define('MY_PLUGIN_URL', plugins_url('/', __FILE__));
 }
-
-// プログラムのバージョン番号を$versionに格納
-// $version_num = '1.0';
-// $my_program_name = '<div class="title">KantanProWP</div><div class="version">' . $version_num . '</div>';
 
 // ファイルをインクルード
 $includes = [
-    'class-tab-list.php', // リストタブクラス
-    'class-tab-order.php', // 注文タブクラス
-    'class-tab-client.php', // 顧客タブクラス
-    'class-tab-service.php', // サービスタブクラス
-    'class-tab-supplier.php', // 仕入先タブクラス
-    'class-tab-report.php', // 報告タブクラス
-    'class-tab-setting.php', // 設定タブクラス
-    'class-login-error.php', // ログインエラークラス
-    'class-view-tab.php', // タブビュークラス
-    'ktp-admin-form.php', // 管理画面に追加
+    'class-tab-list.php',
+    'class-tab-order.php',
+    'class-tab-client.php',
+    'class-tab-service.php',
+    'class-tab-supplier.php',
+    'class-tab-report.php',
+    'class-tab-setting.php',
+    'class-login-error.php',
+    'class-view-tab.php',
+    'ktp-admin-form.php',
 ];
 
 foreach ($includes as $file) {
     include 'includes/' . $file;
 }
 
-// カンタンProWPをロード
-add_action('plugins_loaded','KTPWP_Index'); // カンタンPro本体
+add_action('plugins_loaded', 'KTPWP_Index');
 
-// JavaScriptとスタイルシートを登録
 function ktpwp_scripts_and_styles() {
-	// js
-	wp_enqueue_script(
-		'ktp-js',
-		plugins_url( 'js/ktp-ajax.js' , __FILE__),
-		array(),
-		'1.0.0',
-		true
-	);
-	// css
-	wp_register_style(
-		'ktp-css',
-		plugins_url( '/css/styles.css' , __FILE__),
-		array(),
-		'1.0.0',
-		'all'
-	);
-	wp_enqueue_style( 'ktp-css' );
-	// Google Fonts
-	wp_enqueue_style(
-		'material-symbols-outlined',
-		'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0'
-	);
-	// jQuery
-	wp_enqueue_script(
-		'jquery',
-		'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js',
-		array(),
-		'3.5.1',
-		true
-	);
+    wp_enqueue_script('ktp-js', plugins_url('js/ktp-ajax.js', __FILE__), array(), '1.0.0', true);
+    wp_register_style('ktp-css', plugins_url('/css/styles.css', __FILE__), array(), '1.0.0', 'all');
+    wp_enqueue_style('ktp-css');
+    wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+    wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
 }
-add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
+add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
-// テーブル用の関数を登録
 function ktp_table_setup() {
-    Create_Table(); // テーブル作成
-    Update_Table(); // テーブル更新
+    Create_Table();
+    Update_Table();
 }
-register_activation_hook( __FILE__, 'ktp_table_setup' );
+register_activation_hook(__FILE__, 'ktp_table_setup');
 
-// 有効化キーが設定されているかチェック
 function check_activation_key() {
-	$activation_key = get_site_option( 'ktp_activation_key' );
-
-	if ( empty( $activation_key ) ) {
-		// 有効化キーが設定されていない場合の処理
-		$act_key = '';
-	} else {
-		// 有効化キーが設定されている場合の処理
-		$act_key = '';
-	}
-
-	return $act_key;
+    $activation_key = get_site_option('ktp_activation_key');
+    return empty($activation_key) ? '' : '';
 }
 
-// ヘッダーにhtmxを追加
 function add_htmx_to_head() {
-	echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
+    echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
 }
 add_action('wp_head', 'add_htmx_to_head');
 
@@ -176,11 +131,7 @@ function KTPWP_Index(){
 				</div>
 			</div>
 			END;
-
-			// // 関数を呼び出して結果を表示
-			// $act_key = check_activation_key();
-			// $flont_message .= $act_key;
-
+			
 			$tab_name = $_GET['tab_name']; // URLパラメータからtab_nameを取得
 
 			switch ($tab_name) {
