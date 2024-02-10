@@ -255,6 +255,14 @@ class Kntan_Client_Class {
                     // ポップアップを閉じるためのボタンを追加
                     var closeButton = document.createElement('button');
                     closeButton.textContent = '閉じる';
+                    closeButton.style.fontSize = '0.8em';
+                    closeButton.style.color = 'black'; // 文字をもう少し黒く
+                    closeButton.style.display = 'block';
+                    closeButton.style.margin = '10px auto 0';
+                    closeButton.style.padding = '10px';
+                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
+                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
+                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
