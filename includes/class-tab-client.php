@@ -37,6 +37,7 @@ class Kntan_Client_Class {
             "payment_method TINYTEXT",
             "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
             "memo TEXT",
+            "search_field TEXT", // 検索用フィールドを追加
             "UNIQUE KEY id (id)"
         ];
     
@@ -89,6 +90,29 @@ class Kntan_Client_Class {
         $memo = $_POST['memo'];
         $text = $_POST['text'];
         
+        $search_field_value = implode(', ', [
+            $data_id,
+            current_time( 'mysql' ),
+            $company_name,
+            $user_name,
+            $email,
+            $url,
+            $representative_name,
+            $phone,
+            $postal_code,
+            $prefecture,
+            $city,
+            $address,
+            $building,
+            $closing_day,
+            $payment_month,
+            $payment_day,
+            $payment_method,
+            $tax_category,
+            $memo,
+            $text
+        ]);
+        
         // 削除
         if( $query_post == 'delete' ) {
             $wpdb->delete(
@@ -136,6 +160,7 @@ class Kntan_Client_Class {
                     'tax_category' => $tax_category,
                     'memo' => $memo,
                     'text' => $text,
+                    'search_field' => $search_field_value
                 ),
                 array( 'ID' => $data_id ), 
                 array( 
@@ -169,9 +194,9 @@ class Kntan_Client_Class {
         // 検索
         elseif( $query_post == 'search' ){
 
-        // SQLクエリを準備（会社名を検索）
+        // SQLクエリを準備（search_fieldを検索対象にする）
         $search_query = $_POST['search_query'];
-        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE company_name LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
+        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
             // 検索結果が1つある場合の処理
             if (count($results) == 1) {
@@ -278,6 +303,7 @@ class Kntan_Client_Class {
                         'tax_category' => $tax_category,
                         'memo' => $memo,
                         'text' => $text,
+                        'search_field' => $search_field_value
                 ) 
             );
 
@@ -307,6 +333,29 @@ class Kntan_Client_Class {
 
             // IDを削除
             unset($data['id']);
+
+            // search_fieldの値を更新
+            $data['search_field'] = implode(', ', [
+                $data['time'],
+                $data['company_name'],
+                $data['name'],
+                $data['email'],
+                $data['url'],
+                $data['representative_name'],
+                $data['phone'],
+                $data['postal_code'],
+                $data['prefecture'],
+                $data['city'],
+                $data['address'],
+                $data['building'],
+                $data['closing_day'],
+                $data['payment_month'],
+                $data['payment_day'],
+                $data['payment_method'],
+                $data['tax_category'],
+                $data['memo'],
+                $data['text']
+            ]);
 
             // データを挿入
             $wpdb->insert($table_name, $data);
@@ -670,8 +719,8 @@ class Kntan_Client_Class {
 
             // 検索フォームを生成
             $data_forms = '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><label>会社名：</label> <input type=\"text\" name=\"search_query\" value=\"\" required></div>";
-            
+            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
+               
             // 検索リストを生成
             $data_forms .= $search_results_list;
 
@@ -843,3 +892,4 @@ class Kntan_Client_Class {
 }
         
 ?>
+
