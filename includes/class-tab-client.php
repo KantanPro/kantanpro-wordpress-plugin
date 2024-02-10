@@ -621,12 +621,6 @@ class Kntan_Client_Class {
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 
-        // データーが0の場合は追加モードにする
-        // if( $data_num == 0 ){
-        //     $wpdb->query("ALTER TABLE $table_name AUTO_INCREMENT = 1");
-        //     $action = 'istmode';
-        // }
-
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
 
@@ -900,4 +894,3 @@ class Kntan_Client_Class {
 }
         
 ?>
-
