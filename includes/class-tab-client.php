@@ -765,6 +765,31 @@ class Kntan_Client_Class {
         // 追加・検索 以外なら更新フォームを表示
         elseif ($action !== 'srcmode' || $action !== 'istmode') {
 
+            // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
+            $data_forms .= <<<END
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var postalCode = document.querySelector('input[name="postal_code"]');
+                var prefecture = document.querySelector('input[name="prefecture"]');
+                var city = document.querySelector('input[name="city"]');
+                var address = document.querySelector('input[name="address"]');
+                postalCode.addEventListener('blur', function() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
+                    xhr.addEventListener('load', function() {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.results) {
+                            var data = response.results[0];
+                            prefecture.value = data.address1;
+                            city.value = data.address2 + data.address3; // 市区町村と町名を結合
+                            address.value = ''; // 番地は空欄に
+                        }
+                    });
+                    xhr.send();
+                });
+            });            </script>
+            END;
+                        
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
             // 表題
