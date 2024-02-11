@@ -113,25 +113,24 @@ function KTPWP_Index(){
 			foreach ( $logged_in_users as $user ) {
 				// 現在ログインしているユーザーの場合は名前を太字にする
 				if ($user->ID == $current_user->ID) {
-					$current_user_name = '<strong>' . $user->nickname . 'さん</strong>';
+					$current_user_name = '<strong><span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'avatar']) . '</span></strong>';
 				} else {
-					$other_users_names[] = $user->nickname . 'さん';
+					$other_users_names[] = '<span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'avatar']) . '</span>';
 				}
 			}
-			$other_users_html = count($other_users_names) > 0 ? '（他：' . implode('、', $other_users_names) . '）' : '';
+			$other_users_html = count($other_users_names) > 0 ? '' . implode(' ', $other_users_names)  : '';
 			$logged_in_users_html = $current_user_name . $other_users_html;
 
 			$front_message = <<<END
 			<div class="ktp_header">
 			<div class="parent"><div class="title">KantanProWP</div><div class="version">v1.0</div></div>
 			$logged_in_users_html
-			<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
+			　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
 				<div id="zengo" class="zengo">
 				<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
 				</div>
 			</div>
 			END;
-			
 			$tab_name = $_GET['tab_name']; // URLパラメータからtab_nameを取得
 
 			switch ($tab_name) {
