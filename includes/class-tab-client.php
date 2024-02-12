@@ -469,12 +469,17 @@ class Kntan_Client_Class {
             $page_start = 0;
         }
 
+        // ページネーションのリンク
         $query_range = $page_start . ',' . $query_limit;
 
-        // Ensure $query_order_by is a safe value
+        // $query_order_byが安全な値であることを確認する
         $allowed_order_by_values = ['id', 'category'];
         if (!in_array($query_order_by, $allowed_order_by_values)) {
-            $query_order_by = 'id'; // Default to 'id' if $query_order_by is not an allowed value
+            $query_order_by = 'id'; // $query_order_byが許可された値でない場合はデフォルト値として'id'を使用する
+        }
+        $allowed_order_by_values = ['id', 'category'];
+        if (!in_array($query_order_by, $allowed_order_by_values)) {
+            $query_order_by = 'id'; // $query_order_byが許可された値でない場合はデフォルト値として'id'を使用する
         }
 
         $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$query_order_by} ASC LIMIT %d, %d", $page_start, $query_limit);        $post_row = $wpdb->get_results($query);
