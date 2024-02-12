@@ -429,16 +429,10 @@ class Kntan_Client_Class {
 
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
-        // データーベースからカテゴリーを取得しプルダウンメニューを作成
-        $results_h .= '<select name="category" onchange="sortList(this.value)">';
-        $results_h .= '<option value="">カテゴリーを選んでください</option>'; // Initial value
-        $categories = $wpdb->get_results("SELECT DISTINCT category FROM {$table_name}");
-        if ($categories) {
-            foreach ($categories as $category) {
-                $results_h .= '<option value="' . esc_attr($category->category) . '">' . esc_html($category->category) . '</option>';
-            }
-        }
-        $results_h .= '</select>';
+        // プルダウンメニュー（'id'|'category'）作成し$list_orderに格納
+        // $selected_value = 'category'; // 選択されたバリューを動的に変数に格納
+        // $selected_value = "<select name='list_order'><option value='id'" . ($selected_value === 'id' ? ' selected' : '') . ">ID</option><option value='category'" . ($selected_value === 'category' ? ' selected' : '') . ">カテゴリー</option></select>";
+        // $results_h .= $selected_value;
 
         //表示範囲
         $query_limit = '11';
@@ -457,7 +451,7 @@ class Kntan_Client_Class {
         }
 
         $query_range = $page_start . ',' . $query_limit;
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` ASC LIMIT $query_range");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY 'id' ASC LIMIT $query_range");
         $post_row = $wpdb->get_results($query);
         if( $post_row ){
             foreach ($post_row as $row){
