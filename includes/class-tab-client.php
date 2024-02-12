@@ -20,7 +20,6 @@ class Kntan_Client_Class {
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
             "time BIGINT(11) DEFAULT '0' NOT NULL",
             "name TINYTEXT",
-            "text TEXT",
             "url VARCHAR(55)",
             "company_name VARCHAR(100) NOT NULL DEFAULT '初めてのお客様'",
             "representative_name TINYTEXT",
@@ -88,7 +87,7 @@ class Kntan_Client_Class {
         $payment_method = $_POST['payment_method'];
         $tax_category = $_POST['tax_category'];
         $memo = $_POST['memo'];
-        $text = $_POST['text'];
+        $category = $_POST['category'];
         
         $search_field_value = implode(', ', [
             $data_id,
@@ -110,7 +109,7 @@ class Kntan_Client_Class {
             $payment_method,
             $tax_category,
             $memo,
-            $text
+            $category
         ]);
         
         // 削除
@@ -159,13 +158,13 @@ class Kntan_Client_Class {
                     'payment_method' => $payment_method,
                     'tax_category' => $tax_category,
                     'memo' => $memo,
-                    'text' => $text,
+                    'category' => $category,
                     'search_field' => $search_field_value
                 ),
                 array( 'ID' => $data_id ), 
                 array( 
                     '%s',  // name
-                    '%s',  // text
+                    '%s',  // category
                     '%s',  // email
                     '%s',  // url
                     '%s',  // company_name
@@ -275,7 +274,7 @@ class Kntan_Client_Class {
 
             // 検索結果が0件の場合の処理
             else {
-                // JavaScriptでクールなスタイルのポップアップを表示
+                // JavaScriptを使用してポップアップ警告を表示
                 echo "<script>
                 alert('検索結果がありません！');
                 window.location.href='?tab_name={$tab_name}&query_post=search';
@@ -310,7 +309,7 @@ class Kntan_Client_Class {
                         'payment_method' => $payment_method,
                         'tax_category' => $tax_category,
                         'memo' => $memo,
-                        'text' => $text,
+                        'category' => $category,
                         'search_field' => $search_field_value
                 ) 
             );
@@ -362,7 +361,7 @@ class Kntan_Client_Class {
                 $data['payment_method'],
                 $data['tax_category'],
                 $data['memo'],
-                $data['text']
+                $data['category']
             ]);
 
             // データを挿入
@@ -461,9 +460,9 @@ class Kntan_Client_Class {
                 $payment_method = esc_html($row->payment_method);
                 $tax_category = esc_html($row->tax_category);
                 $memo = esc_html($row->memo);
-                $text = esc_html($row->text);
+                $category = esc_html($row->category);
                 $results[] = <<<END
-                <div class="data_list_item">$id : $company_name : $user_name : $text : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
+                <div class="data_list_item">$id : $company_name : $user_name : $category : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
                 END;
             }
             $query_max_num = $wpdb->num_rows;
@@ -586,19 +585,18 @@ class Kntan_Client_Class {
             $payment_method = esc_html($row->payment_method);
             $tax_category = esc_html($row->tax_category);
             $memo = esc_html($row->memo);
-            $text = esc_html($row->text);
-            $search_results_list = esc_html($row->search_results_list);
+            $category = esc_html($row->category);
         }
 
         // 表示するフォーム要素を定義
         $fields = [
-            '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true],
-            '名前' => ['type' => 'text', 'name' => 'user_name'],
+            '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true, 'placeholder' => '必須 法人名または屋号'],
+            '名前' => ['type' => 'text', 'name' => 'user_name', 'placeholder' => '担当者名'],
             'メール' => ['type' => 'email', 'name' => 'email'],
-            'URL' => ['type' => 'text', 'name' => 'url'],
-            '代表者名' => ['type' => 'text', 'name' => 'representative_name'],
-            '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\d*'],
-            '郵便番号' => ['type' => 'text', 'name' => 'postal_code'],
+            'URL' => ['type' => 'text', 'name' => 'url', 'placeholder' => 'https://....'],
+            '代表者名' => ['type' => 'text', 'name' => 'representative_name', 'placeholder' => '代表者名'],
+            '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\d*', 'placeholder' => '半角数字 ハイフン不要'],
+            '郵便番号' => ['type' => 'text', 'name' => 'postal_code', 'pattern' => '[0-9]*', 'placeholder' => '半角数字 ハイフン不要'],
             '都道府県' => ['type' => 'text', 'name' => 'prefecture'],
             '市区町村' => ['type' => 'text', 'name' => 'city'],
             '番地' => ['type' => 'text', 'name' => 'address'],
@@ -606,11 +604,15 @@ class Kntan_Client_Class {
             '締め日' => ['type' => 'date', 'name' => 'closing_day'],
             '支払月' => ['type' => 'date', 'name' => 'payment_month'],
             '支払日' => ['type' => 'date', 'name' => 'payment_day'],
-            '支払方法' => ['type' => 'text', 'name' => 'payment_method'],
+            '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => ['銀行振込（前）', 'クレジットカード', '現金集金']],
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税']],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
-            'テキスト' => ['type' => 'text', 'name' => 'text'],
+            'カテゴリー' => ['type' => 'text', 'name' => 'category', 'options' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}"), 'editable' => true, 'default' => ['一般'], 'autocomplete' => 'on'], // サジェストを表示する。デフォルトは「一般」
         ];
+
+        if (empty($fields['カテゴリー']['options'])) {
+            $fields['カテゴリー']['options'] = ['一般']; // データベースに値がない場合は「一般」をサジェスト
+        }
 
         $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
@@ -665,6 +667,7 @@ class Kntan_Client_Class {
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
                     $fieldName = $field['name'];
+                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
                     if ($field['type'] === 'textarea') {
                         $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
                     } elseif ($field['type'] === 'select') {
@@ -677,7 +680,7 @@ class Kntan_Client_Class {
 
                         $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
                     } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
                     }
                 }
 
@@ -829,6 +832,7 @@ class Kntan_Client_Class {
                 $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
                 $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                 $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
 
                 if ($field['type'] === 'textarea') {
                     $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
@@ -842,7 +846,7 @@ class Kntan_Client_Class {
 
                     $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}></div>"; // その他のフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
                 }
             }
 
