@@ -392,6 +392,15 @@ class Kntan_Client_Class {
     // テーブルの表示
     // -----------------------------
 
+    // カテゴリーでリストをソート
+    // public function sortListByCategory($list, $category) {
+    //     usort($list, function ($a, $b) use ($category) {
+    //         return strcmp($a[$category], $b[$category]);
+    //     });
+
+    //     return $list;
+    // }
+
     function View_Table( $name ) {
 
         global $wpdb;
@@ -417,8 +426,19 @@ class Kntan_Client_Class {
         <div class="data_list_box">
         <h3>■ 顧客リスト</h3>
         END;
-        
+
         $table_name = $wpdb->prefix . 'ktp_' . $name;
+
+        // データーベースからカテゴリーを取得しプルダウンメニューを作成
+        $results_h .= '<select name="category" onchange="sortList(this.value)">';
+        $results_h .= '<option value="">カテゴリーを選んでください</option>'; // Initial value
+        $categories = $wpdb->get_results("SELECT DISTINCT category FROM {$table_name}");
+        if ($categories) {
+            foreach ($categories as $category) {
+                $results_h .= '<option value="' . esc_attr($category->category) . '">' . esc_html($category->category) . '</option>';
+            }
+        }
+        $results_h .= '</select>';
 
         //表示範囲
         $query_limit = '11';
@@ -587,7 +607,7 @@ class Kntan_Client_Class {
             $memo = esc_html($row->memo);
             $category = esc_html($row->category);
         }
-
+        
         // 表示するフォーム要素を定義
         $fields = [
             '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true, 'placeholder' => '必須 法人名または屋号'],
@@ -608,21 +628,13 @@ class Kntan_Client_Class {
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税']],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
-                'type' => 'select',
+                'type' => 'text',
                 'name' => 'category',
-                'options' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}"),
-                'editable' => true,
-                'default' => ['一般'],
-                'autocomplete' => 'on',
-                'datalist' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}")
+                'options' => '一般',
+                'suggest' => true,
             ],
         ];
-
-        // カテゴリーの処理
-        if (empty($fields['カテゴリー']['options'])) {
-            $fields['カテゴリー']['options'] = ['一般']; // データベースに値がない場合は「一般」をサジェスト
-        }
-
+        
         $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
@@ -959,3 +971,4 @@ class Kntan_Client_Class {
 }
         
 ?>
+
