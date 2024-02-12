@@ -506,7 +506,9 @@ class Kntan_Client_Class {
                 $memo = esc_html($row->memo);
                 $category = esc_html($row->category);
                 $results[] = <<<END
-                <div class="data_list_item">$id : $company_name : $user_name : $category : $email : <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage"> → </a></div>
+                <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage">
+                    <div class="data_list_item">$id : $company_name : $user_name : $category : $email</div>
+                </a>
                 END;
             }
             $query_max_num = $wpdb->num_rows;
