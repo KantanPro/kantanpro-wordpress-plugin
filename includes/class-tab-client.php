@@ -615,11 +615,11 @@ class Kntan_Client_Class {
             '市区町村' => ['type' => 'text', 'name' => 'city'],
             '番地' => ['type' => 'text', 'name' => 'address'],
             '建物名' => ['type' => 'text', 'name' => 'building'],
-            '締め日' => ['type' => 'date', 'name' => 'closing_day'],
-            '支払月' => ['type' => 'date', 'name' => 'payment_month'],
-            '支払日' => ['type' => 'date', 'name' => 'payment_day'],
-            '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => ['銀行振込（前）', 'クレジットカード', '現金集金']],
-            '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税']],
+            '締め日' => ['type' => 'select', 'name' => 'closing_day', 'options' => ['5日', '10日', '15日', '20日', '25日', '末日'], 'default' => '末日'],
+            '支払月' => ['type' => 'select', 'name' => 'payment_month', 'options' => ['今月', '翌月', '翌々月', 'その他'], 'default' => '翌月'],
+            '支払日' => ['type' => 'select', 'name' => 'payment_day', 'options' => ['即日', '5日', '10日', '15日', '20日', '25日', '末日'], 'default' => '末日'],
+            '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => ['銀行振込（後）','銀行振込（前）', 'クレジットカード', '現金集金'], 'default' => '銀行振込（前）'],
+            '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税'], 'default' => '内税'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
                 'type' => 'text',
@@ -693,7 +693,9 @@ class Kntan_Client_Class {
                             $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
                         }
 
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                        $default = isset($field['default']) ? $field['default'] : ''; // デフォルト値を取得
+
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
                     } else {
                         $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
                     }
