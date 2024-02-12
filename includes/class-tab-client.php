@@ -429,30 +429,55 @@ class Kntan_Client_Class {
 
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
-        // プルダウンメニュー（'id'|'category'）作成し$list_orderに格納
-        // $selected_value = 'category'; // 選択されたバリューを動的に変数に格納
-        // $selected_value = "<select name='list_order'><option value='id'" . ($selected_value === 'id' ? ' selected' : '') . ">ID</option><option value='category'" . ($selected_value === 'category' ? ' selected' : '') . ">カテゴリー</option></select>";
-        // $results_h .= $selected_value;
+        // プルダウンメニュー（'id'|'category'）作成し$selected_orderに格納
+        $query_order_by = ($_GET['list_order'] == 'category') ? 'category' : 'id'; // Default to 'id' if $_GET['list_order'] is not 'category'
 
-        //表示範囲
-        $query_limit = '11';
+        $id_selected = $query_order_by == 'id' ? 'selected' : '';
+        $category_selected = $query_order_by == 'category' ? 'selected' : '';
+
+        $selected_order = <<<END
+        <form method="get" action="">
+        <select name="list_order" onchange="handleChange(this)">
+            <option value="id" $id_selected>IDでソート</option>
+            <option value="category" $category_selected>カテゴリーでソート</option>
+        </select>
+        <script>
+        function handleChange(select) {
+            const url = new URL(location);
+            url.searchParams.set('list_order', select.value);
+            location.href = url;
+        }
+        </script>
+        </form>
+        END;
+
+        $results_h .= $selected_order;
+
+        // 表示範囲
+        $query_limit = 11;
 
         // -----------------------------
         // ページネーションリンク
         // -----------------------------
 
-        //スタート位置を決める
+        // スタート位置を決める
         $page_stage = $_GET['page_stage'];
         $page_start = $_GET['page_start'];
         $flg = $_GET['flg'];
-        
-        if( $page_stage == '' ){
+
+        if ($page_stage == '') {
             $page_start = 0;
         }
 
         $query_range = $page_start . ',' . $query_limit;
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY 'id' ASC LIMIT $query_range");
-        $post_row = $wpdb->get_results($query);
+
+        // Ensure $query_order_by is a safe value
+        $allowed_order_by_values = ['id', 'category'];
+        if (!in_array($query_order_by, $allowed_order_by_values)) {
+            $query_order_by = 'id'; // Default to 'id' if $query_order_by is not an allowed value
+        }
+
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$query_order_by} ASC LIMIT %d, %d", $page_start, $query_limit);        $post_row = $wpdb->get_results($query);
         if( $post_row ){
             foreach ($post_row as $row){
                 $id = esc_html($row->id);
@@ -967,4 +992,3 @@ class Kntan_Client_Class {
 }
         
 ?>
-
