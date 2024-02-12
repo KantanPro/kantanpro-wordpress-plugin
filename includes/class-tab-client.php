@@ -607,9 +607,18 @@ class Kntan_Client_Class {
             '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => ['銀行振込（前）', 'クレジットカード', '現金集金']],
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税']],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
-            'カテゴリー' => ['type' => 'text', 'name' => 'category', 'options' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}"), 'editable' => true, 'default' => ['一般'], 'autocomplete' => 'on'], // サジェストを表示する。デフォルトは「一般」
+            'カテゴリー' => [
+                'type' => 'select',
+                'name' => 'category',
+                'options' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}"),
+                'editable' => true,
+                'default' => ['一般'],
+                'autocomplete' => 'on',
+                'datalist' => $wpdb->get_col("SELECT DISTINCT category FROM {$table_name}")
+            ],
         ];
 
+        // カテゴリーの処理
         if (empty($fields['カテゴリー']['options'])) {
             $fields['カテゴリー']['options'] = ['一般']; // データベースに値がない場合は「一般」をサジェスト
         }
