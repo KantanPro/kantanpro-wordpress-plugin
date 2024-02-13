@@ -38,6 +38,7 @@ class Kntan_Client_Class {
             "memo TEXT",
             "search_field TEXT", // 検索用フィールドを追加
             "frequency INT DEFAULT 0", // 頻度
+            "category VARCHAR(100) NOT NULL DEFAULT '一般'",
             "UNIQUE KEY id (id)"
         ];
     
@@ -413,146 +414,153 @@ class Kntan_Client_Class {
         global $wpdb;
 
         // -----------------------------
-        // ログインユーザー情報を取得
-        // -----------------------------
-
-        global $current_user;
-        $login_user = $current_user->nickname;
-
-        // ログアウトのリンク
-        $logout_link = wp_logout_url();
-
-        
-        // -----------------------------
         // リスト表示
         // -----------------------------
-
+        
         // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
             <h3>■ 顧客リスト</h3>
         END;
-
+        
         $table_name = $wpdb->prefix . 'ktp_' . $name;
 
-        // デフォルトを'frequency'に設定
-        $query_order_by = empty($_GET['list_order']) ? 'frequency' : $_GET['list_order'];
-
-        $id_selected = $query_order_by == 'id' ? 'selected' : '';
-        $category_selected = $query_order_by == 'category' ? 'selected' : '';
-        // 'frequency'をデフォルトにするため、$_GET['list_order']が設定されていない場合に'selected'を設定
-        $frequency_selected = ($query_order_by == 'frequency' || empty($_GET['list_order'])) ? 'selected' : '';
-
-        $selected_order = <<<END
-        <form method="get" action="">
-        <select name="list_order" onchange="handleChange(this)">
-            <option value="id" {$id_selected}>IDでソート</option>
-            <option value="category" {$category_selected}>カテゴリーでソート</option>
-            <option value="frequency" {$frequency_selected}>よく使う順でソート</option>
-        </select>
-        <script>
-        function handleChange(select) {
-            const url = new URL(location);
-            url.searchParams.set('list_order', select.value);
-            location.href = url;
-        }
-        </script>
-        </form>
-        END;
-
-        // ソート条件を設定
-        switch ($query_order_by) {
-            case 'id':
-                $order_by_sql = "ORDER BY id ASC";
-                break;
-            case 'category':
-                $order_by_sql = "ORDER BY category ASC";
-                break;
-            case 'frequency':
-                $order_by_sql = "ORDER BY frequency DESC"; // 頻度で降順にソート
-                break;
-            default:
-                $order_by_sql = "ORDER BY id ASC"; // デフォルトはIDでソート
-        }
-
-        // ページ番号の取得（デフォルトは1）
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-
-        // 1ページあたりのアイテム数
-        $query_limit = 10;
-
-        // レコードの開始位置を計算
-        $page_start = ($page - 1) * $query_limit;
-
-        // データベースクエリを実行（ソート条件を適用）
-        $query = "SELECT * FROM {$table_name} {$order_by_sql} LIMIT %d, %d";
-        $post_row = $wpdb->get_results($wpdb->prepare($query, $page_start, $query_limit));
-
-        // 総アイテム数を取得するクエリ（例）
-        $total_items_query = "SELECT COUNT(*) FROM {$table_name}";
-        $total_items_result = $wpdb->get_var($total_items_query);
-        $total_items = $total_items_result ? (int)$total_items_result : 0;
-
-        // 総ページ数を計算
-        $total_pages = ceil($total_items / $query_limit);
-
-        $results_h .= $selected_order;
-
-        // ページネーションリンクの生成
-        $pagination_links = '<div class="pagination-container">';
-        $pagination_links .= '<div class="pagination-links">';
-        if ($page > 1) {
-            // 前ページへのリンク
-            $pagination_links .= '<a href="?page=' . ($page - 1) . '" class="prev-page">&laquo; 前へ</a>';
-        }
-        // 現在のページ番号と総ページ数を表示
-        $pagination_links .= '<span class="current-page">ページ ' . $page . ' / ' . $total_pages . '</span>';
-        if ($page < $total_pages) {
-            // 次ページへのリンク
-            $pagination_links .= '<a href="?page=' . ($page + 1) . '" class="next-page">次へ &raquo;</a>';
-        }
-        $pagination_links .= '</div>'; // pagination-linksの終了
-        $pagination_links .= '</div>'; // pagination-containerの終了
-
-        if( $post_row ){
-            foreach ($post_row as $row){
-                $id = esc_html($row->id);
-                $time = esc_html($row->time);
-                $company_name = esc_html($row->company_name);
-                $user_name = esc_html($row->name);
-                $email = esc_html($row->email);
-                $url = esc_html($row->url);
-                $representative_name = esc_html($row->representative_name);
-                $phone = esc_html($row->phone);
-                $postal_code = esc_html($row->postal_code);
-                $prefecture = esc_html($row->prefecture);
-                $city = esc_html($row->city);
-                $address = esc_html($row->address);
-                $building = esc_html($row->building);
-                $closing_day = esc_html($row->closing_day);
-                $payment_month = esc_html($row->payment_month);
-                $payment_day = esc_html($row->payment_day);
-                $payment_method = esc_html($row->payment_method);
-                $tax_category = esc_html($row->tax_category);
-                $memo = esc_html($row->memo);
-                $category = esc_html($row->category);
-                $results[] = <<<END
-                <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage">
-                    <div class="data_list_item">$id : $company_name : $user_name : $category : $email</div>
-                </a>
-                END;
-            }
-        } else {
-            $results[] = <<<END
-            <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
-            END;            
-        }
         
-        $data_list = $results_h . implode( $results ) . $pagination_links;
-        $data_list .= <<<END
-            </div> <!-- data_list_boxの終了 -->
-        END;
+        // -----------------------------
+        // ページネーションリンク
+        // -----------------------------
+        
+        // 表示範囲
+        $query_limit = 5;
+
+       // スタート位置を決める
+       $page_stage = $_GET['page_stage'];
+       $page_start = $_GET['page_start'];
+       $flg = $_GET['flg'];
+
+       if ($page_stage == '') {
+           $page_start = 0;
+       }
+
+       // ページネーションのリンク
+       $query_range = $page_start . ',' . $query_limit;
+        $query_order_by = 'frequency';
+
+       $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+       $post_row = $wpdb->get_results($query);
+       if( $post_row ){
+           foreach ($post_row as $row){
+               $id = esc_html($row->id);
+               $time = esc_html($row->time);
+               $company_name = esc_html($row->company_name);
+               $user_name = esc_html($row->name);
+               $email = esc_html($row->email);
+               $url = esc_html($row->url);
+               $representative_name = esc_html($row->representative_name);
+               $phone = esc_html($row->phone);
+               $postal_code = esc_html($row->postal_code);
+               $prefecture = esc_html($row->prefecture);
+               $city = esc_html($row->city);
+               $address = esc_html($row->address);
+               $building = esc_html($row->building);
+               $closing_day = esc_html($row->closing_day);
+               $payment_month = esc_html($row->payment_month);
+               $payment_day = esc_html($row->payment_day);
+               $payment_method = esc_html($row->payment_method);
+               $tax_category = esc_html($row->tax_category);
+               $memo = esc_html($row->memo);
+               $category = esc_html($row->category);
+               $results[] = <<<END
+               <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage">
+                   <div class="data_list_item">$id : $company_name : $user_name : $category : $email</div>
+               </a>
+               END;
+           }
+           $query_max_num = $wpdb->num_rows;
+       } else {
+           $results[] = <<<END
+           <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
+           END;            
+       }
+
+       $post_num = count($post_row); // 現在の項目数（可変）
+       $page_buck = ''; // 前のスタート位置
+       $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
+       // 現在表示中の詳細
+       if(isset( $_GET['data_id'] )){
+           $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+       } else {
+           $data_id = $wpdb->insert_id;
+       }
+       // ページステージ移動
+       if( !$page_stage || $page_stage == 1 ){
+           if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
+           $page_start ++;
+           $page_next_start = $query_max_num;
+           $flg ++;
+           $results_f = <<<END
+           <div class="pagination">
+           END;
+           // $page_buck_stage = 2;
+           if( $page_start > 1 && $flg >= 2 ){
+               $page_buck_stage = 2;
+           } else {
+               $page_buck_stage = 1;
+           }
+           if( $post_num >= $query_limit ){
+               $results_f .= <<<END
+               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+               </div>
+               END;
+           } else {
+               $results_f .= <<<END
+               &emsp; $page_start ~ $query_max_num
+               </div>
+               END;
+           }
+           $page_start = $page_start + $query_limit;
+
+       } elseif( $page_stage == 2 ) {
+           if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
+           $page_buck = $page_start - $query_limit;
+           $page_next_start = $page_start + $post_num;
+           $query_max_num = $query_max_num + $page_start;
+           $page_start ++;
+           $flg = 2;
+           $results_f = <<<END
+           <div class="pagination">
+           END;
+           if( $page_start > 1 && $flg >= 2 ){
+               $page_buck_stage = 2;
+               $results_f .= <<<END
+               <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+               END;
+           } else {
+               $page_buck_stage = 1;
+           }
+           if( $post_num >= $query_limit ){
+               $results_f .= <<<END
+               &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
+               </div>
+               END;
+               $flg ++;
+           } else {
+               $results_f .= <<<END
+               &emsp; DATA END!
+               </div>
+               END;
+           }
+       } elseif( $page_stage == 3 ) {
+           if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
+           $results_f = <<<END
+           <div class="pagination">
+           <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
+           </div>
+           END;
+       }
+       $results_f .= '</div>';
+       $data_list = $results_h . implode( $results ) . $results_f;
 
         // -----------------------------
         // 詳細表示(GET)
@@ -956,5 +964,3 @@ class Kntan_Client_Class {
 }
         
 ?>
-
-
