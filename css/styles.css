@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 /* リストと詳細 */
-.deta_contents {
+.data_contents {
   display: flex;
   flex-wrap: wrap;
   text-align: center;
@@ -58,9 +58,30 @@
 }
 
 /* ページネーション */
-.pagination {
-  text-align: center;
-  padding: 15px;
+.pagination-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.pagination-links {
+    display: inline-block;
+    padding: 8px;
+}
+
+.pagination-links a {
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+}
+
+.pagination-links a:hover {
+    background-color: #ddd;
+}
+
+.current-page {
+    margin: 0 15px;
 }
 
 /* ボタン */
