@@ -538,47 +538,44 @@ class Kntan_Client_Class {
            $page_start = $page_start + $query_limit;
 
        } elseif( $page_stage == 2 ) {
-           if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
-           $page_buck = $page_start - $query_limit;
-           $page_next_start = $page_start + $post_num;
-           $query_max_num = $query_max_num + $page_start;
-           $page_start ++;
-           $flg = 2;
-           $results_f = <<<END
-           END;
-           if( $page_start > 1 && $flg >= 2 ){
-               $page_buck_stage = 2;
-               $results_f .= <<<END
-               END;
-           } else {
-               $page_buck_stage = 1;
-           }
-        // データの総数が一定の制限を超えているかどうかを確認します
-        if( $post_num >= $query_limit ){
-            if($page_start > 1){
-                $results_f .= <<<END
-                <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
-                &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                END;
-            }
-            else{
-                $results_f .= <<<END
-                <div class="pagination">
-                &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                END;
-            }
-        // データの総数が制限未満の場合、$results_fには「前へ」リンクと現在のページ範囲のみが追加され、「次へ」リンクは追加されません
-        } else {
-            $results_f .= <<<END
-            <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
+            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
+            $page_buck = $page_start - $query_limit;
+            $page_next_start = $page_start + $post_num;
+            $query_max_num = $query_max_num + $page_start;
+            $page_start ++;
+            $flg = 2;
+            $results_f = <<<END
             END;
+            if( $page_start > 1 && $flg >= 2 ){
+                $page_buck_stage = 2;
+                $results_f .= <<<END
+                END;
+            } else {
+                $page_buck_stage = 1;
+            }
+            // データの総数が一定の制限を超えているかどうかを確認します
+            // 次へ問題
+            if( $post_num >= $query_limit ){
+                if($page_start > 1){
+                    $results_f .= <<<END
+                    <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
+                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ! </a></div>
+                    END;
+                }
+                else{
+                    $results_f .= <<<END
+                    <div class="pagination">
+                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
+                    END;
+                }
+            // データの総数が制限未満の場合、$results_fには「前へ」リンクと現在のページ範囲のみが追加され、「次へ」リンクは追加されません
+            } else {
+                $results_f .= <<<END
+                <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ! </a></div>
+                END;
+            }
         }
-        } elseif( $page_stage == 3 ) {
-           if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
-           $results_f = <<<END
-           <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
-           END;
-       }
+        
        $results_f .= '</div>';
        $data_list = $results_h . implode( $results ) . $results_f;
 

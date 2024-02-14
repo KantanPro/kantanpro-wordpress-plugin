@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "ms-ceintl.vscode-language-pack-ja"
+        "ms-ceintl.vscode-language-pack-ja",
+        "bmewburn.vscode-intelephense-client"
     ]
 }
