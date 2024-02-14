@@ -358,6 +358,9 @@ class Kntan_Client_Class {
             // IDを削除
             unset($data['id']);
 
+            // 頻度を0に設定
+            $data['frequency'] = 0;
+
             // search_fieldの値を更新
             $data['search_field'] = implode(', ', [
                 $data['time'],
@@ -432,7 +435,7 @@ class Kntan_Client_Class {
         // -----------------------------
         
         // 表示範囲
-        $query_limit = 5;
+        $query_limit = 2;
 
        // スタート位置を決める
        $page_stage = $_GET['page_stage'];
@@ -445,6 +448,7 @@ class Kntan_Client_Class {
 
        // ページネーションのリンク
        $query_range = $page_start . ',' . $query_limit;
+
         $query_order_by = 'frequency';
 
        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
@@ -471,16 +475,18 @@ class Kntan_Client_Class {
                $tax_category = esc_html($row->tax_category);
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
+               $frequency = esc_html($row->frequency);
                $results[] = <<<END
                <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage">
-                   <div class="data_list_item">$id : $company_name : $user_name : $category : $email</div>
+                   <div class="data_list_item">$company_name : $user_name : $category : $email</div>
                </a>
                END;
            }
            $query_max_num = $wpdb->num_rows;
        } else {
            $results[] = <<<END
-           <div class="data_list_item">データーがありません。追加モードでデータを追加してください。</div>
+           <div class="data_list_item">データーがありません。</div>
+           <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 最初に戻る </a></div>
            END;            
        }
 
@@ -510,8 +516,7 @@ class Kntan_Client_Class {
            }
            if( $post_num >= $query_limit ){
                $results_f .= <<<END
-               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
-               </div>
+               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ1 </a></div>
                END;
            } else {
                $results_f .= <<<END
@@ -529,34 +534,29 @@ class Kntan_Client_Class {
            $page_start ++;
            $flg = 2;
            $results_f = <<<END
-           <div class="pagination">
            END;
            if( $page_start > 1 && $flg >= 2 ){
                $page_buck_stage = 2;
                $results_f .= <<<END
-               <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
                END;
            } else {
                $page_buck_stage = 1;
            }
            if( $post_num >= $query_limit ){
                $results_f .= <<<END
-               &emsp; $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> > </a>
-               </div>
+               <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ3 </a>
+               &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
                END;
                $flg ++;
            } else {
                $results_f .= <<<END
-               &emsp; DATA END!
-               </div>
+               <div class="pagination"></div>
                END;
            }
        } elseif( $page_stage == 3 ) {
            if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
            $results_f = <<<END
-           <div class="pagination">
-           <a href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> < </a>
-           </div>
+           <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
            END;
        }
        $results_f .= '</div>';
