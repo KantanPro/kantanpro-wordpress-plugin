@@ -435,7 +435,7 @@ class Kntan_Client_Class {
         // -----------------------------
                 
         // 表示範囲
-        $query_limit = 2;
+        $query_limit = 5;
 
        // スタート位置を決める
        $page_stage = $_GET['page_stage'];
@@ -512,7 +512,7 @@ class Kntan_Client_Class {
            }
            if( $post_num >= $query_limit ){
                $results_f .= <<<END
-               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ1 </a></div>
+               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
                END;
            } else {
                $results_f .= <<<END
@@ -545,7 +545,8 @@ class Kntan_Client_Class {
                 <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
                 &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
                 END;
-            }else{
+            }
+            else{
                 $results_f .= <<<END
                 <div class="pagination">
                 &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
@@ -554,11 +555,10 @@ class Kntan_Client_Class {
         // データの総数が制限未満の場合、$results_fには「前へ」リンクと現在のページ範囲のみが追加され、「次へ」リンクは追加されません
         } else {
             $results_f .= <<<END
-            <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
-            &emsp; $page_start ~ $query_max_num
-            </div>
+            <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
             END;
-        }       } elseif( $page_stage == 3 ) {
+        }
+        } elseif( $page_stage == 3 ) {
            if( $post_num >= $query_limit ){ $page_buck = $post_num - $page_start; $page_buck_stage = 2; } else { $page_buck_stage = 1; }
            $results_f = <<<END
            <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
