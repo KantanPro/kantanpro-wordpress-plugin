@@ -434,6 +434,8 @@ class Kntan_Client_Class {
         // ページネーションリンク
         // -----------------------------
         
+        // ページネーションのリンク
+        
         // 表示範囲
         $query_limit = 2;
 
@@ -441,12 +443,9 @@ class Kntan_Client_Class {
        $page_stage = $_GET['page_stage'];
        $page_start = $_GET['page_start'];
        $flg = $_GET['flg'];
-
        if ($page_stage == '') {
            $page_start = 0;
        }
-
-       // ページネーションのリンク
        $query_range = $page_start . ',' . $query_limit;
 
         $query_order_by = 'frequency';
