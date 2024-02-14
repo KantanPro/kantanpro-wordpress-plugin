@@ -5,7 +5,7 @@ class Kntan_Client_Class {
     public function __construct() {
 
     }
- 
+     
     // -----------------------------
     // テーブル作成
     // -----------------------------
@@ -140,6 +140,14 @@ class Kntan_Client_Class {
         
         // 更新
         elseif( $query_post == 'update' ){
+
+            // // 頻度の値を+1する
+            // $wpdb->query(
+            //     $wpdb->prepare(
+            //         "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
+            //         $id
+            //     )
+            // );
             
             $wpdb->update( 
                 $table_name, 
@@ -162,39 +170,35 @@ class Kntan_Client_Class {
                     'tax_category' => $tax_category,
                     'memo' => $memo,
                     'category' => $category,
-                    'search_field' => $search_field_value
+                    'search_field' => $search_field_value,
+                    'frequency' => $frequency,
                 ),
-                array( 'ID' => $data_id ), 
-                array( 
-                    '%s',  // name
-                    '%s',  // category
-                    '%s',  // email
-                    '%s',  // url
-                    '%s',  // company_name
-                    '%s',  // representative_name
-                    '%s',  // phone
-                    '%s',  // postal_code
-                    '%s',  // prefecture
-                    '%s',  // city
-                    '%s',  // address
-                    '%s',  // building
-                    '%s',  // closing_day
-                    '%s',  // payment_month
-                    '%s',  // payment_day
-                    '%s',  // payment_method
-                    '%s',  // tax_category
-                    '%s',  // memo
-                ),
-                array( '%d' ) 
+                    array( 'id' => $data_id ), 
+                    array( 
+                        '%s',  // company_name
+                        '%s',  // name
+                        '%s',  // email
+                        '%s',  // url
+                        '%s',  // representative_name
+                        '%s',  // phone
+                        '%s',  // postal_code
+                        '%s',  // prefecture
+                        '%s',  // city
+                        '%s',  // address
+                        '%s',  // building
+                        '%s',  // closing_day
+                        '%s',  // payment_month
+                        '%s',  // payment_day
+                        '%s',  // payment_method
+                        '%s',  // tax_category
+                        '%s',  // memo
+                        '%s',  // category
+                        '%s',  // search_field
+                        '%d',  // frequency
+                    ),
+                    array( '%d' ) 
             );
 
-            // 頻度の値を+1する
-            $wpdb->query(
-                $wpdb->prepare(
-                    "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
-                    $data_id
-                )
-            );
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             
@@ -447,7 +451,7 @@ class Kntan_Client_Class {
        }
        $query_range = $page_start . ',' . $query_limit;
 
-        $query_order_by = 'frequency';
+       $query_order_by = 'frequency';
 
        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
        $post_row = $wpdb->get_results($query);
@@ -477,8 +481,8 @@ class Kntan_Client_Class {
 
                // リスト項目
                $results[] = <<<END
-               <a href="?tab_name=$name&action=increment_frequency&data_id=$id&page_start=$page_start&page_stage=$page_stage">
-                   <div class="data_list_item">$company_name : $user_name : $category : $email</div>
+               <a href="?tab_name=$name&query_post=update&data_id=$id&page_start=$page_start&page_stage=$page_stage">
+                   <div class="data_list_item">$company_name : $user_name : $category : $email : 頻度($frequency)</div>
                </a>
                END;
            }
@@ -966,4 +970,5 @@ class Kntan_Client_Class {
 }
         
 ?>
+
 
