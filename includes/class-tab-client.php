@@ -3,12 +3,36 @@
 class Kntan_Client_Class {
 
     public function __construct() {
-        // コンストラクタの内容がない場合は、空にしておく
+        // ページロード時にfrequencyを更新する処理を実行
+        $this->increment_frequency_if_needed();
     }
-    
+
+    private function increment_frequency_if_needed() {
+        global $wpdb;
+
+        // URLから'action'と'data_id'の値を確認
+        if (isset($_GET['action']) && $_GET['action'] == 'increment_frequency' && isset($_GET['data_id'])) {
+            $data_id = intval($_GET['data_id']);
+            $tab_name = isset($_GET['tab_name']) ? $_GET['tab_name'] : '';
+            $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+
+            // frequencyを1増やすSQLクエリを実行
+            $wpdb->query($wpdb->prepare(
+                "UPDATE $table_name SET frequency = frequency + 1 WHERE id = %d",
+                $data_id
+            ));
+
+            // frequencyを更新した後、同じページにリダイレクトしてクエリパラメータをクリア
+            $redirect_url = remove_query_arg(['action', 'data_id']);
+            wp_redirect($redirect_url);
+            exit;
+        }
+    }
+        
     // -----------------------------
     // テーブル作成
     // -----------------------------
+    
 
     function Create_Table($tab_name) {
         global $wpdb;
@@ -473,8 +497,10 @@ class Kntan_Client_Class {
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);
+
+               // リスト項目
                $results[] = <<<END
-               <a href="?tab_name=$name&data_id=$id&page_start=$page_start&page_stage=$page_stage">
+               <a href="?tab_name=$name&action=increment_frequency&data_id=$id&page_start=$page_start&page_stage=$page_stage">
                    <div class="data_list_item">$company_name : $user_name : $category : $email</div>
                </a>
                END;
@@ -943,12 +969,6 @@ class Kntan_Client_Class {
             </form>
             END;
 
-            // // 検索ボタンが押されたときに検索モードにする
-            // if (isset($_POST['search_button'])) {
-            //     $query_post = 'search';
-            // }
-
-
             $data_forms .= '</div>';
         }
                             
@@ -969,3 +989,4 @@ class Kntan_Client_Class {
 }
         
 ?>
+
