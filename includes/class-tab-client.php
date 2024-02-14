@@ -431,23 +431,24 @@ class Kntan_Client_Class {
         // リスト表示
         // -----------------------------
         
-        // リスト表示部分の開始
-        $results_h = <<<END
-        <div class="data_contents">
-            <div class="data_list_box">
-            <h3>■ 顧客リスト</h3>
-        END;
-        
+        // テーブル名
         $table_name = $wpdb->prefix . 'ktp_' . $name;
-
+        
         
         // -----------------------------
         // ページネーションリンク
         // -----------------------------
-                
+        
         // 表示範囲
         $query_limit = 5;
-
+        
+        // リスト表示部分の開始
+        $results_h = <<<END
+        <div class="data_contents">
+            <div class="data_list_box">
+            <h3>■ 顧客リスト（レンジ： $query_limit ）</h3>
+        END;
+        
        // スタート位置を決める
        $page_stage = $_GET['page_stage'];
        $page_start = $_GET['page_start'];
