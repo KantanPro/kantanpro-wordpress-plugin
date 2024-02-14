@@ -38,7 +38,7 @@ class Kntan_Client_Class {
             "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
             "memo TEXT",
             "search_field TEXT", // 検索用フィールドを追加
-            "frequency INT DEFAULT 0", // 頻度
+            "frequency INT NOT NULL DEFAULT 0", // 頻度
             "category VARCHAR(100) NOT NULL DEFAULT '一般'",
             "UNIQUE KEY id (id)"
         ];
@@ -141,14 +141,6 @@ class Kntan_Client_Class {
         // 更新
         elseif( $query_post == 'update' ){
 
-            // // 頻度の値を+1する
-            // $wpdb->query(
-            //     $wpdb->prepare(
-            //         "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
-            //         $id
-            //     )
-            // );
-            
             $wpdb->update( 
                 $table_name, 
                 array( 
@@ -171,7 +163,6 @@ class Kntan_Client_Class {
                     'memo' => $memo,
                     'category' => $category,
                     'search_field' => $search_field_value,
-                    'frequency' => $frequency,
                 ),
                     array( 'id' => $data_id ), 
                     array( 
@@ -194,10 +185,25 @@ class Kntan_Client_Class {
                         '%s',  // memo
                         '%s',  // category
                         '%s',  // search_field
-                        '%d',  // frequency
                     ),
                     array( '%d' ) 
             );
+
+            // $data_idの取得方法を確認
+            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+            if($data_id > 0){
+                // 頻度の値を+1する
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "UPDATE $table_name SET frequency = frequency + 1 WHERE id = %d",
+                        $data_id
+                    )
+                );
+            } else {
+                // $data_idが不正な場合のエラーハンドリング
+                // 例: IDが指定されていない、または不正な値の場合
+                error_log('Invalid or missing data_id in Update_Table function');
+            }
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -478,13 +484,14 @@ class Kntan_Client_Class {
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);
-
+               
                // リスト項目
                $results[] = <<<END
-               <a href="?tab_name=$name&query_post=update&data_id=$id&page_start=$page_start&page_stage=$page_stage">
-                   <div class="data_list_item">$company_name : $user_name : $category : $email : 頻度($frequency)</div>
+               <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}">
+                    <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
                </a>
                END;
+
            }
            $query_max_num = $wpdb->num_rows;
        } else {
@@ -970,5 +977,3 @@ class Kntan_Client_Class {
 }
         
 ?>
-
-
