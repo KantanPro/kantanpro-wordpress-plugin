@@ -1,0 +1,11 @@
+body {
+    font-family: "Times New Roman", serif;
+}
+
+.estimate {
+    /* 見積書のスタイリング */
+}
+
+button {
+    display: none; /* プリント時にはボタンを非表示にする */
+}
