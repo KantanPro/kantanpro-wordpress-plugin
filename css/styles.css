@@ -284,3 +284,7 @@ input[name="tab_item"] {
   justify-content: flex-end;
   padding: 10px;
 }
+/* ボタンの間隔 */
+.controller button {
+  margin-right: 10px;
+}

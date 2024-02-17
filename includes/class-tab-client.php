@@ -1044,6 +1044,7 @@ class Kntan_Client_Class {
         </script>
         <div id="previewWindow" style="display: none;"></div>
         <div class="controller">
+        宛名印刷： 
             <button onclick="previewContent()" title="プレビュー">
                 <span class="material-symbols-outlined" aria-label="プレビュー">
                 preview
