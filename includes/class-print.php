@@ -13,11 +13,12 @@ class Print_Class {
         $html .= '<title>見積書印刷</title>';
         $html .= '</head>';
         $html .= '<body>';
+        // 本文
         $html .= '<p></p>';
         $html .= '＜見積書＞';
         $html .= '<p>' . $this->data['customer'] . ' 様</br>';
         $html .= '価格 ' . $this->data['amount'] . '</p>';
-        // Add more HTML generation code here based on your requirements
+        // 本文
         $html .= '</body>';
         $html .= '</html>';
 
