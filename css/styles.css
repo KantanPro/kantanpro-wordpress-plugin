@@ -277,3 +277,10 @@ input[name="tab_item"] {
   background-color: #333;
   color: #fff;
 }
+
+/* コントローラーエリア */
+.controller {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}

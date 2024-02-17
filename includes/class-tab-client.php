@@ -965,20 +965,25 @@ class Kntan_Client_Class {
             </div> <!-- data_detail_boxの終了 -->
         </div> <!-- data_contentsの終了 -->
         END;
-        
-        // template/estimate.phpへのリンクをクリックで表示
-        $estimate_url = plugins_url('template/estimate.php', __FILE__);
+
+        // プリンターボタン
         $printer = <<<END
-        <div class="add">
-            <a href="{$estimate_url}" target="_blank">見積書を表示</a>
+        <div class="controller">
+            <form method="post" action="" onsubmit="window.print()">
+                <button type="submit" name="send_post" title="印刷する">
+                    <span class="material-symbols-outlined" aria-label="印刷">
+                    print
+                    </span>
+                </button>
+            </form>
         </div>
         END;
         
         // 表示するもの
-        $content = $data_list . $data_title . $data_forms . $search_results_list . $div_end . $printer;
+        $content = $printer . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
-    }
+    } // View_Table()の終了
 
 }
         
