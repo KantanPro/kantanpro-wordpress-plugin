@@ -973,10 +973,16 @@ class Kntan_Client_Class {
         // Print_Classのパスを指定
         require_once( dirname( __FILE__ ) . '/class-print.php' );
 
+        // データを指定
+        $data_src = [
+            'company_name' => $company_name,
+        ];
+        $customer = $data_src['company_name'];
         $data = [
-            'customer' => 'John Doe',
+            'customer' => "$customer",
             'amount' => '1000',
         ];
+
         $print_html = new Print_Class($data);
         $print_html = $print_html->generateHTML();
 
@@ -994,18 +1000,47 @@ class Kntan_Client_Class {
                 printWindow.document.write(printContent);
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
-                printWindow.print();
+                printWindow.print();  // Add this line
             }
+
+            function previewContent() {
+                var printContent = $print_html;
+                var previewWindow = document.getElementById('previewWindow');
+                previewWindow.innerHTML = printContent;
+                previewWindow.style.display = 'block';
+            }
+
+            function closePreview() {
+                var previewWindow = document.getElementById('previewWindow');
+                previewWindow.style.display = 'none';
+            }
+
+            // about:blankを閉じる
+            // window.onafterprint = function() {
+            //     window.close();
+            // }
+
         </script>
+        <div id="previewWindow" style="display: none;"></div>
         <div class="controller">
+            <button onclick="previewContent()" title="プレビュー">
+                <span class="material-symbols-outlined" aria-label="プレビュー">
+                preview
+                </span>
+            </button>
             <button onclick="printContent()" title="印刷する">
                 <span class="material-symbols-outlined" aria-label="印刷">
                 print
                 </span>
             </button>
+            <button onclick="closePreview()" title="プレビューを閉じる">
+                <span class="material-symbols-outlined" aria-label="閉じる">
+                close
+                </span>
+            </button>
         </div>
         END;
-        
+
         // コンテンツを返す
         $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;

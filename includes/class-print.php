@@ -10,12 +10,13 @@ class Print_Class {
     public function generateHTML() {
         $html = '<html>';
         $html .= '<head>';
-        $html .= '<title>Estimate</title>';
+        $html .= '<title>見積書印刷</title>';
         $html .= '</head>';
         $html .= '<body>';
-        $html .= '<h1>Estimate</h1>';
-        $html .= '<p>Customer: ' . $this->data['customer'] . '</p>';
-        $html .= '<p>Amount: ' . $this->data['amount'] . '</p>';
+        $html .= '<p></p>';
+        $html .= '＜見積書＞';
+        $html .= '<p>' . $this->data['customer'] . ' 様</br>';
+        $html .= '価格 ' . $this->data['amount'] . '</p>';
         // Add more HTML generation code here based on your requirements
         $html .= '</body>';
         $html .= '</html>';
