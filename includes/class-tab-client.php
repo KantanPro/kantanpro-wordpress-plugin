@@ -976,11 +976,32 @@ class Kntan_Client_Class {
         // データを指定
         $data_src = [
             'company_name' => $company_name,
+            'name' => $user_name,
+            'representative_name' => $representative_name,
+            'postal_code' => $postal_code,
+            'prefecture' => $prefecture,
+            'city' => $city,
+            'address' => $address,
+            'building' => $building,
         ];
+
         $customer = $data_src['company_name'];
+        $user_name = $data_src['name'];
+        $representative_name = $data_src['representative_name'];
+        $postal_code = $data_src['postal_code'];
+        $prefecture = $data_src['prefecture'];
+        $city = $data_src['city'];
+        $address = $data_src['address'];
+        $building = $data_src['building'];
+
         $data = [
+            'postal_code' => "$postal_code",
+            'prefecture' => "$prefecture",
+            'city' => "$city",
+            'address' => "$address",
+            'building' => "$building",
             'customer' => "$customer",
-            'amount' => '1000',
+            'user_name' => "$user_name",
         ];
 
         $print_html = new Print_Class($data);
