@@ -966,25 +966,51 @@ class Kntan_Client_Class {
         </div> <!-- data_contentsの終了 -->
         END;
 
-        // プリンターボタン
-        $printer = <<<END
+        // -----------------------------
+        // テンプレート印刷
+        // -----------------------------
+
+        // Print_Classのパスを指定
+        require_once( dirname( __FILE__ ) . '/class-print.php' );
+
+        $data = [
+            'customer' => 'John Doe',
+            'amount' => '1000',
+        ];
+        $print_html = new Print_Class($data);
+        $print_html = $print_html->generateHTML();
+
+        // PHP
+        $print_html = json_encode($print_html);  // JSON形式にエンコード
+
+        // JavaScript
+        $print = <<<END
+        <script>
+            function printContent() {
+                var printContent = $print_html;
+                var printWindow = window.open('', '_blank');
+                printWindow.document.open();
+                printWindow.document.write('<html><head><title>Print</title></head><body>');
+                printWindow.document.write(printContent);
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                printWindow.print();
+            }
+        </script>
         <div class="controller">
-            <form method="post" action="" onsubmit="window.print()">
-                <button type="submit" name="send_post" title="印刷する">
-                    <span class="material-symbols-outlined" aria-label="印刷">
-                    print
-                    </span>
-                </button>
-            </form>
+            <button onclick="printContent()" title="印刷する">
+                <span class="material-symbols-outlined" aria-label="印刷">
+                print
+                </span>
+            </button>
         </div>
         END;
         
-        // 表示するもの
-        $content = $printer . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        // コンテンツを返す
+        $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
     } // View_Table()の終了
 
 }
-        
 ?>
