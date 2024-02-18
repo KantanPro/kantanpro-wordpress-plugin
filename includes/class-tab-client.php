@@ -1042,9 +1042,8 @@ class Kntan_Client_Class {
             // }
 
         </script>
-        <div id="previewWindow" style="display: none;"></div>
         <div class="controller">
-            <div class="printer">
+        <div class="printer">
                 <div class="up-title">宛名印刷： テンプレート（.txt）をアップロード</div>
                 <form method="POST" enctype="multipart/form-data">
                     <input type="file" name="templateFile" accept=".txt">
@@ -1070,7 +1069,8 @@ class Kntan_Client_Class {
                     </span>
                 </button>
             </div>
-        </div>
+            </div>
+            <div id="previewWindow" style="display: none;"></div>
     END;
 
         // コンテンツを返す
