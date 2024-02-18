@@ -7,5 +7,5 @@ _%user_name%_ 様</br>
 
 このファイルは宛名印刷のテンプレートです。
 <hr>
-KanTanProWP</br>
+KantanProWP</br>
 </p>
