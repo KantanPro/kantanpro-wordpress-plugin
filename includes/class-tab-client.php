@@ -1044,6 +1044,12 @@ class Kntan_Client_Class {
         </script>
         <div id="previewWindow" style="display: none;"></div>
         <div class="controller">
+        
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="templateFile" accept=".txt">
+            <button type="submit">Upload</button>
+        </form>
+
         宛名印刷： 
             <button onclick="previewContent()" title="プレビュー">
                 <span class="material-symbols-outlined" aria-label="プレビュー">
