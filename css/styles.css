@@ -5,7 +5,8 @@
   display: flex;
   flex-wrap: wrap;
   text-align: center;
-  justify-content: center; /* 中央揃えにする */
+  justify-content: center;
+  /* 中央揃えにする */
   margin: 0 auto;
   padding: 20px;
   width: 100%;
@@ -35,6 +36,7 @@
     width: 50%;
     float: left;
   }
+
   .data_detail_box {
     width: 50%;
     float: right;
@@ -59,35 +61,36 @@
 
 /* ページネーション */
 .pagination-container {
-    text-align: center;
-    margin: 20px 0;
+  text-align: center;
+  margin: 20px 0;
 }
 
 .pagination-links {
-    display: inline-block;
-    padding: 8px;
+  display: inline-block;
+  padding: 8px;
 }
 
 .pagination-links a {
-    margin: 0 5px;
-    padding: 5px 10px;
-    background-color: #f0f0f0;
-    color: #333;
-    text-decoration: none;
+  margin: 0 5px;
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  color: #333;
+  text-decoration: none;
 }
 
 .pagination-links a:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 .current-page {
-    margin: 0 15px;
+  margin: 0 15px;
 }
 
 /* ボタン */
 .box {
   margin-bottom: 50px;
 }
+
 .submit_button {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -98,6 +101,7 @@
   display: block;
   float: right;
 }
+
 .zengoButton {
   font-size: 16px;
   margin-right: 10px;
@@ -132,6 +136,7 @@
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
+
 .tab_item:hover {
   opacity: 0.75;
 }
@@ -150,18 +155,18 @@ input[name="tab_item"] {
 }
 
 /*選択されているタブのコンテンツのみを表示*/
-#list:checked ~ #list_content,
-#order:checked ~ #order_content,
-#client:checked ~ #client_content,
-#service:checked ~ #service_content,
-#supplier:checked ~ #supplier_content,
-#report:checked ~ #report_content,
-#setting:checked ~ #setting_content {
+#list:checked~#list_content,
+#order:checked~#order_content,
+#client:checked~#client_content,
+#service:checked~#service_content,
+#supplier:checked~#supplier_content,
+#report:checked~#report_content,
+#setting:checked~#setting_content {
   display: block;
 }
 
 /*選択されているタブのスタイルを変える*/
-.tabs input:checked + .tab_item {
+.tabs input:checked+.tab_item {
   background-color: #cdcccc;
   color: #3b3b3b;
 }
@@ -169,27 +174,33 @@ input[name="tab_item"] {
 /* モバイル表示時のタブスタイル */
 @media screen and (max-width: 768px) {
   .tab_item {
-      width: 100%; /* タブの幅を100%に設定 */
-      box-sizing: border-box; /* ボックスサイズの計算方法を変更 */
-      border-bottom: none; /* 下線を非表示に */
-      border-right: 1px solid #cdcccc; /* 右側に境界線を追加 */
+    width: 100%;
+    /* タブの幅を100%に設定 */
+    box-sizing: border-box;
+    /* ボックスサイズの計算方法を変更 */
+    border-bottom: none;
+    /* 下線を非表示に */
+    border-right: 1px solid #cdcccc;
+    /* 右側に境界線を追加 */
   }
 
   /* 最後のタブの右側の境界線を非表示に */
   .tab_item:last-child {
-      border-right: none;
+    border-right: none;
   }
 
   /* タブコンテンツのスタイル */
   .tab_content {
-      clear: both; /* クリアフィックス */
+    clear: both;
+    /* クリアフィックス */
   }
 }
 
 /* タブが縦に並ぶようにするための追加スタイル */
 @media screen and (max-width: 768px) {
   .tabs {
-      display: block; /* タブをブロック要素として表示 */
+    display: block;
+    /* タブをブロック要素として表示 */
   }
 }
 
@@ -227,21 +238,23 @@ input[name="tab_item"] {
 /* ボタンのスタイル */
 .button button {
   margin-right: 10px;
-  padding: 4px 5px; /* 上下のパディングを3px、左右のパディングを0pxに設定 */
+  padding: 4px 5px;
+  /* 上下のパディングを3px、左右のパディングを0pxに設定 */
 }
 
 /* Googleフォント */
 .material-symbols-outlined {
   font-variation-settings:
-  'FILL' 0,
-  'wght' 400,
-  'GRAD' 0,
-  'opsz' 24
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
 }
 
 .parent {
   display: flex;
-  align-items: flex-end; /* バージョンを下端に揃える */
+  align-items: flex-end;
+  /* バージョンを下端に揃える */
 }
 
 .title {
@@ -261,6 +274,7 @@ input[name="tab_item"] {
   justify-content: center;
   margin-top: 20px;
 }
+
 .pagination a {
   margin: 0 5px;
   padding: 5px 10px;
@@ -269,10 +283,12 @@ input[name="tab_item"] {
   text-decoration: none;
   border-radius: 5px;
 }
+
 .pagination a:hover {
   background-color: #333;
   color: #fff;
 }
+
 .pagination .current-page {
   background-color: #333;
   color: #fff;
@@ -284,6 +300,7 @@ input[name="tab_item"] {
   justify-content: flex-end;
   padding: 10px;
 }
+
 /* ボタンの間隔 */
 .controller button {
   margin-right: 10px;
@@ -296,7 +313,8 @@ input[name="tab_item"] {
   display: flex;
   flex-wrap: nowrap;
   justify-content: flex-end;
-  align-items: center; /* 上下センターぞろえ */
+  align-items: center;
+  /* 上下センターぞろえ */
   margin-top: 2px;
   margin-right: 10px;
   border: 1px solid lightgray;
@@ -304,8 +322,12 @@ input[name="tab_item"] {
   padding: 3px;
   padding-left: 10px;
   opacity: 0.6;
-  font-size: 14px; /* 少し小さくする */
-  color: #000000; /* 文字の色を少し濃くする */
+  font-size: 14px;
+  /* 少し小さくする */
+  color: #000000;
+  /* 文字の色を少し濃くする */
+  width: 100%;
+  /* 幅を最大にする */
 }
 
 .printer button {
@@ -344,4 +366,5 @@ input[name="tab_item"] {
     display: none;
   }
 }
-  /* Add your additional styles for the upload button here */
+
+/* Add your additional styles for the upload button here */
