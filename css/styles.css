@@ -316,7 +316,7 @@ input[name="tab_item"] {
   align-items: center;
   /* 上下センターぞろえ */
   margin-top: 2px;
-  margin-right: 10px;
+  margin-right: 0px;
   border: 1px solid lightgray;
   background-color: rgb(212, 230, 241);
   padding: 3px;
@@ -365,6 +365,22 @@ input[name="tab_item"] {
   .up-title {
     display: none;
   }
+}
+
+/* Add your additional styles for the upload button here */
+
+#previewWindow {
+  display: block;
+  clear: both;
+  word-wrap: break-word;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  padding: 10px;
+  /* Added padding */
 }
 
 /* Add your additional styles for the upload button here */
