@@ -1059,14 +1059,14 @@ class Kntan_Client_Class {
                         preview
                     </span>
                 </button>
-                <button onclick="printContent()" title="印刷する">
-                    <span class="material-symbols-outlined" aria-label="印刷">
-                        print
-                    </span>
-                </button>
                 <button onclick="closePreview()" title="プレビューを閉じる">
                     <span class="material-symbols-outlined" aria-label="閉じる">
                         close
+                    </span>
+                </button>
+                <button onclick="printContent()" title="印刷する">
+                    <span class="material-symbols-outlined" aria-label="印刷">
+                        print
                     </span>
                 </button>
             </div>

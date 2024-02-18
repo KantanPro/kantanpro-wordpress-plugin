@@ -21,8 +21,9 @@ class Print_Class {
                 $newUploadFile = $uploadDir . 'template.txt';
                 rename($uploadFile, $newUploadFile);
                 $template = file_get_contents($newUploadFile);
+                echo '<script>alert("ファイルが有効で、アップロードされました。");</script>';
             } else {
-                echo 'アップロードされたファイルは無効です。';
+                echo '<script>alert("アップロードされたファイルは無効です。");</script>';
             }
         }
 
