@@ -1017,7 +1017,7 @@ class Kntan_Client_Class {
                 var printContent = $print_html;
                 var printWindow = window.open('', '_blank');
                 printWindow.document.open();
-                printWindow.document.write('<html><head><title>Print</title></head><body>');
+                printWindow.document.write('<html><head><title>ーーー宛名印刷ーーー</title></head><body>');
                 printWindow.document.write(printContent);
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
@@ -1044,30 +1044,34 @@ class Kntan_Client_Class {
         </script>
         <div id="previewWindow" style="display: none;"></div>
         <div class="controller">
-        
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="templateFile" accept=".txt">
-            <button type="submit">Upload</button>
-        </form>
-
-        宛名印刷： 
-            <button onclick="previewContent()" title="プレビュー">
-                <span class="material-symbols-outlined" aria-label="プレビュー">
-                preview
-                </span>
-            </button>
-            <button onclick="printContent()" title="印刷する">
-                <span class="material-symbols-outlined" aria-label="印刷">
-                print
-                </span>
-            </button>
-            <button onclick="closePreview()" title="プレビューを閉じる">
-                <span class="material-symbols-outlined" aria-label="閉じる">
-                close
-                </span>
-            </button>
+            <div class="printer">
+                <div class="up-title">宛名印刷： テンプレート（.txt）をアップロード</div>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="file" name="templateFile" accept=".txt">
+                    <button type="submit" class="upload" title="アップロード">
+                        <span class="material-symbols-outlined" aria-label="アップロード">
+                            upload
+                        </span>
+                    </button>
+                </form>
+                <button onclick="previewContent()" title="プレビュー">
+                    <span class="material-symbols-outlined" aria-label="プレビュー">
+                        preview
+                    </span>
+                </button>
+                <button onclick="printContent()" title="印刷する">
+                    <span class="material-symbols-outlined" aria-label="印刷">
+                        print
+                    </span>
+                </button>
+                <button onclick="closePreview()" title="プレビューを閉じる">
+                    <span class="material-symbols-outlined" aria-label="閉じる">
+                        close
+                    </span>
+                </button>
+            </div>
         </div>
-        END;
+    END;
 
         // コンテンツを返す
         $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;

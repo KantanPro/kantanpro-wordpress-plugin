@@ -5,7 +5,7 @@ _%customer%_</br>
 _%user_name%_ 様</br>
 </br></br></br></br></br>
 
-test
+このファイルは宛名印刷のテンプレートです。
 <hr>
 KanTanProWP</br>
 </p>
