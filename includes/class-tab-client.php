@@ -1019,7 +1019,7 @@ class Kntan_Client_Class {
                     var printContent = $print_html;
                     var printWindow = window.open('', '_blank');
                     printWindow.document.open();
-                    printWindow.document.write('<html><head><title>ーーー宛名印刷ーーー</title></head><body>');
+                    printWindow.document.write('<html><head><title>印刷</title></head><body>');
                     printWindow.document.write(printContent);
                     printWindow.document.write('</body></html>');
                     printWindow.document.close();
