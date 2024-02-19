@@ -1010,68 +1010,63 @@ class Kntan_Client_Class {
         // PHP
         $print_html = json_encode($print_html);  // JSON形式にエンコード
 
-        // JavaScript
-        $print = <<<END
-        <script>
-            function printContent() {
-                var printContent = $print_html;
-                var printWindow = window.open('', '_blank');
-                printWindow.document.open();
-                printWindow.document.write('<html><head><title>ーーー宛名印刷ーーー</title></head><body>');
-                printWindow.document.write(printContent);
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.print();  // Add this line
-            }
+            // JavaScript
+            $print = <<<END
+            <script>
+                var isPreviewOpen = false;
 
-            function previewContent() {
-                var printContent = $print_html;
-                var previewWindow = document.getElementById('previewWindow');
-                previewWindow.innerHTML = printContent;
-                previewWindow.style.display = 'block';
-            }
+                function printContent() {
+                    var printContent = $print_html;
+                    var printWindow = window.open('', '_blank');
+                    printWindow.document.open();
+                    printWindow.document.write('<html><head><title>ーーー宛名印刷ーーー</title></head><body>');
+                    printWindow.document.write(printContent);
+                    printWindow.document.write('</body></html>');
+                    printWindow.document.close();
+                    printWindow.print();  // Add this line
+                }
 
-            function closePreview() {
-                var previewWindow = document.getElementById('previewWindow');
-                previewWindow.style.display = 'none';
-            }
+                function togglePreview() {
+                    var previewWindow = document.getElementById('previewWindow');
+                    var previewButton = document.getElementById('previewButton');
+                    if (isPreviewOpen) {
+                        previewWindow.style.display = 'none';
+                        previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
+                        isPreviewOpen = false;
+                    } else {
+                        var printContent = $print_html;
+                        previewWindow.innerHTML = printContent;
+                        previewWindow.style.display = 'block';
+                        previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="閉じる">close</span>';
+                        isPreviewOpen = true;
+                    }
+                }
 
-            // about:blankを閉じる
-            // window.onafterprint = function() {
-            //     window.close();
-            // }
+                // about:blankを閉じる
+                // window.onafterprint = function() {
+                //     window.close();
+                // }
 
-        </script>
-        <div class="controller">
-        <div class="printer">
-                <div class="up-title">宛名印刷： テンプレート（.txt）をアップロード</div>
-                <form method="POST" enctype="multipart/form-data">
-                    <input type="file" name="templateFile" accept=".txt">
-                    <button type="submit" class="upload" title="アップロード">
-                        <span class="material-symbols-outlined" aria-label="アップロード">
-                            upload
-                        </span>
+            </script>
+            <div class="controller">
+                <div class="printer">
+                    <div class="up-title">宛名印刷： テンプレート（.txt）をアップロード</div>
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="file" name="templateFile" accept=".txt">
+                        <button type="submit" class="upload" title="アップロード">
+                            <span class="material-symbols-outlined" aria-label="アップロード">upload</span>
+                        </button>
+                    </form>
+                    <button id="previewButton" onclick="togglePreview()" title="プレビュー">
+                        <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
                     </button>
-                </form>
-                <button onclick="previewContent()" title="プレビュー">
-                    <span class="material-symbols-outlined" aria-label="プレビュー">
-                        preview
-                    </span>
-                </button>
-                <button onclick="closePreview()" title="プレビューを閉じる">
-                    <span class="material-symbols-outlined" aria-label="閉じる">
-                        close
-                    </span>
-                </button>
-                <button onclick="printContent()" title="印刷する">
-                    <span class="material-symbols-outlined" aria-label="印刷">
-                        print
-                    </span>
-                </button>
-            </div>
+                    <button onclick="printContent()" title="印刷する">
+                        <span class="material-symbols-outlined" aria-label="印刷">print</span>
+                    </button>
+                </div>
             </div>
             <div id="previewWindow" style="display: none;"></div>
-    END;
+            END;
 
         // コンテンツを返す
         $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
