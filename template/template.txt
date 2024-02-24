@@ -1,11 +1,3 @@
-<p>
-〒_%postal_code%_</br>
-_％prefecture％__％city％__%address%_</br>
-_%customer%_</br>
-_%user_name%_ 様</br>
-</br></br></br></br></br>
-
-※ 半角 ※
-<hr>
-KantanProWP</br>
-</p>
+<p>〒_%postal_code%_<br />_％prefecture％__％city％__dress%_<br />_%customer%_<br />_%user_name%_ 様<br /><br /><br /><br /><br />※ 宛名印刷のテンプレートです。</p>
+<hr />
+<p>KantanProWP</p>
