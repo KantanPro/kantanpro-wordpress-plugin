@@ -2,10 +2,7 @@
 
 class Kntan_Setting_Class {
 
-    // public $name;
-
     public function __construct() {
-        // $this->name = 'setting';
     }
     
     function Setting_Tab_View( $tab_name ) {
@@ -36,25 +33,27 @@ class Kntan_Setting_Class {
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
             'textarea_rows' => 10,
+            'media_buttons' => true, // Enable media buttons
+            'tinymce' => array(
+                'setup' => 'function(editor) {
+                    editor.on("change", function() {
+                        // Save the content to a hidden input
+                        document.getElementById(\'my_saved_content\').value = editor.getContent();
+                        editor.save(); // Save the content before updating the textarea
+                    });
+                }',
+            ),
         ) );
         $visual_editor = ob_get_clean();
-
+        
         $content .= <<<END
         <h3>宛名印刷のテンプレート</h3>
         <form method="post" action="">
         $visual_editor
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
         <input type="submit" value="保存" style="font-family: Roboto, sans-serif;" />
         </form>
-
-        <script>
-        // Update the textarea content immediately after submission
-        document.querySelector('form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var textarea = document.getElementById('template_content');
-            textarea.value = textarea.value.trim();
-        });
-        </script>
         END;
 
         return $content;

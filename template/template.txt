@@ -1,3 +1,3 @@
 <p>〒_%postal_code%_<br />_％prefecture％__％city％__dress%_<br />_%customer%_<br />_%user_name%_ 様<br /><br /><br /><br /><br />※ 宛名印刷のテンプレートです。</p>
 <hr />
-<p>KantanProWP</p>
+<p><img class=\"alignnone size-medium wp-image-165\" src=\"https://kantanpro.local/ktp/wp-content/uploads/2023/01/ロゴ-300x41.png\" alt=\"\" width=\"300\" height=\"41\" /></p>
