@@ -10,12 +10,6 @@ class Kntan_Setting_Class {
     
     function Setting_Tab_View( $tab_name ) {
 
-        // // 表示する内容
-        // $content = <<<END
-        // <h3>ここは [$tab_name] です。</h3>
-        // 各種設定ができます。
-        // END;
-
         // 宛名印刷のテンプレートを読み込んで編集し保存する
         $template_content = file_get_contents( plugin_dir_path( __FILE__ ) . '../template/template.txt' );
 
@@ -36,10 +30,19 @@ class Kntan_Setting_Class {
             $template_content = $new_template_content;
             $content .= '<script>alert("更新しました！");</script>';
         }
+
+        // Enable visual editor for template content
+        ob_start();
+        wp_editor( $template_content, 'template_content', array(
+            'textarea_name' => 'template_content',
+            'textarea_rows' => 10,
+        ) );
+        $visual_editor = ob_get_clean();
+
         $content .= <<<END
         <h3>宛名印刷のテンプレート</h3>
         <form method="post" action="">
-        <textarea name="template_content" id="template_content" style="height: 300px;" wrap="off">$template_content</textarea>
+        $visual_editor
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
         <input type="submit" value="保存" style="font-family: Roboto, sans-serif;" />
         </form>
