@@ -29,7 +29,7 @@ class Kntan_Setting_Class {
 
             // Update the $template_content variable with the new content
             $template_content = $new_template_content;
-            $content .= '<script>alert("更新しました！");</script>';
+            $content .= '<script>alert("保存しました！");</script>';
         }
 
         // Enable visual editor for template content
@@ -56,16 +56,18 @@ class Kntan_Setting_Class {
         // 宛名印刷のテンプレート
         // ------------------------------------------------
 
+        $content .= '<h4 id="template_title">宛名印刷</h4>';
         $content .= '<div class="template_contents">';
         // ビジュアルエディターを表示
         $content .= <<<END
-        <div class="template_form"><form method="post" action="">
+        <div class="template_form" style="text-align: right;">
+        <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
-        <button id="previewButton" onclick="togglePreview()" title="update">
+        <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
         <span class="material-symbols-outlined">
-        update
+        save_as
         </span>
         </button>
         </form></div>
@@ -73,7 +75,7 @@ class Kntan_Setting_Class {
 
         $content .= <<<END
         <div class="template_example">
-        <h4>テンプレートの置換例</h4>
+        <h5>テンプレートの置換例</h5>
         _%postal_code%_　郵便番号<br />
         _％prefecture％_　都道府県<br />
         _％city％_　市区町村<br />
