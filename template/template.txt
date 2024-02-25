@@ -1,9 +1,3 @@
-<p><strong>〒_%postal_code%_</strong><br /><strong>_％prefecture％__％city％__%address%_</strong><br /><strong>_%customer%_</strong><br /><strong>_%user_name%_ 様</strong></p>
-<ul>
-<li>宛名印刷のテンプレートです。</li>
-<li>設定タブで編集できます。</li>
-<li>選択した顧客データに置換されます。</li>
-<li>画像も追加できます。</li>
-</ul>
+<p>〒_%postal_code%_<br />_％prefecture％__％city％__%address%_<br />_%customer%_<br />_%user_name%_ 様<strong><br /><br /><br /><br /><br /></strong></p>
 <hr />
-<p><br /><img class="size-medium wp-image-183 alignleft" src="https://kantanpro.local/ktp/wp-content/uploads/2024/02/logo-300x42.png" alt="" width="300" height="42" /></p>
+<p><img class="size-medium wp-image-183 alignleft" src="https://kantanpro.local/ktp/wp-content/uploads/2024/02/logo-300x42.png" alt="" width="300" height="42" /></p>
