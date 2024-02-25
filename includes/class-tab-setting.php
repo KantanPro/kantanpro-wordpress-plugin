@@ -39,22 +39,17 @@ class Kntan_Setting_Class {
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
-            'textarea_rows' => 10,
+            'textarea_rows' => 20,
             'media_buttons' => true, // Enable media buttons
             'tinymce' => array(
-                'toolbar1' => 'bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link unlink', // ショートコードボタン（insert_shortcode）を除外
-                'setup' => 'function(editor) {
-                    editor.on("change", function() {
-                        // Save the content to a hidden input
-                        editor.save(); // 一回のみ保存
-                        document.getElementById(\'my_saved_content\').value = editor.getContent();
-                    });
-                }',
+                'toolbar1' => 'formatselect bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link unlink | blockquote hr | subscript superscript | removeformat',
+                'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
+                'toolbar3' => '',
             ),
             'default_editor' => 'tinymce', // Display visual editor by default
         ) );
         $visual_editor = ob_get_clean();
-  
+
         // ------------------------------------------------
         // 宛名印刷のテンプレート
         // ------------------------------------------------
