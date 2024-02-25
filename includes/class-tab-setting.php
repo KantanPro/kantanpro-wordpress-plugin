@@ -45,6 +45,7 @@ class Kntan_Setting_Class {
                 'toolbar1' => 'formatselect bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link unlink | blockquote hr | subscript superscript | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
+                'wp_adv' => false, // Disable "Add shortcode" button
             ),
             'default_editor' => 'tinymce', // Display visual editor by default
         ) );
