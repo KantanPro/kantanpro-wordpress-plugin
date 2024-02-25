@@ -17,6 +17,9 @@ class Kntan_Setting_Class {
         if ( isset( $_POST['template_content'] ) ) {
             $new_template_content = $_POST['template_content'];
 
+            // Remove slashes
+            $new_template_content = stripslashes($new_template_content);
+
             // 全角スペースを半角スペースに変換する処理を追加
             $new_template_content = str_replace("　", " ", $new_template_content);
 
@@ -31,27 +34,27 @@ class Kntan_Setting_Class {
             $template_content = $new_template_content;
             $content .= '<script>alert("保存しました！");</script>';
         }
-
-        // Enable visual editor for template content
+        
+        // ビジュアルエディターを表示
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
             'textarea_rows' => 10,
-            'media_buttons' => 0, // Enable media buttons
-            'tinymce' => 0, // Enable TinyMCE
-
+            'media_buttons' => true, // Enable media buttons
             'tinymce' => array(
+                'toolbar1' => 'bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link unlink', // ショートコードボタン（insert_shortcode）を除外
                 'setup' => 'function(editor) {
                     editor.on("change", function() {
                         // Save the content to a hidden input
+                        editor.save(); // 一回のみ保存
                         document.getElementById(\'my_saved_content\').value = editor.getContent();
-                        editor.save(); // Save the content before updating the textarea
                     });
                 }',
             ),
+            'default_editor' => 'tinymce', // Display visual editor by default
         ) );
         $visual_editor = ob_get_clean();
-        
+  
         // ------------------------------------------------
         // 宛名印刷のテンプレート
         // ------------------------------------------------
@@ -82,6 +85,7 @@ class Kntan_Setting_Class {
         _%address%_　番地<br />
         _%customer%_　会社名｜屋号｜お名前<br />
         _%user_name%_ 　担当者名<br />
+        ※ ショートコードを挿入ボタンは使用できません。
         </div>
         END;
         $content .= '</div>';
