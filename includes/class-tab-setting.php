@@ -39,7 +39,7 @@ class Kntan_Setting_Class {
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
-            'textarea_rows' => 20,
+            'textarea_rows' => 15,
             'media_buttons' => true, // Enable media buttons
             'tinymce' => array(
                 'toolbar1' => 'formatselect bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link unlink | blockquote hr | subscript superscript | removeformat',
@@ -80,7 +80,11 @@ class Kntan_Setting_Class {
         _％city％_　市区町村<br />
         _%address%_　番地<br />
         _%customer%_　会社名｜屋号｜お名前<br />
-        _%user_name%_ 　担当者名<br />
+        _%user_name%_ 　担当者名<br /><br />
+        ※ 宛名印刷のテンプレートです。<br />
+        ※ 設定タブで編集できます。<br />
+        ※ 選択した顧客データに置換されます。<br />
+        ※ 画像も追加できます。<br />
         ※ ショートコードを挿入ボタンは使用できません。
         </div>
         END;
