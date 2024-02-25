@@ -7,6 +7,10 @@ class Kntan_Setting_Class {
     
     function Setting_Tab_View( $tab_name ) {
 
+        $content .= <<<END
+        <h3>テンプレート設定</h3>
+        END;
+
         // 宛名印刷のテンプレートを読み込んで編集し保存する
         $template_content = file_get_contents( plugin_dir_path( __FILE__ ) . '../template/template.txt' );
 
@@ -33,7 +37,9 @@ class Kntan_Setting_Class {
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
             'textarea_rows' => 10,
-            'media_buttons' => true, // Enable media buttons
+            'media_buttons' => 0, // Enable media buttons
+            'tinymce' => 0, // Enable TinyMCE
+
             'tinymce' => array(
                 'setup' => 'function(editor) {
                     editor.on("change", function() {
@@ -46,15 +52,37 @@ class Kntan_Setting_Class {
         ) );
         $visual_editor = ob_get_clean();
         
+        // ------------------------------------------------
+        // 宛名印刷のテンプレート
+        // ------------------------------------------------
+
+        $content .= '<div class="template_contents">';
+        // ビジュアルエディターを表示
         $content .= <<<END
-        <h3>宛名印刷のテンプレート</h3>
-        <form method="post" action="">
+        <div class="template_form"><form method="post" action="">
         $visual_editor
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
-        <input type="submit" value="保存" style="font-family: Roboto, sans-serif;" />
-        </form>
+        <button id="previewButton" onclick="togglePreview()" title="update">
+        <span class="material-symbols-outlined">
+        update
+        </span>
+        </button>
+        </form></div>
         END;
+
+        $content .= <<<END
+        <div class="template_example">
+        <h4>テンプレートの置換例</h4>
+        _%postal_code%_　郵便番号<br />
+        _％prefecture％_　都道府県<br />
+        _％city％_　市区町村<br />
+        _%address%_　番地<br />
+        _%customer%_　会社名｜屋号｜お名前<br />
+        _%user_name%_ 　担当者名<br />
+        </div>
+        END;
+        $content .= '</div>';
 
         return $content;
     }
