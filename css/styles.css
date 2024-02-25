@@ -383,4 +383,40 @@ input[name="tab_item"] {
   /* Added padding */
 }
 
-/* Add your additional styles for the upload button here */
+#previewWindow img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.template_contents {
+  display: flex;
+  flex-wrap: wrap;
+  text-align: center;
+  justify-content: center;
+  /* 中央揃えにする */
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.template_form {
+  flex: 1; /* これにより、利用可能なスペースを均等に分けます */
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.template_example {
+  flex: 1; /* これにより、利用可能なスペースを均等に分けます */
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+@media (max-width: 767px) {
+  .template_contents {
+    flex-direction: column;
+  }
+}
