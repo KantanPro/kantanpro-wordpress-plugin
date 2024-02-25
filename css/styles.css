@@ -420,3 +420,7 @@ input[name="tab_item"] {
     flex-direction: column;
   }
 }
+
+#template_title {
+  margin-bottom: 0;
+}
