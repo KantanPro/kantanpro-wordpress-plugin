@@ -21,6 +21,7 @@ class Print_Class {
             '_％prefecture％_' => $this->data['prefecture'],
             '_％city％_' => $this->data['city'],
             '_%address%_' => $this->data['address'],
+            '_%building%_' => $this->data['building'],
             '_%customer%_' => $this->data['customer'],
             '_%user_name%_' => $this->data['user_name']
         );
