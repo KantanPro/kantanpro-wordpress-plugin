@@ -1,3 +1,0 @@
-<p>〒_%postal_code%_<br />_％prefecture％__％city％__%address%_<br />_%customer%_<br />_%user_name%_ 様<strong><br /><br /><br /><br /><br /></strong></p>
-<hr />
-<p><img class="size-medium wp-image-183 alignleft" src="https://kantanpro.local/ktp/wp-content/uploads/2024/02/logo-300x42.png" alt="" width="300" height="42" /></p>
