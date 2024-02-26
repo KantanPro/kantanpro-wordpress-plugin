@@ -164,6 +164,8 @@ function KTPWP_Index(){
 					break;
 				case 'setting':
 					$setting = new Kntan_Setting_Class();
+					$setting->Create_Table($tab_name);
+					$setting->Update_Table($tab_name);
 					$setting_content = $setting->Setting_Tab_View($tab_name);
 					break;
 				default:
