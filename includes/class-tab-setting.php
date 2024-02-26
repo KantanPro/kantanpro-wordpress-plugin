@@ -181,7 +181,7 @@ class Kntan_Setting_Class {
             'textarea_rows' => 15,
             'media_buttons' => true, // Enable media buttons
             'tinymce' => array(
-                'toolbar1' => 'formatselect bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link unlink | blockquote hr | subscript superscript | removeformat',
+                'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
                 'wp_adv' => false, // Disable "Add shortcode" button
@@ -220,6 +220,7 @@ class Kntan_Setting_Class {
         _％prefecture％_　都道府県<br />
         _％city％_　市区町村<br />
         _%address%_　番地<br />
+        _%building%_　建物<br />
         _%customer%_　会社名｜屋号｜お名前<br />
         _%user_name%_ 　担当者名<br /><br />
         ※ 宛名印刷のテンプレートです。<br />
