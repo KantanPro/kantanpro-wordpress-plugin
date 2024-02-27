@@ -215,15 +215,36 @@ class Kntan_Setting_Class {
 
         $content .= <<<END
         <div class="template_example">
-        <h5>テンプレートの置換例</h5>
-        _%postal_code%_　郵便番号<br />
-        _％prefecture％_　都道府県<br />
-        _％city％_　市区町村<br />
-        _%address%_　番地<br />
-        _%building%_　建物<br />
-        _%customer%_　会社名｜屋号｜お名前<br />
-        _%user_name%_ 　担当者名<br /><br />
-        ※ 宛名印刷のテンプレートです。<br />
+            <table>
+                <tr>
+                    <td>_%postal_code%_</td>
+                    <td>郵便番号</td>
+                </tr>
+                <tr>
+                    <td>_％prefecture％_</td>
+                    <td>都道府県</td>
+                </tr>
+                <tr>
+                    <td>_％city％_</td>
+                    <td>市区町村</td>
+                </tr>
+                <tr>
+                    <td>_%address%_</td>
+                    <td>番地</td>
+                </tr>
+                <tr>
+                    <td>_%building%_</td>
+                    <td>建物</td>
+                </tr>
+                <tr>
+                    <td>_%customer%_</td>
+                    <td>会社名｜屋号｜お名前</td>
+                </tr>
+                <tr>
+                    <td>_%user_name%_</td>
+                    <td>担当者名</td>
+                </tr>
+            </table>        ※ 宛名印刷のテンプレートです。<br />
         ※ 設定タブで編集できます。<br />
         ※ 選択した顧客データに置換されます。<br />
         ※ 画像も追加できます。<br />
