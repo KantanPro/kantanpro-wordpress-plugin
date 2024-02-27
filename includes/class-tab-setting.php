@@ -440,7 +440,7 @@ class Kntan_Setting_Class {
         $atena .= '</div>';
         
         // コンテンツを返す
-        $content = $my_company_info . $atena;
+        $content = $atena . $my_company_info;
 
         return $content;
     }
