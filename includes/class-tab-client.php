@@ -1066,7 +1066,7 @@ class Kntan_Client_Class {
         $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
-    } // View_Table()の終了
+    }
 
 }
 ?>
