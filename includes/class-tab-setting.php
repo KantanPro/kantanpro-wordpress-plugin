@@ -151,27 +151,27 @@ class Kntan_Setting_Class {
         if ( isset( $_POST['template_content'] ) ) {
             $new_template_content = $_POST['template_content'];
 
-            // Remove slashes
+            // エスケープ処理を追加
             $new_template_content = stripslashes($new_template_content);
 
             // 全角スペースを半角スペースに変換する処理を追加
-            $new_template_content = str_replace("　", " ", $new_template_content);
+            // $new_template_content = str_replace("　", " ", $new_template_content);
 
-            // ファイルへの書き込みをDBへの保存に変更
+            // DBへの保存
             $result = $wpdb->update(
                 $table_name,
                 array('template_content' => $new_template_content), // data
-                array('id' => 1) // where
+                array('id' => 1) 
             );
 
             // データの更新が成功したかどうかを確認
             if ($result === false) {
-                die('Error: Failed to update the database');
+                die('Error: データーベースの更新に失敗しました。');
             }
 
-            // Update the $template_content variable with the new content
+            // テンプレートコンテンツを更新を通知
             $template_content = $new_template_content;
-            $content .= '<script>alert("保存しました！");</script>';
+            $content .= '<script>alert("テンプレートを保存しました！");</script>';
         }
         
         // ビジュアルエディターを表示
@@ -179,22 +179,18 @@ class Kntan_Setting_Class {
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
             'textarea_rows' => 15,
-            'media_buttons' => true, // Enable media buttons
+            'media_buttons' => true,
             'tinymce' => array(
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
-                'wp_adv' => false, // Disable "Add shortcode" button
+                'wp_adv' => false,
             ),
-            'default_editor' => 'tinymce', // Display visual editor by default
+            'default_editor' => 'tinymce',
         ) );
         $visual_editor = ob_get_clean();
 
-
-
-        // ------------------------------------------------
         // 宛名印刷のテンプレート
-        // ------------------------------------------------
 
         $content .= '<h4 id="template_title">宛名印刷</h4>';
         $content .= '<div class="template_contents">';
@@ -212,7 +208,8 @@ class Kntan_Setting_Class {
         </button>
         </form></div>
         END;
-
+        
+        // 置換ワードの凡例
         $content .= <<<END
         <div class="template_example">
             <table>
@@ -244,7 +241,8 @@ class Kntan_Setting_Class {
                     <td>_%user_name%_</td>
                     <td>担当者名</td>
                 </tr>
-            </table>        ※ 宛名印刷のテンプレートです。<br />
+            </table>
+        ※ 宛名印刷のテンプレートです。<br />
         ※ 設定タブで編集できます。<br />
         ※ 選択した顧客データに置換されます。<br />
         ※ 画像も追加できます。<br />
