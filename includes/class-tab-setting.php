@@ -135,13 +135,200 @@ class Kntan_Setting_Class {
 
     function Setting_Tab_View( $tab_name ) {
         
+        // $content .= <<<END
+        // <h3>テンプレート設定</h3>
+        // END;
+
+        // ------------------------------------------------
+        // 自社情報
+        // ------------------------------------------------
+
+        $my_company_info = '　';
+
+        // DBから自社情報を読み込む
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        $my_data = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
+
+        if ( isset( $_POST['logo'] ) ) {
+            $new_logo = $_POST['logo'];
+            $new_company_name = $_POST['company_name'];
+            $new_postal_code = $_POST['postal_code'];
+            $new_prefecture = $_POST['prefecture'];
+            $new_city = $_POST['city'];
+            $new_address = $_POST['address'];
+            $new_building = $_POST['building'];
+            $new_phone_number = $_POST['phone_number'];
+            $new_representative_name = $_POST['representative_name'];
+            $new_email_address = $_POST['email_address'];
+            $new_url = $_POST['url'];
+            $new_tax_rate = $_POST['tax_rate'];
+            $new_closing_date = $_POST['closing_date'];
+            $new_invoice = $_POST['invoice'];
+            $new_bank_account = $_POST['bank_account'];
+
+            // エスケープ処理を追加
+            $new_logo = stripslashes($new_logo);
+            $new_company_name = stripslashes($new_company_name);
+            $new_postal_code = stripslashes($new_postal_code);
+            $new_prefecture = stripslashes($new_prefecture);
+            $new_city = stripslashes($new_city);
+            $new_address = stripslashes($new_address);
+            $new_building = stripslashes($new_building);
+            $new_phone_number = stripslashes($new_phone_number);
+            $new_representative_name = stripslashes($new_representative_name);
+            $new_email_address = stripslashes($new_email_address);
+            $new_url = stripslashes($new_url);
+            $new_tax_rate = stripslashes($new_tax_rate);
+            $new_closing_date = stripslashes($new_closing_date);
+            $new_invoice = stripslashes($new_invoice);
+            $new_bank_account = stripslashes($new_bank_account);
+
+            // DBへの保存
+            $result = $wpdb->update(
+                $table_name,
+                array(
+                    'logo' => $new_logo,
+                    'company_name' => $new_company_name,
+                    'postal_code' => $new_postal_code,
+                    'prefecture' => $new_prefecture,
+                    'city' => $new_city,
+                    'address' => $new_address,
+                    'building' => $new_building,
+                    'phone_number' => $new_phone_number,
+                    'representative_name' => $new_representative_name,
+                    'email_address' => $new_email_address,
+                    'url' => $new_url,
+                    'tax_rate' => $new_tax_rate,
+                    'closing_date' => $new_closing_date,
+                    'invoice' => $new_invoice,
+                    'bank_account' => $new_bank_account
+                ),
+                array('id' => 1)
+            );
+
+            // データの更新が成功したかどうかを確認
+            if ($result === false) {
+                die('Error: データーベースの更新に失敗しました。');
+            }
+            
+            // 自社情報を更新を通知
+            $my_data = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
+            $my_company_info .= '<script>alert("自社情報を保存しました！");</script>';
+
+            // ロゴ画像をアップロード
+            if ( isset( $_FILES['logo'] ) && $_FILES['logo']['error'] == 0 ) {
+                $upload = wp_upload_bits( $_FILES['logo']['name'], null, file_get_contents( $_FILES['logo']['tmp_name'] ) );
+                if ( $upload['error'] ) {
+                    echo "画像のアップロードに失敗しました。";
+                } else {
+                    $new_logo = $upload['url'];
+                    $result = $wpdb->update(
+                        $table_name,
+                        array('logo' => $new_logo), // data
+                        array('id' => 1) 
+                    );
+                    if ($result === false) {
+                        die('Error: データーベースの更新に失敗しました。');
+                    }
+                }
+            }
+
+            // ロゴ画像を削除
+            if ( isset( $_POST['delete_logo'] ) ) {
+                $new_logo = '';
+                $result = $wpdb->update(
+                    $table_name,
+                    array('logo' => $new_logo), // data
+                    array('id' => 1) 
+                );
+                if ($result === false) {
+                    die('Error: データーベースの更新に失敗しました。');
+                }
+            }
+
+            // ロゴ画像を表示
+            $my_company_info .= '<img src="' . $my_data->logo . '" style="max-width: 100px; max-height: 100px;">';
+
+            // ロゴ画像のアップロードフォーム
+            $my_company_info .= <<<END
+            <form method="post" action="" enctype="multipart/form-data">
+            <input type="file" name="logo" accept="image/*">
+            <input type="submit" value="アップロード">
+            </form>
+            END;
+
+            // ロゴ画像の削除ボタン
+            $my_company_info .= <<<END
+            <form method="post" action="">
+            <input type="submit" name="delete_logo" value="削除">
+            </form>
+            END;
+
+            // ロゴ画像の削除ボタン
+            $my_company_info .= <<<END
+            <form method="post" action="">
+            <input type="submit" name="delete_logo" value="削除">
+            </form>
+            END;
+
+        } else {
+            // ロゴ画像を表示
+            $my_company_info .= '<img src="' . $my_data->logo . '" style="max-width: 100px; max-height: 100px;">';
+
+            // ロゴ画像のアップロードフォーム
+            $my_company_info .= <<<END
+            <form method="post" action="" enctype="multipart/form-data">
+            <input type="file" name="logo" accept="image/*">
+            <input type="submit" value="アップロード">
+            </form>
+            END;
+
+            // ロゴ画像の削除ボタン
+            $my_company_info .= <<<END
+            <form method="post" action="">
+            <input type="submit" name="delete_logo" value="削除">
+            </form>
+            END;
+        }
+
+        // 表示するフォーム要素を定義
+        $form_elements = array(
+            'company_name' => '会社名',
+            'postal_code' => '郵便番号',
+            'prefecture' => '都道府県',
+            'city' => '市区町村',
+            'address' => '番地',
+            'building' => '建物',
+            'phone_number' => '電話番号',
+            'representative_name' => '代表者名',
+            'email_address' => 'メールアドレス',
+            'url' => 'URL',
+            'tax_rate' => '消費税率',
+            'closing_date' => '自社締め日',
+            'invoice' => 'インボイス',
+            'bank_account' => '振込先口座'
+        );
+
+        // 自社情報のフォーム
+        $my_company_info .= '<h4 id="company_title">自社情報</h4>';
+        $my_company_info .= '<div class="company_contents">';
+        $my_company_info .= '<form method="post" action="">';
+        foreach ( $form_elements as $key => $value ) {
+            $my_company_info .= '<div class="company_form">';
+            $my_company_info .= '<label for="' . $key . '">' . $value . '</label>';
+            $my_company_info .= '<input type="text" id="' . $key . '" name="' . $key . '" value="' . $my_data->$key . '">';
+            $my_company_info .= '</div>';
+        }
+        $my_company_info .= '<input type="submit" value="保存">';
+        $my_company_info .= '</form>';
+        $my_company_info .= '</div>';
+
         // ------------------------------------------------
         // 宛名印刷
         // ------------------------------------------------
-        
-        $content .= <<<END
-        <h3>テンプレート設定</h3>
-        END;
+
+        $atena = '　';
         
         // DBからテンプレートコンテンツを読み込む
         global $wpdb;
@@ -171,14 +358,14 @@ class Kntan_Setting_Class {
 
             // テンプレートコンテンツを更新を通知
             $template_content = $new_template_content;
-            $content .= '<script>alert("テンプレートを保存しました！");</script>';
+            $atena .= '<script>alert("テンプレートを保存しました！");</script>';
         }
         
         // ビジュアルエディターを表示
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
-            'textarea_rows' => 15,
+            'textarea_rows' => 20,
             'media_buttons' => true,
             'tinymce' => array(
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
@@ -192,10 +379,11 @@ class Kntan_Setting_Class {
 
         // 宛名印刷のテンプレート
 
-        $content .= '<h4 id="template_title">宛名印刷</h4>';
-        $content .= '<div class="template_contents">';
+        $atena .= '<h4 id="template_title">宛名印刷</h4>';
+        $atena .= '<div class="template_contents">';
+
         // ビジュアルエディターを表示
-        $content .= <<<END
+        $atena .= <<<END
         <div class="template_form" style="text-align: right;">
         <form method="post" action="">
         $visual_editor
@@ -210,7 +398,7 @@ class Kntan_Setting_Class {
         END;
         
         // 置換ワードの凡例
-        $content .= <<<END
+        $atena .= <<<END
         <div class="template_example">
             <table>
                 <tr>
@@ -249,7 +437,10 @@ class Kntan_Setting_Class {
         ※ ショートコードを挿入ボタンは使用できません。
         </div>
         END;
-        $content .= '</div>';
+        $atena .= '</div>';
+        
+        // コンテンツを返す
+        $content = $my_company_info . $atena;
 
         return $content;
     }
