@@ -86,23 +86,13 @@ class Kntan_Setting_Class {
     function Update_Table( $tab_name ) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $my_table_version = '1.0.1';
+        $my_table_version = '1.0.2';
 
         // テーブルバージョンが違う場合はテーブルを更新
         if (get_option('ktp_' . $tab_name . '_table_version') != $my_table_version) {
             $columns = [
                 'id mediumint(9) NOT NULL AUTO_INCREMENT',
-                'logo varchar(255) DEFAULT "" NOT NULL',
-                'company_name varchar(255) DEFAULT "" NOT NULL',
-                'postal_code varchar(255) DEFAULT "" NOT NULL',
-                'prefecture varchar(255) DEFAULT "" NOT NULL',
-                'city varchar(255) DEFAULT "" NOT NULL',
-                'address varchar(255) DEFAULT "" NOT NULL',
-                'building varchar(255) DEFAULT "" NOT NULL',
-                'phone_number varchar(255) DEFAULT "" NOT NULL',
-                'representative_name varchar(255) DEFAULT "" NOT NULL',
                 'email_address varchar(255) DEFAULT "" NOT NULL',
-                'url varchar(255) DEFAULT "" NOT NULL',
                 'tax_rate varchar(255) DEFAULT "" NOT NULL',
                 'closing_date varchar(255) DEFAULT "" NOT NULL',
                 'invoice varchar(255) DEFAULT "" NOT NULL',
@@ -171,7 +161,7 @@ class Kntan_Setting_Class {
 
             // 自社コンテンツを更新を通知
             $my_company_content = $new_my_company_content;
-            $my_company_content .= '<script>alert("自社を保存しました！");</script>';
+            $my_company_info .= '<script>alert("自社を保存しました！");</script>';
         }
         
         // ビジュアルエディターを表示
@@ -213,7 +203,7 @@ class Kntan_Setting_Class {
         // 自社情報の説明
         $my_company_info .= <<<END
         <div class="data_detail_box">
-        ※ ほげほげ
+        $my_company_content
         </div>
         END;
         $my_company_info .= '</div>';
