@@ -92,10 +92,9 @@ class Kntan_Setting_Class {
     }
     
 
-
     function Setting_Tab_View( $tab_name ) {
 
-        // タブ切り替えのスクリプト
+        // タブ切り替えのスクリプトを修正
         $tab_script = <<<SCRIPT
         <script>
         function switchTab(evt, tabName) {
@@ -110,18 +109,32 @@ class Kntan_Setting_Class {
             }
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+            // 選択されたタブの名前を隠しフィールドに設定
+            document.getElementById('active_tab').value = tabName;
         }
-        // ページ読み込み時に自社情報タブをデフォルトで表示
+        // ページ読み込み時に前回選択されたタブを表示
         window.onload = function() {
-            document.getElementById('MyCompany').style.display = "block";
-            document.getElementsByClassName('tablinks')[0].className += " active";
+            var activeTab = document.getElementById('active_tab').value;
+            if (activeTab) {
+                document.getElementById(activeTab).style.display = "block";
+                var tablinks = document.getElementsByClassName("tablinks");
+                for (var i = 0; i < tablinks.length; i++) {
+                    if (tablinks[i].getAttribute('onclick').includes(activeTab)) {
+                        tablinks[i].className += " active";
+                    }
+                }
+            } else {
+                // デフォルトのタブをアクティブにする
+                document.getElementById('MyCompany').style.display = "block";
+                document.getElementsByClassName('tablinks')[0].className += " active";
+            }
         }
         </script>
         SCRIPT;
 
         // タブのボタン
         $tab_buttons = <<<BUTTONS
-        <div class="tab_setting">
+        <div class="in_tab">
         <button class="tablinks" onclick="switchTab(event, 'MyCompany')">自社情報</button>
         <button class="tablinks" onclick="switchTab(event, 'Atena')">宛名印刷</button>
         </div>
@@ -211,6 +224,9 @@ class Kntan_Setting_Class {
         $my_company_info .= '<div class="atena_contents">';
         $my_company_info .= '<div class="data_list_box">';
 
+        // フォームのどこかに隠しフィールドを追加
+        $hidden_field = '<input type="hidden" id="active_tab" name="active_tab" value="">';
+
         // ビジュアルエディターを表示
         $my_company_info .= <<<END
         <form method="post" action="">
@@ -222,6 +238,7 @@ class Kntan_Setting_Class {
         save_as
         </span>
         </button>
+        $hidden_field
         </form>
         END;
         $my_company_info .= '</div>';
@@ -269,7 +286,7 @@ class Kntan_Setting_Class {
 
             // テンプレートコンテンツを更新を通知
             $template_content = $new_template_content;
-            $atena .= '<script>alert("テンプレートを保存しました！");</script>';
+            // $atena .= '<script>alert("テンプレートを保存しました！");</script>';
         }
         
         // ビジュアルエディターを表示
@@ -293,6 +310,10 @@ class Kntan_Setting_Class {
         $atena .= '<h4 id="template_title">宛名印刷</h4>';
         $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
+
+        // フォームのどこかに隠しフィールドを追加
+        $hidden_field = '<input type="hidden" id="active_tab" name="active_tab" value="">';
+        
         $atena .= <<<END
         <form method="post" action="">
         $visual_editor
@@ -303,6 +324,7 @@ class Kntan_Setting_Class {
         save_as
         </span>
         </button>
+        $hidden_field
         </form>
         END;
         $atena .= '</div>';

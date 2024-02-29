@@ -447,14 +447,14 @@ input[name="tab_item"] {
 }
 
 /* 設定タブ内のタブのスタイル */
-.tab_setting {
+.in_tab {
   overflow: hidden;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
 }
 
 /* タブのボタンスタイル */
-.tab_setting button {
+.in_tab button {
   background-color: inherit;
   float: left;
   border: none;
@@ -466,12 +466,12 @@ input[name="tab_item"] {
 }
 
 /* タブのボタンをホバーした時のスタイル */
-.tab_setting button:hover {
+.in_tab button:hover {
   background-color: #ddd;
 }
 
 /* アクティブなタブのボタンスタイル */
-.tab_setting button.active {
+.in_tab button.active {
   background-color: #ccc;
 }
 
