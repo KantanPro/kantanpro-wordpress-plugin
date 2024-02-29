@@ -88,6 +88,7 @@ class Kntan_Setting_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $my_table_version = '1.0.1';
 
+        // テーブルバージョンが違う場合はテーブルを更新
         if (get_option('ktp_' . $tab_name . '_table_version') != $my_table_version) {
             $columns = [
                 'id mediumint(9) NOT NULL AUTO_INCREMENT',
@@ -190,14 +191,12 @@ class Kntan_Setting_Class {
         $visual_editor = ob_get_clean();
 
         // 自社情報
-
-        $my_company_info .= '<div class="my_company_contents">';
-        $my_company_info .= '<div class="data_list_box">';
         $my_company_info .= '<h4 id="template_title">自社情報</h4>';
+        $my_company_info .= '<div class="atena_contents">';
+        $my_company_info .= '<div class="data_list_box">';
 
         // ビジュアルエディターを表示
         $my_company_info .= <<<END
-        <div class="template_form" style="text-align: right;">
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -207,19 +206,17 @@ class Kntan_Setting_Class {
         save_as
         </span>
         </button>
-        </form></div>
+        </form>
         END;
+        $my_company_info .= '</div>';
         
         // 自社情報の説明
         $my_company_info .= <<<END
         <div class="data_detail_box">
-        ※ ほげほへ
+        ※ ほげほげ
         </div>
         END;
         $my_company_info .= '</div>';
-        $my_company_info .= '</div>';
-
-
         
         // ------------------------------------------------
         // 宛名印刷
@@ -244,7 +241,7 @@ class Kntan_Setting_Class {
             // DBへの保存
             $result = $wpdb->update(
                 $table_name,
-                array('template_content' => $new_template_content), // data
+                array('template_content' => $new_template_content),
                 array('id' => 1) 
             );
 
@@ -275,14 +272,11 @@ class Kntan_Setting_Class {
         $visual_editor = ob_get_clean();
 
         // 宛名印刷のテンプレート
-
+        // ビジュアルエディターを表示
+        $atena .= '<h4 id="template_title">宛名印刷</h4>';
         $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
-        $atena .= '<h4 id="template_title">宛名印刷</h4>';
-
-        // ビジュアルエディターを表示
         $atena .= <<<END
-        <div class="template_form" style="text-align: right;">
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -292,8 +286,9 @@ class Kntan_Setting_Class {
         save_as
         </span>
         </button>
-        </form></div>
+        </form>
         END;
+        $atena .= '</div>';
         
         // 置換ワードの凡例
         $atena .= <<<END
@@ -338,7 +333,7 @@ class Kntan_Setting_Class {
         $atena .= '</div>';
         
         // コンテンツを返す
-        $content = '<div class="data_contents">' . $atena . '</div>' . '<div class="data_contents">' . $my_company_info . '</div>';
+        $content = $atena . $my_company_info;
 
         return $content;
     }
