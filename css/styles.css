@@ -9,6 +9,28 @@
   width: 100%;
 }
 
+.atena_contents {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  /* 左右に表示 */
+  text-align: center;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.my_company_contents {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  /* 左右に表示 */
+  text-align: center;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
 /* リストBOX */
 .data_list_box {
   width: 100%;

@@ -159,7 +159,7 @@ class Kntan_Setting_Class {
             // DBへの保存
             $result = $wpdb->update(
                 $table_name,
-                array('my_company_content' => $new_my_company_content), // data
+                array('my_company_content' => $new_my_company_content),
                 array('id' => 1) 
             );
 
@@ -170,7 +170,7 @@ class Kntan_Setting_Class {
 
             // 自社コンテンツを更新を通知
             $my_company_content = $new_my_company_content;
-            $atena .= '<script>alert("自社を保存しました！");</script>';
+            $my_company_content .= '<script>alert("自社を保存しました！");</script>';
         }
         
         // ビジュアルエディターを表示
@@ -191,6 +191,7 @@ class Kntan_Setting_Class {
 
         // 自社情報
 
+        $my_company_info .= '<div class="my_company_contents">';
         $my_company_info .= '<div class="data_list_box">';
         $my_company_info .= '<h4 id="template_title">自社情報</h4>';
 
@@ -216,6 +217,8 @@ class Kntan_Setting_Class {
         </div>
         END;
         $my_company_info .= '</div>';
+        $my_company_info .= '</div>';
+
 
         
         // ------------------------------------------------
@@ -273,6 +276,7 @@ class Kntan_Setting_Class {
 
         // 宛名印刷のテンプレート
 
+        $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
         $atena .= '<h4 id="template_title">宛名印刷</h4>';
 
