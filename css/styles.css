@@ -445,3 +445,40 @@ input[name="tab_item"] {
 #template_title {
   margin-bottom: 0;
 }
+
+/* 設定タブ内のタブのスタイル */
+.tab_setting {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* タブのボタンスタイル */
+.tab_setting button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* タブのボタンをホバーした時のスタイル */
+.tab_setting button:hover {
+  background-color: #ddd;
+}
+
+/* アクティブなタブのボタンスタイル */
+.tab_setting button.active {
+  background-color: #ccc;
+}
+
+/* タブコンテンツのスタイル */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
