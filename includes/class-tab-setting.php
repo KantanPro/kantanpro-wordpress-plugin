@@ -172,7 +172,7 @@ class Kntan_Setting_Class {
             }
 
             // 自社コンテンツを更新を通知
-            // $my_company_content = $new_my_company_content;
+            $my_company_content = $new_my_company_content;
             // $my_company_info .= <<<END
             // <script>
             // (function() {
