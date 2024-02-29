@@ -94,6 +94,38 @@ class Kntan_Setting_Class {
 
 
     function Setting_Tab_View( $tab_name ) {
+
+        // タブ切り替えのスクリプト
+        $tab_script = <<<SCRIPT
+        <script>
+        function switchTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        // ページ読み込み時に自社情報タブをデフォルトで表示
+        window.onload = function() {
+            document.getElementById('MyCompany').style.display = "block";
+            document.getElementsByClassName('tablinks')[0].className += " active";
+        }
+        </script>
+        SCRIPT;
+
+        // タブのボタン
+        $tab_buttons = <<<BUTTONS
+        <div class="tab_setting">
+        <button class="tablinks" onclick="switchTab(event, 'MyCompany')">自社情報</button>
+        <button class="tablinks" onclick="switchTab(event, 'Atena')">宛名印刷</button>
+        </div>
+        BUTTONS;
         
         // $content .= <<<END
         // <h3>テンプレート設定</h3>
@@ -105,7 +137,7 @@ class Kntan_Setting_Class {
 
         // 宛名印刷と同じように自社情報を表示
 
-        $my_company_info = '　';
+        $my_company_info = '<div id="MyCompany" class="tabcontent" style="display:none;">';
 
         // DBから自社情報を読み込む
         global $wpdb;
@@ -140,17 +172,31 @@ class Kntan_Setting_Class {
             }
 
             // 自社コンテンツを更新を通知
-            $my_company_content = $new_my_company_content;
-            $my_company_info .= '<script>alert("自社を保存しました！");</script>';
+            // $my_company_content = $new_my_company_content;
+            // $my_company_info .= <<<END
+            // <script>
+            // (function() {
+            //     var saveMessage = document.createElement("span");
+            //     saveMessage.textContent = "自社を保存しました！";
+            //     saveMessage.style.cssText = "margin-left: 10px; background-color: #dff0d8; color: #3c763d; padding: 5px; border-radius: 4px;";
+            //     var saveButton = document.getElementById("previewButton");
+            //     saveButton.parentNode.insertBefore(saveMessage, saveButton.nextSibling);
+            //     setTimeout(function() {
+            //         saveMessage.style.display = "none";
+            //     }, 3000);
+            // })();
+            // </script>
+            // END;
+
         }
         
         // ビジュアルエディターを表示
         ob_start();
         wp_editor( $my_company_content, 'my_company', array(
             'textarea_name' => 'my_company_content',
-            'textarea_rows' => 20,
             'media_buttons' => true,
             'tinymce' => array(
+                'height' => 400, // エディタの高さを400pxに設定
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
@@ -187,12 +233,13 @@ class Kntan_Setting_Class {
         </div>
         END;
         $my_company_info .= '</div>';
+        $my_company_info .= '</div>';
         
         // ------------------------------------------------
         // 宛名印刷
         // ------------------------------------------------
 
-        $atena = '　';
+        $atena = '<div id="Atena" class="tabcontent" style="display:none;">';
         
         // DBからテンプレートコンテンツを読み込む
         global $wpdb;
@@ -229,9 +276,9 @@ class Kntan_Setting_Class {
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
-            'textarea_rows' => 20,
             'media_buttons' => true,
             'tinymce' => array(
+                'height' => 400, // エディタの高さを400pxに設定
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
@@ -301,9 +348,10 @@ class Kntan_Setting_Class {
         </div>
         END;
         $atena .= '</div>';
+        $atena .= '</div>';
         
         // コンテンツを返す
-        $content = $atena . $my_company_info;
+        $content = $tab_script . $tab_buttons . $atena . $my_company_info;
 
         return $content;
     }
