@@ -14,21 +14,7 @@ class Kntan_Setting_Class {
 
         $columns = [
             'id mediumint(9) NOT NULL AUTO_INCREMENT',
-            'logo varchar(255) DEFAULT "" NOT NULL',
-            'company_name varchar(255) DEFAULT "" NOT NULL',
-            'postal_code varchar(255) DEFAULT "" NOT NULL',
-            'prefecture varchar(255) DEFAULT "" NOT NULL',
-            'city varchar(255) DEFAULT "" NOT NULL',
-            'address varchar(255) DEFAULT "" NOT NULL',
-            'building varchar(255) DEFAULT "" NOT NULL',
-            'phone_number varchar(255) DEFAULT "" NOT NULL',
-            'representative_name varchar(255) DEFAULT "" NOT NULL',
-            'email_address varchar(255) DEFAULT "" NOT NULL',
-            'url varchar(255) DEFAULT "" NOT NULL',
-            'tax_rate varchar(255) DEFAULT "" NOT NULL',
-            'closing_date varchar(255) DEFAULT "" NOT NULL',
-            'invoice varchar(255) DEFAULT "" NOT NULL',
-            'bank_account varchar(255) DEFAULT "" NOT NULL',
+
             'template_content longtext DEFAULT "" NOT NULL',
             'PRIMARY KEY  (id)'
         ];
@@ -58,6 +44,7 @@ class Kntan_Setting_Class {
                     'closing_date' => '',
                     'invoice' => '',
                     'bank_account' => '',
+                    'my_company_content' => '',
                     'template_content' => ''
                 )
             );
@@ -88,6 +75,7 @@ class Kntan_Setting_Class {
                     'closing_date' => '',
                     'invoice' => '',
                     'bank_account' => '',
+                    'my_company_content' => '',
                     'template_content' => ''
                 )
             );
@@ -118,6 +106,7 @@ class Kntan_Setting_Class {
                 'closing_date varchar(255) DEFAULT "" NOT NULL',
                 'invoice varchar(255) DEFAULT "" NOT NULL',
                 'bank_account varchar(255) DEFAULT "" NOT NULL',
+                'my_company_content longtext DEFAULT "" NOT NULL',
                 'template_content longtext DEFAULT "" NOT NULL',
                 'PRIMARY KEY  (id)'
             ];
@@ -150,43 +139,27 @@ class Kntan_Setting_Class {
         // DBから自社情報を読み込む
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $my_company = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
+        $my_company_content = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
 
-        if ( isset( $_POST['company_name'] ) ) {
-            $new_company_name = $_POST['company_name'];
-            $new_postal_code = $_POST['postal_code'];
-            $new_prefecture = $_POST['prefecture'];
-            $new_city = $_POST['city'];
-            $new_address = $_POST['address'];
-            $new_building = $_POST['building'];
-            $new_phone_number = $_POST['phone_number'];
-            $new_representative_name = $_POST['representative_name'];
-            $new_email_address = $_POST['email_address'];
-            $new_url = $_POST['url'];
-            $new_tax_rate = $_POST['tax_rate'];
-            $new_closing_date = $_POST['closing_date'];
-            $new_invoice = $_POST['invoice'];
-            $new_bank_account = $_POST['bank_account'];
+        // DBから自社コンテンツを読み込む
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        $my_company_content = $wpdb->get_var( "SELECT my_company_content FROM $table_name" );
+
+
+        if ( isset( $_POST['my_company_content'] ) ) {
+            $new_my_company_content = $_POST['my_company_content'];
+
+            // エスケープ処理を追加
+            $new_my_company_content = stripslashes($new_my_company_content);
+
+            // 全角スペースを半角スペースに変換する処理を追加
+            // $new_my_company_content = str_replace("　", " ", $new_my_company_content);
 
             // DBへの保存
             $result = $wpdb->update(
                 $table_name,
-                array(
-                    'company_name' => $new_company_name,
-                    'postal_code' => $new_postal_code,
-                    'prefecture' => $new_prefecture,
-                    'city' => $new_city,
-                    'address' => $new_address,
-                    'building' => $new_building,
-                    'phone_number' => $new_phone_number,
-                    'representative_name' => $new_representative_name,
-                    'email_address' => $new_email_address,
-                    'url' => $new_url,
-                    'tax_rate' => $new_tax_rate,
-                    'closing_date' => $new_closing_date,
-                    'invoice' => $new_invoice,
-                    'bank_account' => $new_bank_account
-                ),
+                array('my_company_content' => $new_my_company_content), // data
                 array('id' => 1) 
             );
 
@@ -195,17 +168,17 @@ class Kntan_Setting_Class {
                 die('Error: データーベースの更新に失敗しました。');
             }
 
-            // 自社情報を更新を通知
-            $my_company = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
-            $my_company_info .= '<script>alert("自社情報を保存しました！");</script>';
+            // 自社コンテンツを更新を通知
+            $my_company_content = $new_my_company_content;
+            $atena .= '<script>alert("自社を保存しました！");</script>';
         }
-
+        
         // ビジュアルエディターを表示
         ob_start();
-        wp_editor( $my_company->company_name, 'company_name', array(
-            'textarea_name' => 'company_name',
-            'textarea_rows' => 1,
-            'media_buttons' => false,
+        wp_editor( $my_company_content, 'my_company', array(
+            'textarea_name' => 'my_company_content',
+            'textarea_rows' => 20,
+            'media_buttons' => true,
             'tinymce' => array(
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
@@ -214,29 +187,35 @@ class Kntan_Setting_Class {
             ),
             'default_editor' => 'tinymce',
         ) );
-        $company_name = ob_get_clean();
+        $visual_editor = ob_get_clean();
 
-        // 自社情報のテンプレート
-        $my_company_info .= '<h4 id="company_title">自社情報</h4>';
-        $my_company_info .= '<div class="company_contents">';
+        // 自社情報
+
+        $my_company_info .= '<div class="data_list_box">';
+        $my_company_info .= '<h4 id="template_title">自社情報</h4>';
+
+        // ビジュアルエディターを表示
         $my_company_info .= <<<END
-        <div class="company_form">
+        <div class="template_form" style="text-align: right;">
         <form method="post" action="">
-        <table>
-        <tr>
-        <td>会社情報</td>
-        <td>$company_name</td>
-        </tr>
-        <tr>
-        </table>
-        <button type="submit" title="保存する" style="margin-top: 10px;">保存</button>
-        </form>
+        $visual_editor
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
+        <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
+        <span class="material-symbols-outlined">
+        save_as
+        </span>
+        </button>
+        </form></div>
+        END;
+        
+        // 自社情報の説明
+        $my_company_info .= <<<END
+        <div class="data_detail_box">
+        ※ ほげほへ
         </div>
         END;
         $my_company_info .= '</div>';
-
-
-
 
         
         // ------------------------------------------------
@@ -294,8 +273,8 @@ class Kntan_Setting_Class {
 
         // 宛名印刷のテンプレート
 
+        $atena .= '<div class="data_list_box">';
         $atena .= '<h4 id="template_title">宛名印刷</h4>';
-        $atena .= '<div class="template_contents">';
 
         // ビジュアルエディターを表示
         $atena .= <<<END
@@ -314,7 +293,7 @@ class Kntan_Setting_Class {
         
         // 置換ワードの凡例
         $atena .= <<<END
-        <div class="template_example">
+        <div class="data_detail_box">
             <table>
                 <tr>
                     <td>_%postal_code%_</td>
@@ -355,7 +334,7 @@ class Kntan_Setting_Class {
         $atena .= '</div>';
         
         // コンテンツを返す
-        $content = $atena . $my_company_info;
+        $content = '<div class="data_contents">' . $atena . '</div>' . '<div class="data_contents">' . $my_company_info . '</div>';
 
         return $content;
     }

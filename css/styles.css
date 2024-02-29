@@ -1,12 +1,9 @@
-@charset "UTF-8";
-
-/* リストと詳細 */
 .data_contents {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
+  /* 左右に表示 */
   text-align: center;
-  justify-content: center;
-  /* 中央揃えにする */
   margin: 0 auto;
   padding: 20px;
   width: 100%;
@@ -402,14 +399,16 @@ input[name="tab_item"] {
 }
 
 .template_form {
-  flex: 1; /* これにより、利用可能なスペースを均等に分けます */
+  flex: 1;
+  /* これにより、利用可能なスペースを均等に分けます */
   padding: 20px;
   box-sizing: border-box;
   text-align: left;
 }
 
 .template_example {
-  flex: 1; /* これにより、利用可能なスペースを均等に分けます */
+  flex: 1;
+  /* これにより、利用可能なスペースを均等に分けます */
   padding: 20px;
   box-sizing: border-box;
   text-align: left;
