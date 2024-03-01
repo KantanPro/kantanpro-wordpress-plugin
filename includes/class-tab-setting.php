@@ -109,6 +109,7 @@ class Kntan_Setting_Class {
             }
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+
             // 選択されたタブの名前を隠しフィールドに設定
             document.getElementById('active_tab').value = tabName;
         }
@@ -135,8 +136,8 @@ class Kntan_Setting_Class {
         // タブのボタン
         $tab_buttons = <<<BUTTONS
         <div class="in_tab">
-        <button class="tablinks" onclick="switchTab(event, 'MyCompany')">自社情報</button>
-        <button class="tablinks" onclick="switchTab(event, 'Atena')">宛名印刷</button>
+            <button class="tablinks" onclick="switchTab(event, 'MyCompany')">自社情報</button>
+            <button class="tablinks" onclick="switchTab(event, 'Atena')">宛名印刷</button>
         </div>
         BUTTONS;
         
@@ -149,13 +150,12 @@ class Kntan_Setting_Class {
         // ------------------------------------------------
 
         // 宛名印刷と同じように自社情報を表示
-
         $my_company_info = '<div id="MyCompany" class="tabcontent" style="display:none;">';
 
-        // DBから自社情報を読み込む
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $my_company_content = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
+        // // DBから自社情報を読み込む
+        // global $wpdb;
+        // $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        // $my_company_content = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
 
         // DBから自社コンテンツを読み込む
         global $wpdb;
@@ -185,21 +185,8 @@ class Kntan_Setting_Class {
             }
 
             // 自社コンテンツを更新を通知
-            $my_company_content = $new_my_company_content;
-            // $my_company_info .= <<<END
-            // <script>
-            // (function() {
-            //     var saveMessage = document.createElement("span");
-            //     saveMessage.textContent = "自社を保存しました！";
-            //     saveMessage.style.cssText = "margin-left: 10px; background-color: #dff0d8; color: #3c763d; padding: 5px; border-radius: 4px;";
-            //     var saveButton = document.getElementById("previewButton");
-            //     saveButton.parentNode.insertBefore(saveMessage, saveButton.nextSibling);
-            //     setTimeout(function() {
-            //         saveMessage.style.display = "none";
-            //     }, 3000);
-            // })();
-            // </script>
-            // END;
+            // $my_company_content = $new_my_company_content;
+            // $my_company_info .= '<script>alert("自社情報を保存しました！");</script>';
 
         }
         
@@ -224,21 +211,18 @@ class Kntan_Setting_Class {
         $my_company_info .= '<div class="atena_contents">';
         $my_company_info .= '<div class="data_list_box">';
 
-        // フォームのどこかに隠しフィールドを追加
-        $hidden_field = '<input type="hidden" id="active_tab" name="active_tab" value="">';
-
         // ビジュアルエディターを表示
         $my_company_info .= <<<END
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
+        <input type="hidden" id="active_tab" name="active_tab" value="">
         <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
         <span class="material-symbols-outlined">
         save_as
         </span>
         </button>
-        $hidden_field
         </form>
         END;
         $my_company_info .= '</div>';
@@ -310,21 +294,18 @@ class Kntan_Setting_Class {
         $atena .= '<h4 id="template_title">宛名印刷</h4>';
         $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
-
-        // フォームのどこかに隠しフィールドを追加
-        $hidden_field = '<input type="hidden" id="active_tab" name="active_tab" value="">';
         
         $atena .= <<<END
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <input type="hidden" id="active_tab" name="active_tab" value="">
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
         <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
         <span class="material-symbols-outlined">
         save_as
         </span>
         </button>
-        $hidden_field
         </form>
         END;
         $atena .= '</div>';
