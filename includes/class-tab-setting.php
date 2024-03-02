@@ -95,60 +95,66 @@ class Kntan_Setting_Class {
     function Setting_Tab_View( $tab_name ) {
 
         // タブ切り替えのスクリプトを修正
+
         $tab_script = <<<SCRIPT
         <script>
         // タブコンテンツとタブリンクを取得
         function getTabContentAndLinks() {
-          return {
+        return {
             tabcontent: document.getElementsByClassName("tabcontent"),
             tablinks: document.getElementsByClassName("tablinks"),
-          };
+        };
         }
-        
+
         // タブを切り替える
         function switchTab(evt, tabName) {
-          const { tabcontent, tablinks } = getTabContentAndLinks();
-        
-          // すべてのタブコンテンツを非表示にする
-          for (const tab of tabcontent) {
+        const { tabcontent, tablinks } = getTabContentAndLinks();
+
+        // すべてのタブコンテンツを非表示にする
+        for (const tab of tabcontent) {
             tab.style.display = "none";
-          }
-        
-          // すべてのタブリンクの active クラスを削除する
-          for (const tablink of tablinks) {
-            tablink.classList.remove("active");
-          }
-        
-          // 選択されたタブコンテンツを表示する
-          document.getElementById(tabName).style.display = "block";
-        
-          // 選択されたタブリンクに active クラスを追加する
-          evt.currentTarget.classList.add("active");
-        
-          // 選択されたタブの名前を隠しフィールドに設定
-          document.getElementById('active_tab').value = tabName;
         }
-        
+
+        // すべてのタブリンクの active クラスを削除する
+        for (const tablink of tablinks) {
+            tablink.classList.remove("active");
+        }
+
+        // 選択されたタブコンテンツを表示する
+        document.getElementById(tabName).style.display = "block";
+
+        // 選択されたタブリンクに active クラスを追加する
+        evt.currentTarget.classList.add("active");
+
+        // 選択されたタブの名前を隠しフィールドに設定
+        document.getElementById('active_tab').value = tabName;
+
+        // 保存ボタン押下時に `active_tab` フィールドの値を更新
+        if (evt.target.id === 'previewButton') {
+            document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
+        }
+        }
+
         // ページ読み込み時に前回選択されたタブを表示
         window.onload = function() {
-          const activeTab = document.getElementById('active_tab').value;
-        
-          if (activeTab) {
+        const activeTab = document.getElementById('active_tab').value;
+
+        if (activeTab) {
             switchTab(null, activeTab);
-          } else {
+        } else {
             // デフォルトのタブをアクティブにする
             document.getElementById('MyCompany').style.display = "block";
             document.getElementsByClassName('tablinks')[0].classList.add("active");
-          }
+        }
         };
-        
+
         // 各タブに aria-label 属性を追加
         document.getElementById('MyCompany').setAttribute('aria-label', 'My Company');
         document.getElementById('AboutUs').setAttribute('aria-label', 'About Us');
         document.getElementById('ContactUs').setAttribute('aria-label', 'Contact Us');
         </script>
-
         SCRIPT;
+
 
         // タブのボタン
         $tab_buttons = <<<BUTTONS
