@@ -91,7 +91,6 @@ class Kntan_Setting_Class {
         }
     }
     
-
     function Setting_Tab_View( $tab_name ) {
 
         // タブ切り替えのスクリプトを修正
@@ -100,58 +99,54 @@ class Kntan_Setting_Class {
         <script>
         // タブコンテンツとタブリンクを取得
         function getTabContentAndLinks() {
-        return {
-            tabcontent: document.getElementsByClassName("tabcontent"),
-            tablinks: document.getElementsByClassName("tablinks"),
-        };
+            return {
+                tabcontent: document.getElementsByClassName("tabcontent"),
+                tablinks: document.getElementsByClassName("tablinks"),
+            };
         }
 
         // タブを切り替える
         function switchTab(evt, tabName) {
-        const { tabcontent, tablinks } = getTabContentAndLinks();
+            const { tabcontent, tablinks } = getTabContentAndLinks();
 
-        // すべてのタブコンテンツを非表示にする
-        for (const tab of tabcontent) {
-            tab.style.display = "none";
-        }
+            // すべてのタブコンテンツを非表示にする
+            for (const tab of tabcontent) {
+                tab.style.display = "none";
+            }
 
-        // すべてのタブリンクの active クラスを削除する
-        for (const tablink of tablinks) {
-            tablink.classList.remove("active");
-        }
+            // すべてのタブリンクの active クラスを削除する
+            for (const tablink of tablinks) {
+                tablink.classList.remove("active");
+            }
 
-        // 選択されたタブコンテンツを表示する
-        document.getElementById(tabName).style.display = "block";
+            // 選択されたタブコンテンツを表示する
+            document.getElementById(tabName).style.display = "block";
 
-        // 選択されたタブリンクに active クラスを追加する
-        evt.currentTarget.classList.add("active");
+            // 選択されたタブリンクに active クラスを追加する
+            evt.currentTarget.classList.add("active");
 
-        // 選択されたタブの名前を隠しフィールドに設定
-        document.getElementById('active_tab').value = tabName;
+            // 選択されたタブの名前を隠しフィールドに設定
+            document.getElementById('active_tab').value = tabName;
 
-        // 保存ボタン押下時に `active_tab` フィールドの値を更新
-        if (evt.target.id === 'previewButton') {
-            document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
-        }
+            // 保存ボタン押下時に `active_tab` フィールドの値を更新
+            if (evt.target.id === 'previewButton') {
+                document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
+            }
         }
 
         // ページ読み込み時に前回選択されたタブを表示
         window.onload = function() {
-        const activeTab = document.getElementById('active_tab').value;
+            const activeTab = document.getElementById('active_tab').value;
 
-        if (activeTab) {
-            switchTab(null, activeTab);
-        } else {
-            // デフォルトのタブをアクティブにする
-            document.getElementById('MyCompany').style.display = "block";
-            document.getElementsByClassName('tablinks')[0].classList.add("active");
-        }
+            if (activeTab) {
+                switchTab(null, activeTab);
+            } else {
+                // デフォルトのタブをアクティブにする
+                document.getElementById('MyCompany').style.display = "block";
+                document.getElementsByClassName('tablinks')[0].classList.add("active");
+            }
         };
-
-        // 各タブに aria-label 属性を追加
-        document.getElementById('MyCompany').setAttribute('aria-label', 'My Company');
-        document.getElementById('AboutUs').setAttribute('aria-label', 'About Us');
-        document.getElementById('ContactUs').setAttribute('aria-label', 'Contact Us');
+        
         </script>
         SCRIPT;
 
@@ -159,8 +154,8 @@ class Kntan_Setting_Class {
         // タブのボタン
         $tab_buttons = <<<BUTTONS
         <div class="in_tab">
-            <button class="tablinks" onclick="switchTab(event, 'MyCompany')">自社情報</button>
-            <button class="tablinks" onclick="switchTab(event, 'Atena')">宛名印刷</button>
+            <button class="tablinks" onclick="switchTab(event, 'MyCompany')" aria-label="My Company">自社情報</button>
+            <button class="tablinks" onclick="switchTab(event, 'Atena')" aria-label="宛名印刷">宛名印刷</button>
         </div>
         BUTTONS;
         
