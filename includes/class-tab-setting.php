@@ -93,10 +93,16 @@ class Kntan_Setting_Class {
     
     function Setting_Tab_View( $tab_name ) {
 
-        // タブ切り替えのスクリプトを修正
+        //
+        // タブ切り替えのスクリプト
+        //
+
+        // 前回の選択タブを取得、なければデフォルトのタブを設定
+        $active_tab = isset( $_POST['active_tab'] ) ? $_POST['active_tab'] : 'MyCompany';
 
         $tab_script = <<<SCRIPT
         <script>
+
         // タブコンテンツとタブリンクを取得
         function getTabContentAndLinks() {
             return {
@@ -133,10 +139,14 @@ class Kntan_Setting_Class {
                 document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
             }
         }
-
+        </script>
+        SCRIPT;
+        
         // ページ読み込み時に前回選択されたタブを表示
+        $tab_script .= <<<SCRIPT
+        <script>
         window.onload = function() {
-            const activeTab = document.getElementById('active_tab').value;
+            const activeTab = "<?php echo $active_tab; ?>";
 
             if (activeTab) {
                 switchTab(null, activeTab);
