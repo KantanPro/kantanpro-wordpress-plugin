@@ -139,24 +139,39 @@ class Kntan_Setting_Class {
                 document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
             }
         }
-        </script>
-        SCRIPT;
-        
-        // ページ読み込み時に前回選択されたタブを表示
-        $tab_script .= <<<SCRIPT
-        <script>
-        window.onload = function() {
-            const activeTab = "<?php echo $active_tab; ?>";
 
-            if (activeTab) {
-                switchTab(null, activeTab);
-            } else {
-                // デフォルトのタブをアクティブにする
-                document.getElementById('MyCompany').style.display = "block";
-                document.getElementsByClassName('tablinks')[0].classList.add("active");
+        // ページ読み込み時に前回選択されたタブを表示
+        document.addEventListener("DOMContentLoaded", function() {
+            const { tabcontent, tablinks } = getTabContentAndLinks();
+
+            // すべてのタブコンテンツを非表示にする
+            for (const tab of tabcontent) {
+                tab.style.display = "none";
             }
-        };
-        
+
+            // すべてのタブリンクの active クラスを削除する
+            for (const tablink of tablinks) {
+                tablink.classList.remove("active");
+            }
+
+            // 前回選択されたタブを表示する
+            document.getElementById('active_tab').style.display = "block";
+
+            // 前回選択されたタブリンクに active クラスを追加する
+            for (const tablink of tablinks) {
+                if (tablink.textContent === 'active_tab') {
+                    tablink.classList.add("active");
+                }
+            }
+        });
+
+        // プレビューボタンを押下したときに隠しフィールドに値を設定
+        function togglePreview() {
+            document.getElementById('my_saved_content').value = document.getElementById('template_content').value;
+            document.getElementById('active_tab').value = 'Atena';
+        }
+
+
         </script>
         SCRIPT;
 
