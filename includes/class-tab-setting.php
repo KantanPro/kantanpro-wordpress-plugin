@@ -5,7 +5,7 @@ class Kntan_Setting_Class {
     public function __construct() {
     }
     
-    // DBにカラムがなければ作成（ロゴマーク、会社名、郵便番号、都道府県、市区町村、番地、建物、電話番号、代表者名、メールアドレス、URL、消費税率、自社締め日、インボイス、振込先口座）
+    // DBにカラムがなければ作成（会社情報、メールアドレス、消費税率、自社締め日、インボイス、振込先口座）
     function Create_Table( $tab_name ) {
         global $wpdb;
         $my_table_version = '1.0.1';
@@ -89,88 +89,109 @@ class Kntan_Setting_Class {
             }
             update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
         }
-        
+
     }
     
     function Setting_Tab_View( $tab_name ) {
 
+        
+        // ページをリロード
+        $reload = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // フォームが送信された場合に実行する処理を記述します
-            // ここにフォームの処理を追加してください
-
-            // ページをリロード
             header("Location: ".$_SERVER['REQUEST_URI']);
+            $reload++;
+        }
+        
+        // クッキーからactive_tabを読み出す
+        $active_tab = isset($_COOKIE['active_tab']) ? $_COOKIE['active_tab'] : '';
+        echo $active_tab . '-1';
+
+        // 
+        if( !$reload ){
+            $active_tab = '';
         }
 
         //
         // タブ切り替えのスクリプト
         //
 
-        // 前回の選択タブを取得、なければデフォルトのタブを設定
-        $active_tab = isset( $_POST['active_tab'] ) ? $_POST['active_tab'] : 'MyCompany';
+        // $active_tabをecho HTMLして引数として使う
+        echo <<<HTML
+        <input type="hidden" id="active_tab" value="$active_tab">
+        HTML;
 
         $tab_script = <<<SCRIPT
         <script>
         // タブコンテンツとタブリンクを取得
         function getTabContentAndLinks() {
-          return {
-            tabcontent: document.getElementsByClassName("tabcontent"),
-            tablinks: document.getElementsByClassName("tablinks"),
-          };
+            return {
+                tabcontent: document.getElementsByClassName("tabcontent"),
+                tablinks: document.getElementsByClassName("tablinks"),
+            };
         }
-        
+
         // タブを切り替える
         function switchTab(evt, tabName) {
-          const { tabcontent, tablinks } = getTabContentAndLinks();
-        
-          // すべてのタブコンテンツを非表示にする
-          for (const tab of tabcontent) {
-            tab.style.display = "none";
-          }
-        
-          // すべてのタブリンクの active クラスを削除する
-          for (const tablink of tablinks) {
-            tablink.classList.remove("active");
-          }
-        
-          // 選択されたタブコンテンツを表示する
-          document.getElementById(tabName).style.display = "block";
-        
-          // 選択されたタブリンクに active クラスを追加する
-          evt.currentTarget.classList.add("active");
-        
-          // 選択されたタブの名前を隠しフィールドに設定
-          document.getElementById('active_tab').value = tabName;
+            const { tabcontent, tablinks } = getTabContentAndLinks();
+
+            // すべてのタブコンテンツを非表示にする
+            for (const tab of tabcontent) {
+                tab.style.display = "none";
+            }
+
+            // すべてのタブリンクの active クラスを削除する
+            for (const tablink of tablinks) {
+                tablink.classList.remove("active");
+            }
+
+            // 選択されたタブコンテンツを表示する
+            document.getElementById(tabName).style.display = "block";
+
+            // 選択されたタブリンクに active クラスを追加する
+            evt.currentTarget.classList.add("active");
+
+            // 選択されたタブの名前を隠しフィールドに設定
+            document.getElementById('active_tab').value = tabName;
+
+            // アクティブなタブスタイルを設定
+            const inTab = document.querySelector('.in_tab');
+            inTab.dataset.activeTab = tabName;
         }
-        
+
         // ページ読み込み時に前回選択されたタブを表示
         window.onload = function() {
-          const activeTab = document.getElementById('active_tab').value;
-        
-          if (activeTab) {
-            switchTab(null, activeTab);
-          } else {
-            // デフォルトのタブをアクティブにする
-            document.getElementById('MyCompany').style.display = "block";
-            document.getElementsByClassName('tablinks')[0].classList.add("active");
-          }
+            const activeTab = document.getElementById('active_tab').value;
+
+            if (activeTab) {
+                switchTab(null, activeTab);
+            } else {
+                // デフォルトのタブをアクティブにする
+                document.getElementById('MyCompany').style.display = "block";
+                document.getElementsByClassName('tablinks')[0].classList.add("active");
+                document.querySelector('.in_tab').dataset.activeTab = 'MyCompany';
+            }
         };
-        
-        // 各タブに aria-label 属性を追加
-        document.getElementById('MyCompany').setAttribute('aria-label', 'My Company');
-        document.getElementById('AboutUs').setAttribute('aria-label', 'About Us');
-        document.getElementById('ContactUs').setAttribute('aria-label', 'Contact Us');
+
+        // 自動的に選択されたin_tabのスタイルをアクティブにする
+        const activeTab = document.getElementById('active_tab').value;
+        if (activeTab) {
+            const inTab = document.querySelector('.in_tab');
+            inTab.dataset.activeTab = activeTab;
+        }
         </script>
         SCRIPT;
 
         // タブのボタン
         $tab_buttons = <<<BUTTONS
-        <div class="in_tab">
+        <div class="in_tab" data-active-tab="">
             <button class="tablinks" onclick="switchTab(event, 'MyCompany')" aria-label="My Company">自社情報</button>
             <button class="tablinks" onclick="switchTab(event, 'Atena')" aria-label="宛名印刷">宛名印刷</button>
         </div>
         BUTTONS;
-        
+
+        $active_tab = '';
+                
+
         // $content .= <<<END
         // <h3>テンプレート設定</h3>
         // END;
@@ -179,13 +200,8 @@ class Kntan_Setting_Class {
         // 自社情報
         // ------------------------------------------------
 
-        // 宛名印刷と同じように自社情報を表示
+        // 自社情報を表示
         $my_company_info = '<div id="MyCompany" class="tabcontent" style="display:none;">';
-
-        // // DBから自社情報を読み込む
-        // global $wpdb;
-        // $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        // $my_company_content = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = 1" );
 
         // DBから自社コンテンツを読み込む
         global $wpdb;
@@ -220,7 +236,7 @@ class Kntan_Setting_Class {
 
         }
         
-        // ビジュアルエディターを表示
+        // ビジュアルエディターを表示（自社情報）
         ob_start();
         wp_editor( $my_company_content, 'my_company', array(
             'textarea_name' => 'my_company_content',
@@ -241,23 +257,32 @@ class Kntan_Setting_Class {
         $my_company_info .= '<div class="atena_contents">';
         $my_company_info .= '<div class="data_list_box">';
 
-        // ビジュアルエディターを表示
+        // // フォームの出現前にactive_tab＝MyCompanyをクッキーに保存
+        // setcookie('active_tab', 'MyCompany');
+        // $active_tab = 'MyCompany';
+        
+        // ビジュアルエディターを表示（自社情報）
         $my_company_info .= <<<END
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
-        <input type="hidden" id="active_tab" name="active_tab" value="">
         <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
         <span class="material-symbols-outlined">
         save_as
         </span>
         </button>
         </form>
+        <script>
+            function togglePreview() {
+                // Set the cookie 'active_tab' to 'MyCompany'
+                document.cookie = "active_tab=MyCompany";
+            }
+        </script>
         END;
         $my_company_info .= '</div>';
         
-        // 自社情報の説明
+        // 自社情報のプレビュー
         $my_company_info .= <<<END
         <div class="data_detail_box">
         $my_company_content
@@ -303,7 +328,7 @@ class Kntan_Setting_Class {
             // $atena .= '<script>alert("テンプレートを保存しました！");</script>';
         }
         
-        // ビジュアルエディターを表示
+        // ビジュアルエディターを表示（宛名印刷）
         ob_start();
         wp_editor( $template_content, 'template_content', array(
             'textarea_name' => 'template_content',
@@ -320,7 +345,6 @@ class Kntan_Setting_Class {
         $visual_editor = ob_get_clean();
 
         // 宛名印刷のテンプレート
-        // ビジュアルエディターを表示
         $atena .= '<h4 id="template_title">宛名印刷</h4>';
         $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
@@ -329,7 +353,6 @@ class Kntan_Setting_Class {
         <form method="post" action="">
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        <input type="hidden" id="active_tab" name="active_tab" value="">
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
         <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
         <span class="material-symbols-outlined">
@@ -337,6 +360,12 @@ class Kntan_Setting_Class {
         </span>
         </button>
         </form>
+        <script>
+            function setCookie() {
+                document.cookie = "active_tab=Atena";
+            }
+            document.getElementById("previewButton").addEventListener("click", setCookie);
+        </script>
         END;
         $atena .= '</div>';
         
