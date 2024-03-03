@@ -3,6 +3,7 @@
 class Kntan_Setting_Class {
 
     public function __construct() {
+        
     }
     
     // DBにカラムがなければ作成（ロゴマーク、会社名、郵便番号、都道府県、市区町村、番地、建物、電話番号、代表者名、メールアドレス、URL、消費税率、自社締め日、インボイス、振込先口座）
