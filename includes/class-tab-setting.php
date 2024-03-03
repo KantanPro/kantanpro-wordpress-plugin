@@ -89,10 +89,19 @@ class Kntan_Setting_Class {
             }
             update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
         }
+        
     }
     
 
     function Setting_Tab_View( $tab_name ) {
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // フォームが送信された場合に実行する処理を記述します
+            // ここにフォームの処理を追加してください
+
+            // ページをリロード
+            header("Location: ".$_SERVER['REQUEST_URI']);
+        }
 
         // タブ切り替えのスクリプトを修正
         $tab_script = <<<SCRIPT
@@ -132,7 +141,7 @@ class Kntan_Setting_Class {
         }
         </script>
         SCRIPT;
-
+        
         // タブのボタン
         $tab_buttons = <<<BUTTONS
         <div class="in_tab">
