@@ -473,7 +473,8 @@ input[name="tab_item"] {
 
 /* アクティブなタブのボタンスタイル */
 .in_tab button.active {
-  background-color: #ccc;
+  background-color: #ccc !important;
+  color: #3b3b3b !important;
 }
 
 /* タブコンテンツのスタイル */

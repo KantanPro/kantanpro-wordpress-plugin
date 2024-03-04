@@ -160,7 +160,7 @@ class Kntan_Setting_Class {
             };
         }
         
-        // タブを切り替える
+        // タブを切り替える関数
         function switchTab(evt, tabName) {
             const { tabcontent, tablinks } = getTabContentAndLinks();
         
@@ -188,7 +188,32 @@ class Kntan_Setting_Class {
         window.onload = function() {
             const activeTab = document.getElementById('active_tab').value || 'MyCompany';
             switchTab(null, activeTab);
-        }
+        
+            // 新たに追加する機能: 表示されているコンテンツに基づいてタブにアクティブなスタイルを適用
+            const myCompanyContent = document.getElementById('MyCompanyContent');
+            const atenaContent = document.getElementById('AtenaContent');
+        
+            // 自社情報のコンテンツが表示されているかチェック
+            if (myCompanyContent && myCompanyContent.style.display !== 'none') {
+                setActiveTab('MyCompany');
+            }
+            // 宛名印刷のコンテンツが表示されているかチェック
+            else if (atenaContent && atenaContent.style.display !== 'none') {
+                setActiveTab('Atena');
+            }
+        
+            // タブをアクティブにする関数
+            function setActiveTab(tabName) {
+                const tablinks = document.getElementsByClassName("tablinks");
+                for (const tablink of tablinks) {
+                    if (tablink.getAttribute("onclick").includes(tabName)) {
+                        tablink.classList.add("active");
+                    } else {
+                        tablink.classList.remove("active");
+                    }
+                }
+            }
+        };
         </script>
         SCRIPT;
 

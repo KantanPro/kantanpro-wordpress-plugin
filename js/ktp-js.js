@@ -51,3 +51,11 @@ popupElement.style.borderRadius = '10px';
 popupElement.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
 popupElement.style.textAlign = 'center';
 popupElement.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+
+document.addEventListener('DOMContentLoaded', function() {
+    var activeTab = document.querySelector('.in_tab button.active');
+    if (activeTab) {
+        activeTab.style.backgroundColor = '#ccc';
+        activeTab.style.color = '#3b3b3b';
+    }
+});
