@@ -95,24 +95,20 @@ class Kntan_Setting_Class {
     function Setting_Tab_View( $tab_name ) {
 
         
-        // // ページをリロード
+        // ページをリロード
         $reload = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: ".$_SERVER['REQUEST_URI']);
-            $reload++;
         }
         
         // リクエストメソッドがPOSTの場合、フォームの送信を処理
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // ここでフォームのデータを処理する
-            // ...
-
-            // active_tabの値をクッキーに保存する
-            if (isset($_POST['active_tab'])) {
-                $active_tab = $_POST['active_tab'];
-                setcookie('active_tab', $active_tab, time() + (86400 * 30), "/"); // 30日間有効
-            }
-        }
+        // if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        //     // active_tabの値をクッキーに保存する
+        //     if (isset($_POST['active_tab'])) {
+        //         $active_tab = $_POST['active_tab'];
+        //         setcookie('active_tab', $active_tab, time() + (86400 * 30), "/"); // 30日間有効
+        //     }
+        // }
         
         // クッキーからactive_tabを読み出す
         $active_tab = isset($_COOKIE['active_tab']) ? $_COOKIE['active_tab'] : 'MyCompany';
@@ -120,26 +116,23 @@ class Kntan_Setting_Class {
         // タブのボタン
         $myCompanyClass = $active_tab == 'MyCompany' ? 'active' : '';
         $atenaClass = $active_tab == 'Atena' ? 'active' : '';
-
         $tab_buttons = <<<BUTTONS
-        <div class="in_tab" data-active-tab="$active_tab">
-            <button class="tablinks {$myCompanyClass}" onclick="switchTab(event, 'MyCompany')" aria-label="My Company">自社情報</button>
-            <button class="tablinks {$atenaClass}" onclick="switchTab(event, 'Atena')" aria-label="宛名印刷">宛名印刷</button>
+        <div class="controller" data-active-tab="$active_tab">
+            <div class="in_tab" data-active-tab="$active_tab">
+                <a href="javascript:void(0);" class="tablinks {$myCompanyClass}" onclick="switchTab(event, 'MyCompany');" aria-label="My Company">
+                <span class="material-symbols-outlined" title="自社情報">
+                domain
+                </span>
+                </a>
+                <a href="javascript:void(0);" class="tablinks {$atenaClass}" onclick="switchTab(event, 'Atena');" aria-label="Atena">
+                <span class="material-symbols-outlined" title="印刷テンプレート">
+                print_add
+                </span>
+                </a>
+            </div>
         </div>
         BUTTONS;
-        echo $active_tab . '-1';
-
-        // active_tabが設定されていない場合、デフォルトで'MyCompany'をアクティブにする
-        // if (empty($active_tab)) {
-        //     $active_tab = 'MyCompany';
-        // }
-
-        // // 
-        // if( !$reload ){
-        //     $active_tab = $active_tab;
-        // } else {
-        //     $active_tab = '';
-        // }
+        // echo $active_tab . '-1';
 
         //
         // タブ切り替えのスクリプト
@@ -184,54 +177,18 @@ class Kntan_Setting_Class {
             document.getElementById('active_tab').value = tabName;
         }
         
-        // ページ読み込み時に前回選択されたタブまたはデフォルトのタブを表示
+        // アクティブなコンテンツを表示
         window.onload = function() {
             const activeTab = document.getElementById('active_tab').value || 'MyCompany';
             switchTab(null, activeTab);
         
-            // 新たに追加する機能: 表示されているコンテンツに基づいてタブにアクティブなスタイルを適用
+            // 表示されているコンテンツに基づいてタブにアクティブなスタイルを適用
             const myCompanyContent = document.getElementById('MyCompanyContent');
             const atenaContent = document.getElementById('AtenaContent');
-        
-            // 自社情報のコンテンツが表示されているかチェック
-            if (myCompanyContent && myCompanyContent.style.display !== 'none') {
-                setActiveTab('MyCompany');
-            }
-            // 宛名印刷のコンテンツが表示されているかチェック
-            else if (atenaContent && atenaContent.style.display !== 'none') {
-                setActiveTab('Atena');
-            }
-        
-            // タブをアクティブにする関数
-            function setActiveTab(tabName) {
-                const tablinks = document.getElementsByClassName("tablinks");
-                for (const tablink of tablinks) {
-                    if (tablink.getAttribute("onclick").includes(tabName)) {
-                        tablink.classList.add("active");
-                    } else {
-                        tablink.classList.remove("active");
-                    }
-                }
-            }
         };
         </script>
         SCRIPT;
-
-
-        // タブのボタン
-        // $tab_buttons = <<<BUTTONS
-        // <div class="in_tab" data-active-tab="$active_tab">
-        //     <button class="tablinks {$myCompanyClass}" onclick="switchTab(event, 'MyCompany')" aria-label="My Company">自社情報</button>
-        //     <button class="tablinks {$atenaClass}" onclick="switchTab(event, 'Atena')" aria-label="宛名印刷">宛名印刷</button>
-        // </div>
-        // BUTTONS;
-        // echo $active_tab . '-2';
-                
-
-        // $content .= <<<END
-        // <h3>テンプレート設定</h3>
-        // END;
-
+        
         // ------------------------------------------------
         // 自社情報
         // ------------------------------------------------
@@ -266,14 +223,7 @@ class Kntan_Setting_Class {
                 die('Error: データーベースの更新に失敗しました。');
             }
 
-            // 自社コンテンツを更新を通知
-            // $my_company_content = $new_my_company_content;
-            // $my_company_info .= '<script>alert("自社情報を保存しました！");</script>';
-
         }
-        // // クッキーからactive_tabを読み出す
-        // $active_tab = isset($_COOKIE['active_tab']) ? $_COOKIE['active_tab'] : 'MyCompany';
-        // echo $active_tab . '-2';
 
         // ビジュアルエディターを表示（自社情報）
         ob_start();
@@ -292,7 +242,7 @@ class Kntan_Setting_Class {
         $visual_editor = ob_get_clean();
 
         // 自社情報
-        $my_company_info .= '<h4 id="template_title">自社情報</h4>';
+        $my_company_info .= '<div class="header_title">自社情報</div>';
         $my_company_info .= '<div class="atena_contents">';
         $my_company_info .= '<div class="data_list_box">';
 
@@ -331,7 +281,7 @@ class Kntan_Setting_Class {
         $my_company_info .= '</div>';
         
         // ------------------------------------------------
-        // 宛名印刷
+        // 宛名印刷テンプレート
         // ------------------------------------------------
 
         $atena = '<div id="Atena" class="tabcontent" style="display:none;">';
@@ -384,7 +334,7 @@ class Kntan_Setting_Class {
         $visual_editor = ob_get_clean();
 
         // 宛名印刷のテンプレート
-        $atena .= '<h4 id="template_title">宛名印刷</h4>';
+        $atena .= '<div class="header_title">宛名印刷テンプレート</div>';
         $atena .= '<div class="atena_contents">';
         $atena .= '<div class="data_list_box">';
         
@@ -441,10 +391,7 @@ class Kntan_Setting_Class {
                     <td>担当者名</td>
                 </tr>
             </table>
-        ※ 宛名印刷のテンプレートです。<br />
-        ※ 設定タブで編集できます。<br />
         ※ 選択した顧客データに置換されます。<br />
-        ※ 画像も追加できます。<br />
         ※ ショートコードを挿入ボタンは使用できません。
         </div>
         END;
