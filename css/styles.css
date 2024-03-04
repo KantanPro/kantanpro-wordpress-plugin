@@ -31,6 +31,12 @@
   width: 100%;
 }
 
+.header_title {
+  margin: 0 10px;
+  font-size: 25px;
+  border-bottom: 1px solid gray;
+}
+
 /* リストBOX */
 .data_list_box {
   width: 100%;
@@ -467,20 +473,76 @@ input[name="tab_item"] {
 }
 
 /* タブのボタンをホバーした時のスタイル */
-.in_tab button:hover {
+/* .in_tab button:hover {
   background-color: #ddd;
-}
+} */
 
 /* アクティブなタブのボタンスタイル */
-.in_tab button.active {
+/* .in_tab button.active {
   background-color: #ccc !important;
   color: #3b3b3b !important;
-}
+} */
 
 /* タブコンテンツのスタイル */
-.tabcontent {
+/* .tabcontent {
   display: none;
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-top: none;
+} */
+
+
+.in_tab .tablinks {
+  text-decoration: none; /* 下線を消す */
+  padding: 0px 10px; /* パディングを追加、左右10px */
+  font-family: 'Roboto', sans-serif; /* Google Fontsを使用 */
+  color: #000000; /* アクティブなリンクの色を変更 */
+}
+
+.in_tab {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  /* 上下センターぞろえ */
+  margin-top: 2px;
+  margin-right: 0px;
+  border: 1px solid lightgray;
+  background-color: rgb(212, 230, 241);
+  padding: 3px;
+  padding-left: 10px;
+  opacity: 0.6;
+  font-size: 14px;
+  /* 少し小さくする */
+  color: #000000;
+  /* 文字の色を少し濃くする */
+  width: 100%;
+  /* 幅を最大にする */
+}
+
+.in_tab button {
+  background-color: transparent;
+  border: none;
+  font-size: 14px;
+  color: black;
+  cursor: pointer;
+}
+
+.in_tab button.upload {
+  background-color: transparent;
+  border: none;
+  font-size: 32px;
+  color: black;
+  cursor: pointer;
+  margin-right: 30px;
+  margin-top: -10px;
+}
+
+.in_tab input {
+  margin-top: -4px;
+}
+
+.in_tab form {
+  display: flex;
+  margin-top: 10px;
 }
