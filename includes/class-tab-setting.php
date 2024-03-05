@@ -231,7 +231,7 @@ class Kntan_Setting_Class {
             'textarea_name' => 'my_company_content',
             'media_buttons' => true,
             'tinymce' => array(
-                'height' => 400, // エディタの高さを400pxに設定
+                'height' => 200, // エディタの高さを400pxに設定
                 'toolbar1' => 'formatselect bold italic underline | alignleft aligncenter alignright alignjustify | removeformat',
                 'toolbar2' => 'styleselect | forecolor backcolor | table | charmap | pastetext | code',
                 'toolbar3' => '',
