@@ -1,3 +1,7 @@
+.user_icon{
+  margin-top: 5px;
+}
+
 .data_contents {
   display: flex;
   flex-wrap: wrap;

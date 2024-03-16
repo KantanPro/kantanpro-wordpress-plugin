@@ -113,9 +113,9 @@ function KTPWP_Index(){
 			foreach ( $logged_in_users as $user ) {
 				// 現在ログインしているユーザーの場合は名前を太字にする
 				if ($user->ID == $current_user->ID) {
-					$current_user_name = '<strong><span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'avatar']) . '</span></strong>';
+					$current_user_name = '<strong><span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon user_icon--current']) . '</span></strong>';
 				} else {
-					$other_users_names[] = '<span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'avatar']) . '</span>';
+					$other_users_names[] = '<span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon']) . '</span>';
 				}
 			}
 			$other_users_html = count($other_users_names) > 0 ? '' . implode(' ', $other_users_names)  : '';
