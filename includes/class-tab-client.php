@@ -486,12 +486,12 @@ class Kntan_Client_Class {
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);
                
-               // リスト項目
-               $results[] = <<<END
-               <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}">
-                    <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
-               </a>
-               END;
+            // リスト項目
+            $results[] = <<<END
+            <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = 'ktp_current_client_id=' + $id;">
+                <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
+            </a>
+            END;
 
            }
            $query_max_num = $wpdb->num_rows;
@@ -584,7 +584,9 @@ class Kntan_Client_Class {
         // -----------------------------
 
         // 現在表示中の詳細
-        if(isset( $_GET['data_id'] )){
+        if (isset($_COOKIE['ktp_current_client_id'])) {
+            $query_id = filter_input(INPUT_COOKIE, 'ktp_current_client_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
             $query_id = $wpdb->insert_id;
