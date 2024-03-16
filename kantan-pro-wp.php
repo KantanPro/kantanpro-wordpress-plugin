@@ -150,7 +150,9 @@ function KTPWP_Index(){
 					break;
 				case 'service':
 					$service = new kntan_Service_Class();
-					$service_content = $service->Service_Tab_View($tab_name);
+					$service->Create_Table($tab_name);
+					$service->Update_Table($tab_name);
+					$service_content = $service->View_Table($tab_name);
 					break;
 				case 'supplier':
 					$supplier = new Kantan_Supplier_Class();
