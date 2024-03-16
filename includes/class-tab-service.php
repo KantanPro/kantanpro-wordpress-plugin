@@ -13,7 +13,7 @@ class Kntan_Service_Class {
 
     function Create_Table($tab_name) {
         global $wpdb;
-        $my_table_version = '1.0.1';
+        $my_table_version = '1.0.0';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
     
@@ -105,7 +105,7 @@ class Kntan_Service_Class {
                     'service_name' => $service_name,
                     'memo' => $memo,
                     'category' => $category,
-                    '$image_url' => $image_url,
+                    'image_url' => $image_url,
                     'search_field' => $search_field_value,
                 ),
                     array( 'id' => $data_id ), 
@@ -113,7 +113,7 @@ class Kntan_Service_Class {
                         '%s',  // service_name
                         '%s',  // memo
                         '%s',  // category
-                        '%s',  // $image_url
+                        '%s',  // image_url
                         '%s',  // search_field
                     ),
                     array( '%d' ) 
@@ -245,29 +245,32 @@ class Kntan_Service_Class {
 
         // 追加
         elseif( $query_post == 'insert' ) {
-            $wpdb->insert( 
+            $insert_result = $wpdb->insert( 
                 $table_name, 
-                    array( 
-                        'time' => current_time( 'mysql' ),
-                        'service_name' => $service_name,
-                        'memo' => $memo,
-                        'category' => $category,
-                        '$image_url' => $image_url,
-                        'search_field' => $search_field_value
+                array( 
+                    'time' => current_time( 'mysql' ),
+                    'service_name' => $service_name,
+                    'memo' => $memo,
+                    'category' => $category,
+                    'image_url' => $image_url,
+                    'search_field' => $search_field_value
                 ) 
             );
 
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
+            if($insert_result === false) {
+                error_log('Insert error: ' . $wpdb->last_error);
+            } else {
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
 
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            exit;
-            
+                // 追加後に更新モードにする
+                // リダイレクト
+                $action = 'update';
+                $data_id = $wpdb->insert_id;
+                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
+            }
         }
         
         // 複製
@@ -293,7 +296,7 @@ class Kntan_Service_Class {
                 $data['service_name'],
                 $data['memo'],
                 $data['category'],
-                $data['$image_url']
+                $data['image_url']
             ]);
 
             // データを挿入
@@ -347,7 +350,7 @@ class Kntan_Service_Class {
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <h3>■ 顧客リスト（レンジ： $query_limit ）</h3>
+            <h3>■ 商品リスト（レンジ： $query_limit ）</h3>
         END;
         
        // スタート位置を決める
@@ -370,7 +373,7 @@ class Kntan_Service_Class {
                $service_name = esc_html($row->service_name);
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
-               $image_url = esc_html($row->$image_url);
+               $image_url = esc_html($row->image_url);
                $frequency = esc_html($row->frequency);
                
             // リスト項目
@@ -488,7 +491,7 @@ class Kntan_Service_Class {
             $service_name = esc_html($row->service_name);
             $memo = esc_html($row->memo);
             $category = esc_html($row->category);
-            $image_url = esc_html($row->$image_url);
+            $image_url = esc_html($row->image_url);
         }
         
         // 表示するフォーム要素を定義
@@ -521,7 +524,7 @@ class Kntan_Service_Class {
                 // 詳細表示部分の開始
                 $data_title = <<<END
                     <div class="data_detail_box">
-                    <h3>■ 顧客の詳細</h3>
+                    <h3>■ 商品の詳細</h3>
                 END;
 
                 // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
@@ -637,7 +640,7 @@ class Kntan_Service_Class {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ 検索モード ）</h3>
+                <h3>■ 商品の詳細（ 検索モード ）</h3>
             END;
 
             // 検索フォームを生成
@@ -717,7 +720,7 @@ class Kntan_Service_Class {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
+                <h3>■ 商品の詳細（ ID: $data_id ）</h3>
             END;
 
             foreach ($fields as $label => $field) {
@@ -838,14 +841,14 @@ class Kntan_Service_Class {
         $data_src = [
             'service_name' => $service_name,
             'category' => $category,
-            '$image_url' => $image_url
+            'image_url' => $image_url
         ];
 
         $customer = $data_src['service_name'];
         $data = [
             'service_name' => $service_name,
             'category' => $category,
-            '$image_url' => $image_url
+            'image_url' => $image_url
         ];
 
         $print_html = new Print_Class($data);
