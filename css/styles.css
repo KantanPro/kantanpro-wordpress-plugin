@@ -550,3 +550,21 @@ input[name="tab_item"] {
   display: flex;
   margin-top: 10px;
 }
+
+.image_upload_form {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  /* 左右に均等に配置 */
+  margin: -20px 5px 20px 5px; /* マージン上を0pxに変更 */
+  border: 1px solid #a9a9a9;
+  background-color: #ffffff;
+  padding: 10px;
+  opacity: 0.9;
+  font-size: 14px;
+  /* 文字サイズをスマートに */
+  color: #444;
+  /* 文字の色を少し暗めに */
+  width: 100%;
+  /* 幅をスリムに */
+}
