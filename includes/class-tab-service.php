@@ -2,13 +2,57 @@
 
 class Kntan_Service_Class {
 
-    public function __construct() {
+    private $tab_name;
 
+    public function __construct($tab_name = '') {
+        $this->tab_name = $tab_name;
     }
      
     // -----------------------------
     // テーブル作成
     // -----------------------------
+    
+    // 画像アップロードとデータベースへの保存機能の修正
+    public function Upload_Service_Image($tab_name) {
+
+        global $wpdb; // この行を追加
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+
+
+
+        if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
+            // 画像を保存するディレクトリのパスを修正
+            $uploads_dir = plugin_dir_path(__FILE__) . '/../images/service';
+            if (!file_exists($uploads_dir)) {
+                // ディレクトリが存在しない場合は作成
+                wp_mkdir_p($uploads_dir);
+            }
+            $tmp_name = $_FILES['service_image']['tmp_name'];
+            $file_name = 'ktp-img-' . date('YmdHis') . '.jpg'; // ファイル名をktp-img-日時に変更
+            $upload_path = $uploads_dir . '/' . $file_name;
+
+            // ファイルを指定したディレクトリに移動
+            if (move_uploaded_file($tmp_name, $upload_path)) {
+                // 画像のURLを生成
+                $image_url = plugin_dir_url(__FILE__) . '/../images/service/' . $file_name;
+
+                // 画像URLをデータベースに保存
+                $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+                if ($data_id > 0) {
+                    $wpdb->update(
+                        $table_name,
+                        ['image_url' => $image_url],
+                        ['id' => $data_id],
+                        ['%s'],
+                        ['%d']
+                    );
+                }
+            } else {
+                // ファイルの移動に失敗した場合のエラーハンドリングを改善
+                error_log('アップロードされたファイルの移動に失敗しました。');
+            }
+        }
+    }
     
 
     function Create_Table($tab_name) {
@@ -63,6 +107,9 @@ class Kntan_Service_Class {
         $memo = $_POST['memo'];
         $category = $_POST['category'];
         $image_url = $_POST['image_url'];
+        
+        // 画像のアップロード処理を呼び出す
+        $this->Upload_Service_Image($tab_name);
         
         $search_field_value = implode(', ', [
             $data_id,
@@ -245,6 +292,9 @@ class Kntan_Service_Class {
 
         // 追加
         elseif( $query_post == 'insert' ) {
+            // 画像のアップロード処理を呼び出す
+            $this->Upload_Service_Image($tab_name);
+
             $insert_result = $wpdb->insert( 
                 $table_name, 
                 array( 
@@ -275,6 +325,9 @@ class Kntan_Service_Class {
         
         // 複製
         elseif( $query_post == 'duplication' ) {
+            // 画像のアップロード処理を呼び出す
+            $this->Upload_Service_Image($tab_name);
+
             // データのIDを取得
             $data_id = $_POST['data_id'];
 
@@ -322,7 +375,6 @@ class Kntan_Service_Class {
 
 
     }
-    
     // -----------------------------
     // テーブルの表示
     // -----------------------------
@@ -714,7 +766,24 @@ class Kntan_Service_Class {
             });
             </script>
             END;
-                        
+            
+            // image_urlの値がある場合は、商品画像を表示、ない場合はデフォルト画像を表示
+            $image_url = $image_url ? $image_url : plugin_dir_url(__FILE__) . 'no_image.png';
+            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" style=\"width: 320px; height: 320px;\"></div>";
+            
+            // 商品画像アップロードフォームを追加
+            $data_forms .= '<div class=image_upload_form>';
+            $data_forms .= <<<END
+            <form action="" method="post" enctype="multipart/form-data">
+                <div style="display: flex; align-items: center;">
+                    <input type="file" name="service_image" style="width: 80%;">
+                    <input type="hidden" name="data_id" value="$data_id">
+                    <input type="submit" value="アップロード" style="width: 50%;">
+                </div>
+            </form>
+            END;
+            $data_forms .= '</div>';
+            
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
             // 表題
@@ -722,6 +791,7 @@ class Kntan_Service_Class {
             <div class="data_detail_box">
                 <h3>■ 商品の詳細（ ID: $data_id ）</h3>
             END;
+
 
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
