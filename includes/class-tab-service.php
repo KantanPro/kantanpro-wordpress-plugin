@@ -86,23 +86,6 @@ class Kntan_Service_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         global $image_url;
 
-        if ($query_post == 'delete_image' && $data_id > 0) {
-            // 削除後、デフォルト画像のURLを設定
-            $default_image_url = 'images/default/no-image-icon.png';
-            // 指定されたIDの商品画像URLをデフォルト画像のURLに更新
-            $update_result = $wpdb->update(
-                $table_name,
-                ['image_url' => $default_image_url], // 更新するカラムと値
-                ['id' => $data_id], // WHERE条件
-                ['%s'], // 値のフォーマット
-                ['%d']  // WHERE条件のフォーマット
-            );
-
-            if (false === $update_result) {
-                error_log('画像の削除に失敗しました: ' . $wpdb->last_error);
-            }
-        }
-
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
@@ -831,24 +814,16 @@ class Kntan_Service_Class {
             $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.png';
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" style=\"width: 320px; height: 320px;\"></div>";
             
-            // 画像アップロード
+            // 商品画像アップロードフォームを追加
+            $data_forms .= '<div class=image_upload_form>';
             $data_forms .= <<<END
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <form action="" method="post" enctype="multipart/form-data" style="flex-grow: 1; margin-right: 10px;">
-                    <div style="display: flex; align-items: center;">
-                        <input type="file" name="service_image" style="width: 80%;">
-                        <input type="hidden" name="data_id" value="$data_id">
-                        <input type="submit" value="アップロード" style="width: 50%;">
-                    </div>
-                </form>
-                <form action="" method="post" style="flex-grow: 1;">
-                    <div style="text-align: center;">
-                        <input type="hidden" name="data_id" value="$data_id">
-                        <input type="hidden" name="query_post" value="delete_image">
-                        <button type="submit" style="width: 100%; background-color: #ff4d4d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">画像を削除</button>
-                    </div>
-                </form>
-            </div>
+            <form action="" method="post" enctype="multipart/form-data">
+                <div style="display: flex; align-items: center;">
+                    <input type="file" name="service_image" style="width: 80%;">
+                    <input type="hidden" name="data_id" value="$data_id">
+                    <input type="submit" value="アップロード" style="width: 50%;">
+                </div>
+            </form>
             END;
             $data_forms .= '</div>';
             
@@ -1055,6 +1030,5 @@ class Kntan_Service_Class {
 
 }
 ?>
-
 
 
