@@ -12,30 +12,34 @@ class Kntan_Service_Class {
     // テーブル作成
     // -----------------------------
     
-    // 画像アップロードとデータベースへの保存機能の修正
+    //
+    // 画像アップロード処理
+    //
+
     public function Upload_Service_Image($tab_name) {
 
-        global $wpdb; // この行を追加
+        global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
+        global $image_url;
+
         if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
-            // 画像を保存するディレクトリのパスを修正
-            $uploads_dir = plugin_dir_path(__FILE__) . '/../images/service';
+
+            // 画像を保存するディレクトリ
+            $uploads_dir = plugins_url( 'images/'. $tab_name, __FILE__ );
             if (!file_exists($uploads_dir)) {
                 // ディレクトリが存在しない場合は作成
                 wp_mkdir_p($uploads_dir);
             }
+
             $tmp_name = $_FILES['service_image']['tmp_name'];
             $file_name = 'ktp-img-' . date('YmdHis') . '.jpg'; // ファイル名をktp-img-日時に変更
-            $upload_path = $uploads_dir . '/' . $file_name;
+            $image_url = $uploads_dir . '/' . $file_name;
+
+            echo $image_url;
 
             // ファイルを指定したディレクトリに移動
-            if (move_uploaded_file($tmp_name, $upload_path)) {
-                // 画像のURLを生成
-                $image_url = plugin_dir_url(__FILE__) . '/../images/service/' . $file_name;
-                // $img_pasからincludes/を除去
-                $image_url = str_replace('includes//..', '', $uploads_dir) . '/' . $file_name;
-                
+            if (move_uploaded_file($tmp_name, $image_url)) {
 
                 // 画像URLをデータベースに保存
                 $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
@@ -768,14 +772,10 @@ class Kntan_Service_Class {
             </script>
             END;
             
-// // アップロードされた画像のファイル名
-// $file_name = 'ktp-img-20240319003551.jpg';
+            // 画像のURLを取得
+            global $image_url;
+            echo $image_url;
 
-// 画像が保存されているディレクトリへのURLを生成
-// $image_url = plugins_url('kantan-pro-wp/images/service/' . $file_name);
-// $image_url = plugin_dir_url( 'images/service/' . $file_name );
-
-// image_urlの値がある場合は、商品画像を表示、ない場合はデフォルト画像を表示
             $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.png';
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" style=\"width: 320px; height: 320px;\"></div>";
             
