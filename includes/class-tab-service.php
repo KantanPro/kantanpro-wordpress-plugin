@@ -17,48 +17,31 @@ class Kntan_Service_Class {
     //
 
     public function Upload_Service_Image($tab_name) {
-
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-
+    
         global $image_url;
 
         if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
-
-            // 画像を保存するディレクトリ
-            $uploads_dir = plugins_url( 'images/'. $tab_name, __FILE__ );
+            $uploads_dir = WP_CONTENT_DIR . '/plugins/kantan-pro-wp/images/' . $tab_name;
             if (!file_exists($uploads_dir)) {
-                // ディレクトリが存在しない場合は作成
                 wp_mkdir_p($uploads_dir);
             }
 
             $tmp_name = $_FILES['service_image']['tmp_name'];
             $file_name = 'ktp-img-' . date('YmdHis') . '.jpg'; // ファイル名をktp-img-日時に変更
-            $image_url = $uploads_dir . '/' . $file_name;
+            $image_path = $uploads_dir . '/' . $file_name;
+            $image_url = plugins_url('../images/' . $tab_name . '/' . $file_name, __FILE__);
 
-            echo $image_url;
-
-            // ファイルを指定したディレクトリに移動
-            if (move_uploaded_file($tmp_name, $image_url)) {
-
-                // 画像URLをデータベースに保存
-                $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-                if ($data_id > 0) {
-                    $wpdb->update(
-                        $table_name,
-                        ['image_url' => $image_url],
-                        ['id' => $data_id],
-                        ['%s'],
-                        ['%d']
-                    );
-                }
+            if (move_uploaded_file($tmp_name, $image_path)) {
+                return $image_url; // 成功した場合は画像URLを返す
             } else {
-                // ファイルの移動に失敗した場合のエラーハンドリングを改善
-                error_log('アップロードされたファイルの移動に失敗しました。');
+                error_log('アップロードファイルの移動に失敗しました。');
+                return false; // 失敗した場合はfalseを返す
             }
         }
+        return false; // ファイルがアップロードされていない、またはエラーがある場合はfalseを返す
     }
-    
 
     function Create_Table($tab_name) {
         global $wpdb;
@@ -101,6 +84,7 @@ class Kntan_Service_Class {
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        global $image_url;
 
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
@@ -111,7 +95,47 @@ class Kntan_Service_Class {
         $service_name = $_POST['service_name'];
         $memo = $_POST['memo'];
         $category = $_POST['category'];
-        $image_url = $_POST['image_url'];
+        
+        // 画像のアップロード処理を呼び出す
+        $upload_result = $this->Upload_Service_Image($tab_name);
+        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+        // 画像がアップロードされた場合、そのURLを$image_urlに設定
+        if ($upload_result) {
+            $image_url = $upload_result;
+        } else {
+            // 画像がアップロードされていない場合、既存のimage_urlを使用
+            $current_image = $wpdb->get_var($wpdb->prepare("SELECT image_url FROM $table_name WHERE id = %d", $data_id));
+            $image_url = $current_image ? $current_image : $image_url;
+        }
+        if ($data_id > 0) {
+            $update_result = $wpdb->update(
+                $table_name,
+                ['image_url' => $image_url], // 更新するカラムと値
+                ['id' => $data_id], // WHERE条件
+                ['%s'], // 値のフォーマット
+                ['%d']  // WHERE条件のフォーマット
+            );
+
+            if (false === $update_result) {
+                error_log('データベースの更新に失敗しました: ' . $wpdb->last_error);
+            }
+        } elseif (!$upload_result) {
+            error_log('画像のアップロードに失敗しました。');
+        }
+        
+        // 削除
+        if ($query_post == 'delete' && $data_id > 0) {
+            $delete_result = $wpdb->delete(
+                $table_name,
+                ['id' => $data_id],
+                ['%d']
+            );
+
+            if (false === $delete_result) {
+                error_log('データベースからの削除に失敗しました: ' . $wpdb->last_error);
+            }
+        }
+        // $image_url = $_POST['image_url'];
         
         // 画像のアップロード処理を呼び出す
         $this->Upload_Service_Image($tab_name);
@@ -773,8 +797,19 @@ class Kntan_Service_Class {
             END;
             
             // 画像のURLを取得
-            global $image_url;
-            echo $image_url;
+            // global $image_url;
+            // echo $image_url;
+
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'ktp_' . $name;
+        
+            // データを取得
+            $query = "SELECT * FROM {$table_name} WHERE id = %d";
+            $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));
+        
+            foreach ($post_row as $row) {
+                $image_url = esc_html($row->image_url);
+            }
 
             $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.png';
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" style=\"width: 320px; height: 320px;\"></div>";
@@ -995,3 +1030,6 @@ class Kntan_Service_Class {
 
 }
 ?>
+
+
+
