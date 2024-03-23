@@ -555,7 +555,7 @@ input[name="tab_item"] {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin: -20px 5px 20px 5px;
+  margin: 10px; /* 上下左右にマージンを設定 */
   border: 1px solid #a9a9a9;
   background-color: #ffffff;
   padding: 10px;
