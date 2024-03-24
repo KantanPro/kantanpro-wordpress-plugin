@@ -5,7 +5,7 @@ class Kntan_Client_Class {
     public function __construct() {
 
     }
-    
+
     //
     // 次回バグ修正：検索結果にクッキーを追加
     //
@@ -577,7 +577,9 @@ class Kntan_Client_Class {
         } else {
             $query_id = $wpdb->insert_id;
         }
-        echo $query_id;
+        echo 'cookie:'. isset($_COOKIE[$cookie_name]).'<br>';
+        echo 'GET data_id:'. isset($_GET['data_id']).'<br>';
+        echo '$wpdb->insert_id:'. $wpdb->insert_id;
 
         // if(isset($_GET['data_id'])) {
         //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
