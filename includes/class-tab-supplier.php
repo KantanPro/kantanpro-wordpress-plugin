@@ -506,9 +506,9 @@ class Kantan_Supplier_Class{
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        // 現在表示中の詳細
        if(isset( $_GET['data_id'] )){
-           $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-       } else {
-           $data_id = $wpdb->insert_id;
+            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $data_id = $wpdb->insert_id;
        }
        // ページステージ移動
        if( !$page_stage || $page_stage == 1 ){
@@ -592,8 +592,14 @@ class Kantan_Supplier_Class{
             $query_id = $wpdb->insert_id;
         }
         
+        if(isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = null; // $query_idが想定外の値の場合、nullを設定
+        }
+        
         // データを取得し変数に格納
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
@@ -650,7 +656,7 @@ class Kantan_Supplier_Class{
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
         // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 

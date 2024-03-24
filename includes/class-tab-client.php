@@ -244,6 +244,7 @@ class Kntan_Client_Class {
                 // 検索結果を表示するHTMLを初期化
                 $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
 
+
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
@@ -253,14 +254,11 @@ class Kntan_Client_Class {
                     // 各検索結果に対してリンクを設定
                     $search_results_html .= "<li><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update'>{$id} : {$company_name} : {$user_name} : {$email}</a></li>";
                 }
-
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
-
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
-
-                // JavaScriptでクールなスタイルのポップアップを表示
+                // JavaScriptでポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -282,14 +280,6 @@ class Kntan_Client_Class {
                     // ポップアップを閉じるためのボタンを追加
                     var closeButton = document.createElement('button');
                     closeButton.textContent = '閉じる';
-                    closeButton.style.fontSize = '0.8em';
-                    closeButton.style.color = 'black'; // 文字をもう少し黒く
-                    closeButton.style.display = 'block';
-                    closeButton.style.margin = '10px auto 0';
-                    closeButton.style.padding = '10px';
-                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
-                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
-                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
@@ -299,21 +289,11 @@ class Kntan_Client_Class {
                 });
                 </script>";
             }
-
-            // 検索結果が0件の場合の処理
-            else {
-                // JavaScriptを使用してポップアップ警告を表示
-                echo "<script>
-                alert('検索結果がありません！');
-                window.location.href='?tab_name={$tab_name}&query_post=search';
-                </script>";
-            }
-
+            
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             exit;
         }
-
         // 追加
         elseif( $query_post == 'insert' ) {
             $wpdb->insert( 
@@ -506,7 +486,7 @@ class Kntan_Client_Class {
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        // 現在表示中の詳細
        if(isset( $_GET['data_id'] )){
-           $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
        } else {
            $data_id = $wpdb->insert_id;
        }
@@ -591,9 +571,15 @@ class Kntan_Client_Class {
         } else {
             $query_id = $wpdb->insert_id;
         }
+
+        if(isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = null; // $query_idが想定外の値の場合、nullを設定
+        }
         
         // データを取得し変数に格納
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
@@ -650,7 +636,7 @@ class Kntan_Client_Class {
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
         // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 

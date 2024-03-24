@@ -256,7 +256,7 @@ class Kntan_Service_Class {
                     $service_name = esc_html($row->service_name);
                     $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update'>{$id} : {$service_name} </a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} : {$service_name} </a></li>";
                 }
 
                 // HTMLを閉じる
@@ -477,9 +477,9 @@ class Kntan_Service_Class {
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        // 現在表示中の詳細
        if(isset( $_GET['data_id'] )){
-           $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
        } else {
-           $data_id = $wpdb->insert_id;
+            $data_id = $wpdb->insert_id;
        }
        // ページステージ移動
        if( !$page_stage || $page_stage == 1 ){
@@ -562,9 +562,15 @@ class Kntan_Service_Class {
         } else {
             $query_id = $wpdb->insert_id;
         }
+
+        if(isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = null; // $query_idが想定外の値の場合、nullを設定
+        }
         
         // データを取得し変数に格納
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
@@ -593,7 +599,7 @@ class Kntan_Service_Class {
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
         // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY `id` = $query_id");
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $data_num = $wpdb->get_results($query);
         $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
 
