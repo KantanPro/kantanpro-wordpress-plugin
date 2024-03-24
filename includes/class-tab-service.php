@@ -5,11 +5,7 @@ class Kntan_Service_Class {
     public function __construct($tab_name = '') {
 
     }
-
-    //
-    // 次回バグ修正：検索結果にクッキーを追加
-    //
-     
+    
     // -----------------------------
     // テーブル作成
     // -----------------------------
@@ -164,53 +160,23 @@ class Kntan_Service_Class {
         
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
-            $delete_result = $wpdb->delete(
+            $wpdb->delete(
                 $table_name,
                 ['id' => $data_id],
                 ['%d']
             );
-
-            if (false === $delete_result) {
-                error_log('データベースからの削除に失敗しました: ' . $wpdb->last_error);
-            }
-        }
-        // $image_url = $_POST['image_url'];
         
-        // 画像のアップロード処理を呼び出す
-        $this->Upload_Service_Image($tab_name,$data_id);
-        
-        $search_field_value = implode(', ', [
-            $data_id,
-            current_time( 'mysql' ),
-            $service_name,
-            $memo,
-            $category,
-            $image_url
-        ]);
-        
-        // 削除
-        if( $query_post == 'delete' ) {
-            $wpdb->delete(
-                $table_name,
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%d'
-                )
-            );
-
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
-
+        
             // リダイレクト
             $data_id = $data_id - 1;
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
-        }    
-        
+        }
+
         // 更新
         elseif( $query_post == 'update' ){
 
