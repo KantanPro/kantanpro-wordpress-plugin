@@ -16,11 +16,13 @@ class Kntan_Service_Class {
     // 画像アップロード処理
     //
 
-    public function Upload_Service_Image($tab_name) {
+    public function Upload_Service_Image($tab_name,$data_id) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
     
         global $image_url;
+        global $data_id;
+        echo $data_id;
 
         if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
             $uploads_dir = WP_CONTENT_DIR . '/plugins/kantan-pro-wp/images/' . $tab_name;
@@ -28,8 +30,18 @@ class Kntan_Service_Class {
                 wp_mkdir_p($uploads_dir);
             }
 
+            // ファイル名を生成
+            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+            // 画像ファイルの拡張子を取得
+            $ext = pathinfo($_FILES['service_image']['name'], PATHINFO_EXTENSION);
+            // 画像ファイルの拡張子がjpg, jpeg, png以外の場合はエラー
+            if (!in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                error_log('画像ファイルの拡張子が不正です。');
+                return false;
+            }
+
             $tmp_name = $_FILES['service_image']['tmp_name'];
-            $file_name = 'ktp-img-' . date('YmdHis') . '.jpg'; // ファイル名をktp-img-日時に変更
+            $file_name = $data_id . '.' . $ext; // ファイル名を$data_idと拡張子で設定
             $image_path = $uploads_dir . '/' . $file_name;
             $image_url = plugins_url('../images/' . $tab_name . '/' . $file_name, __FILE__);
 
@@ -95,9 +107,21 @@ class Kntan_Service_Class {
         $service_name = $_POST['service_name'];
         $memo = $_POST['memo'];
         $category = $_POST['category'];
-        
+
+        // POSTからdata_idを取得
+        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+
+        // data_idが0の場合、データベースから最後のdata_idを取得
+        if ($data_id === 0) {
+            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_result = $wpdb->get_row($last_id_query);
+            if ($last_id_result) {
+                $data_id = $last_id_result->id;
+            }
+        }
+
         // 画像のアップロード処理を呼び出す
-        $upload_result = $this->Upload_Service_Image($tab_name);
+        $upload_result = $this->Upload_Service_Image($tab_name,$data_id);
         $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
         // 画像がアップロードされた場合、そのURLを$image_urlに設定
         if ($upload_result) {
@@ -138,7 +162,7 @@ class Kntan_Service_Class {
         // $image_url = $_POST['image_url'];
         
         // 画像のアップロード処理を呼び出す
-        $this->Upload_Service_Image($tab_name);
+        $this->Upload_Service_Image($tab_name,$data_id);
         
         $search_field_value = implode(', ', [
             $data_id,
