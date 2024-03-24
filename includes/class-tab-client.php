@@ -5,7 +5,11 @@ class Kntan_Client_Class {
     public function __construct() {
 
     }
-     
+    
+    //
+    // 次回バグ修正：検索結果にクッキーを追加
+    //
+    
     // -----------------------------
     // テーブル作成
     // -----------------------------
@@ -466,12 +470,13 @@ class Kntan_Client_Class {
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);
                
-            // リスト項目
-            $results[] = <<<END
-            <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = 'ktp_current_client_id=' + $id;">
-                <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
-            </a>
-            END;
+               // リスト項目
+               $cookie_name = 'ktp_' . $name . '_id';
+               $results[] = <<<END
+               <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+               <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
+               </a>
+               END;
 
            }
            $query_max_num = $wpdb->num_rows;
@@ -564,19 +569,21 @@ class Kntan_Client_Class {
         // -----------------------------
 
         // 現在表示中の詳細
-        if (isset($_COOKIE['ktp_current_client_id'])) {
-            $query_id = filter_input(INPUT_COOKIE, 'ktp_current_client_id', FILTER_SANITIZE_NUMBER_INT);
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
             $query_id = $wpdb->insert_id;
         }
+        echo $query_id;
 
-        if(isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            $query_id = null; // $query_idが想定外の値の場合、nullを設定
-        }
+        // if(isset($_GET['data_id'])) {
+        //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        // } else {
+        //     $query_id = null; // $query_idが想定外の値の場合、nullを設定
+        // }
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
@@ -606,6 +613,7 @@ class Kntan_Client_Class {
         
         // 表示するフォーム要素を定義
         $fields = [
+            'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
             '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true, 'placeholder' => '必須 法人名または屋号'],
             '名前' => ['type' => 'text', 'name' => 'user_name', 'placeholder' => '担当者名'],
             'メール' => ['type' => 'email', 'name' => 'email'],
@@ -841,6 +849,7 @@ class Kntan_Client_Class {
                         
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">

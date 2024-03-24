@@ -2,11 +2,13 @@
 
 class Kntan_Service_Class {
 
-    private $tab_name;
-
     public function __construct($tab_name = '') {
-        $this->tab_name = $tab_name;
+
     }
+
+    //
+    // 次回バグ修正：検索結果にクッキーを追加
+    //
      
     // -----------------------------
     // テーブル作成
@@ -16,14 +18,26 @@ class Kntan_Service_Class {
     // 画像アップロード処理
     //
 
+    // クッキーの設定
+    function Set_Cookie($name) {
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = 1;
+        }
+    }
+
     public function Upload_Service_Image($tab_name,$data_id) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
     
         global $image_url;
         global $data_id;
-        echo $data_id;
 
+        // 画像がアップロードされているかどうかを確認
         if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
             $uploads_dir = WP_CONTENT_DIR . '/plugins/kantan-pro-wp/images/' . $tab_name;
             if (!file_exists($uploads_dir)) {
@@ -515,8 +529,9 @@ class Kntan_Service_Class {
                $frequency = esc_html($row->frequency);
                
             // リスト項目
+            $cookie_name = 'ktp_' . $name . '_id';
             $results[] = <<<END
-            <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = 'ktp_current_client_id=' + $id;">
+            <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                 <div class="data_list_item">$id : $service_name : $category : 頻度($frequency)</div>
             </a>
             END;
@@ -534,15 +549,16 @@ class Kntan_Service_Class {
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        
         // 現在表示中の詳細
-        if (isset($_COOKIE['ktp_current_client_id'])) {
-            $query_id = filter_input(INPUT_COOKIE, 'ktp_current_client_id', FILTER_SANITIZE_NUMBER_INT);
+        $cookie_name = 'ktp_'. $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name , FILTER_SANITIZE_NUMBER_INT);
         } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
             // 最後のIDを取得して表示
             $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
             $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : null;
+            $query_id = $last_id_row ? $last_id_row->id : 1;
         }
 
        // ページステージ移動
@@ -619,19 +635,20 @@ class Kntan_Service_Class {
         // -----------------------------
 
         // 現在表示中の詳細
-        if (isset($_COOKIE['ktp_current_client_id'])) {
-            $query_id = filter_input(INPUT_COOKIE, 'ktp_current_client_id', FILTER_SANITIZE_NUMBER_INT);
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
-            $query_id = $wpdb->insert_id;
+            $query_id = Null; // $query_idが想定外の値の場合、nullを設定
         }
 
-        if(isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            $query_id = null; // $query_idが想定外の値の場合、nullを設定
-        }
+        // if(isset($_GET['data_id'])) {
+        //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        // } else {
+        //     $query_id = Null; // $query_idが想定外の値の場合、nullを設定
+        // }
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
@@ -647,6 +664,7 @@ class Kntan_Service_Class {
         
         // 表示するフォーム要素を定義
         $fields = [
+            'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
             '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
             '画像URL' => ['type' => 'text', 'name' => 'image_url'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
@@ -913,10 +931,21 @@ class Kntan_Service_Class {
             
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+
+            // cookieに保存されたIDを取得
+            $cookie_name = 'ktp_'. $name . '_id';
+            if (isset($_GET['data_id'])) {
+                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+            } elseif (isset($_COOKIE[$cookie_name])) {
+                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+            } else {
+                $data_id = $last_id_row ? $last_id_row->id : Null;
+            }
+
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 商品の詳細 $data_id</h3>
+                <h3>■ 商品の詳細（ ID： $data_id ）</h3>
             END;
 
 
