@@ -59,8 +59,12 @@ class Kntan_Service_Class {
             $image_path = $uploads_dir . '/' . $file_name;
             $image_url = plugins_url('../images/' . $tab_name . '/' . $file_name, __FILE__);
 
+            // 画像URLにクエリパラメータを追加（キャッシュ回避）
+            $timestamp = time();
+            $image_url_with_timestamp = $image_url . '?v=' . $timestamp;
+
             if (move_uploaded_file($tmp_name, $image_path)) {
-                return $image_url; // 成功した場合は画像URLを返す
+                return $image_url_with_timestamp; // タイムスタンプ付きのURLを返す
             } else {
                 error_log('アップロードファイルの移動に失敗しました。');
                 return false; // 失敗した場合はfalseを返す
@@ -121,9 +125,6 @@ class Kntan_Service_Class {
         $service_name = $_POST['service_name'];
         $memo = $_POST['memo'];
         $category = $_POST['category'];
-
-        // POSTからdata_idを取得
-        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
 
         // data_idが0の場合、データベースから最後のdata_idを取得
         if ($data_id === 0) {
@@ -360,7 +361,7 @@ class Kntan_Service_Class {
         // 追加
         elseif( $query_post == 'insert' ) {
             // 画像のアップロード処理を呼び出す
-            $this->Upload_Service_Image($tab_name);
+            $upload_result = $this->Upload_Service_Image($tab_name, $data_id);
 
             $insert_result = $wpdb->insert( 
                 $table_name, 
@@ -393,7 +394,7 @@ class Kntan_Service_Class {
         // 複製
         elseif( $query_post == 'duplication' ) {
             // 画像のアップロード処理を呼び出す
-            $this->Upload_Service_Image($tab_name);
+            $upload_result = $this->Upload_Service_Image($tab_name, $data_id);
 
             // データのIDを取得
             $data_id = $_POST['data_id'];
@@ -436,10 +437,11 @@ class Kntan_Service_Class {
 
         // 画像削除処理
         elseif( $query_post == 'delete_image' ) {
+            ob_start(); // 出力バッファリングを開始
             $data_id = $_POST['data_id'];
             if ($data_id > 0) {
                 // 画像URLをデフォルトの「no_image.png」に更新
-                $default_image_url = plugin_dir_url('') . 'kantan-pro-wp/images/default/no_image.png';
+                $default_image_url = plugins_url('images/default/no-image-icon.png', __DIR__);
                 $update_result = $wpdb->update(
                     $table_name,
                     ['image_url' => $default_image_url], // 画像URLをデフォルトに更新
@@ -464,6 +466,7 @@ class Kntan_Service_Class {
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
+            ob_end_flush(); // 出力バッファリングを終了し、バッファ内容を送信
             exit;
         }
 
