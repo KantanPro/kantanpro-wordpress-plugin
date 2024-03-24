@@ -396,6 +396,39 @@ class Kntan_Service_Class {
             exit;
         }
 
+        // 画像削除処理
+        elseif( $query_post == 'delete_image' ) {
+            $data_id = $_POST['data_id'];
+            if ($data_id > 0) {
+                // 画像URLをデフォルトの「no_image.png」に更新
+                $default_image_url = plugin_dir_url('') . 'kantan-pro-wp/images/default/no_image.png';
+                $update_result = $wpdb->update(
+                    $table_name,
+                    ['image_url' => $default_image_url], // 画像URLをデフォルトに更新
+                    ['id' => $data_id], // WHERE条件
+                    ['%s'], // 値のフォーマット
+                    ['%d']  // WHERE条件のフォーマット
+                );
+
+                if (false === $update_result) {
+                    error_log('画像URLの更新に失敗しました: ' . $wpdb->last_error);
+                } else {
+                    // 更新成功時の処理（必要に応じて）
+                }
+            } else {
+                error_log('無効なdata_idです。');
+            }
+
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+
+            // リダイレクト
+            $action = 'update';
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
+        }
+
         // どの処理にも当てはまらない場合はロック解除
         else {
             // ロックを解除する
@@ -475,12 +508,19 @@ class Kntan_Service_Class {
        $post_num = count($post_row); // 現在の項目数（可変）
        $page_buck = ''; // 前のスタート位置
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
-       // 現在表示中の詳細
-       if(isset( $_GET['data_id'] )){
-            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-       } else {
-            $data_id = $wpdb->insert_id;
-       }
+       
+        // 現在表示中の詳細
+        if (isset($_COOKIE['ktp_current_client_id'])) {
+            $query_id = filter_input(INPUT_COOKIE, 'ktp_current_client_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            // 最後のIDを取得して表示
+            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_row = $wpdb->get_row($query);
+            $query_id = $last_id_row ? $last_id_row->id : null;
+        }
+
        // ページステージ移動
        if( !$page_stage || $page_stage == 1 ){
            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
@@ -831,6 +871,20 @@ class Kntan_Service_Class {
                 </div>
             </form>
             END;
+
+            // 商品画像削除ボタンを追加
+            $data_forms .= <<<END
+            <form method="post" action="">
+                <input type="hidden" name="data_id" value="{$data_id}">
+                <input type="hidden" name="query_post" value="delete_image">
+                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
+                    <span class="material-symbols-outlined">
+                        delete
+                    </span>
+                </button>
+            </form>
+            END;
+            
             $data_forms .= '</div>';
             
             $data_forms .= "<div class=\"add\">";
@@ -838,7 +892,7 @@ class Kntan_Service_Class {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 商品の詳細（ ID: $data_id ）</h3>
+                <h3>■ 商品の詳細 $data_id</h3>
             END;
 
 
