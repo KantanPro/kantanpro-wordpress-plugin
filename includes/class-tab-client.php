@@ -7,7 +7,7 @@ class Kntan_Client_Class {
     }
 
     //
-    // 次回バグ修正：検索結果にクッキーを追加
+    // 次回バグ修正：追加・複製時に出てくるデーターが違う
     //
     
     // -----------------------------
@@ -261,7 +261,7 @@ class Kntan_Client_Class {
                     $id = esc_html($row->id);
                     $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} </a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
                 
                 // HTMLを閉じる

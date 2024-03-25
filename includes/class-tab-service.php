@@ -5,6 +5,11 @@ class Kntan_Service_Class {
     public function __construct($tab_name = '') {
 
     }
+
+    //
+    // 次回バグ修正：追加・複製時に出てくるデーターが違う
+    //
+    
     
     // -----------------------------
     // テーブル作成
@@ -260,7 +265,7 @@ class Kntan_Service_Class {
                     $id = esc_html($row->id);
                     $service_name = esc_html($row->service_name);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} : {$service_name} </a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} サービス名：{$service_name} カテゴリー：{$category}</a></li>";
                 }
 
                 // HTMLを閉じる

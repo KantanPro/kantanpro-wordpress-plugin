@@ -7,7 +7,7 @@ class Kantan_Supplier_Class{
     }
 
     //
-    // 次回バグ修正：検索結果にクッキーを追加
+    // 次回バグ修正：追加・複製時に出てくるデーターが違う
     //
 
     // -----------------------------
@@ -17,9 +17,40 @@ class Kantan_Supplier_Class{
 
     function Create_Table($tab_name) {
         global $wpdb;
-        $my_table_version = '1.0.1';
+        $my_table_version = '1.0.0';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
+
+        // テーブルが存在しない場合は作成
+        if($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") != $table_name) {
+            $sql = "CREATE TABLE {$table_name} (
+                id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
+                time BIGINT(11) DEFAULT '0' NOT NULL,
+                name TINYTEXT NOT NULL,
+                url VARCHAR(55) NOT NULL,
+                company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者',
+                email VARCHAR(100) NOT NULL,
+                phone VARCHAR(20) NOT NULL,
+                postal_code VARCHAR(10) NOT NULL,
+                prefecture TINYTEXT NOT NULL,
+                city TINYTEXT NOT NULL,
+                address TEXT NOT NULL,
+                building TINYTEXT NOT NULL,
+                closing_day TINYTEXT NOT NULL,
+                payment_month TINYTEXT NOT NULL,
+                payment_day TINYTEXT NOT NULL,
+                payment_method TINYTEXT NOT NULL,
+                tax_category VARCHAR(100) NOT NULL DEFAULT '税込',
+                memo TEXT NOT NULL,
+                search_field TEXT NOT NULL,
+                frequency INT NOT NULL DEFAULT 0,
+                category VARCHAR(100) NOT NULL DEFAULT '一般',
+                UNIQUE KEY id (id)
+            ) {$charset_collate};";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            add_option("{$table_name}_version", $my_table_version);
+        }
     
         $columns = [
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
@@ -261,7 +292,7 @@ class Kantan_Supplier_Class{
                     $id = esc_html($row->id);
                     $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} </a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
 
                 // HTMLを閉じる
