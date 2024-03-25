@@ -118,9 +118,17 @@ class Kntan_Client_Class {
             $memo,
             $category
         ]);
-        
+        // data_idが0の場合、データベースから最後のdata_idを取得
+        if ($data_id === 0) {
+            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_result = $wpdb->get_row($last_id_query);
+            if ($last_id_result) {
+                $data_id = $last_id_result->id;
+            }
+        }
+
         // 削除
-        if( $query_post == 'delete' ) {
+        if ($query_post == 'delete' && $data_id > 0) {
             $wpdb->delete(
                 $table_name,
                 array(
@@ -226,7 +234,7 @@ class Kntan_Client_Class {
 
                 // 検索結果のIDを取得
                 $id = $results[0]->id;
-
+                
                 // 頻度の値を+1する
                 $wpdb->query(
                     $wpdb->prepare(
@@ -235,11 +243,11 @@ class Kntan_Client_Class {
                     )
                 );
 
-                // 検索後に更新モードにする
-                $action = 'update';
-                $data_id = $id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-                header("Location: {$url}");
+                 // 検索後に更新モードにする
+                 $action = 'update';
+                 $data_id = $id;
+                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                 header("Location: {$url}");
 
             }
 
@@ -252,12 +260,11 @@ class Kntan_Client_Class {
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
-                    $company_name = esc_html($row->company_name);
-                    $user_name = esc_html($row->name);
                     $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update'>{$id} : {$company_name} : {$user_name} : {$email}</a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} </a></li>";
                 }
+                
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
@@ -284,6 +291,14 @@ class Kntan_Client_Class {
                     // ポップアップを閉じるためのボタンを追加
                     var closeButton = document.createElement('button');
                     closeButton.textContent = '閉じる';
+                    closeButton.style.fontSize = '0.8em';
+                    closeButton.style.color = 'black'; // 文字をもう少し黒く
+                    closeButton.style.display = 'block';
+                    closeButton.style.margin = '10px auto 0';
+                    closeButton.style.padding = '10px';
+                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
+                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
+                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
@@ -293,50 +308,63 @@ class Kntan_Client_Class {
                 });
                 </script>";
             }
-            
+
+            // 検索結果が0件の場合の処理
+            else {
+                // JavaScriptを使用してポップアップ警告を表示
+                echo "<script>
+                alert('検索結果がありません！');
+                window.location.href='?tab_name={$tab_name}&query_post=search';
+                </script>";
+            }
+
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
             exit;
         }
         // 追加
         elseif( $query_post == 'insert' ) {
-            $wpdb->insert( 
+            
+            $insert_result = $wpdb->insert( 
                 $table_name, 
-                    array( 
-                        'time' => current_time( 'mysql' ),
-                        'company_name' => $company_name,
-                        'name' => $user_name,
-                        'email' => $email,
-                        'url' => $url,
-                        'representative_name' => $representative_name,
-                        'phone' => $phone,
-                        'postal_code' => $postal_code,
-                        'prefecture' => $prefecture,
-                        'city' => $city,
-                        'address' => $address,
-                        'building' => $building,
-                        'closing_day' => $closing_day,
-                        'payment_month' => $payment_month,
-                        'payment_day' => $payment_day,
-                        'payment_method' => $payment_method,
-                        'tax_category' => $tax_category,
-                        'memo' => $memo,
-                        'category' => $category,
-                        'search_field' => $search_field_value
+                array( 
+                    'time' => current_time( 'mysql' ),
+                    'company_name' => $company_name,
+                    'name' => $user_name,
+                    'email' => $email,
+                    'url' => $url,
+                    'representative_name' => $representative_name,
+                    'phone' => $phone,
+                    'postal_code' => $postal_code,
+                    'prefecture' => $prefecture,
+                    'city' => $city,
+                    'address' => $address,
+                    'building' => $building,
+                    'closing_day' => $closing_day,
+                    'payment_month' => $payment_month,
+                    'payment_day' => $payment_day,
+                    'payment_method' => $payment_method,
+                    'tax_category' => $tax_category,
+                    'memo' => $memo,
+                    'category' => $category,                    'search_field' => $search_field_value
                 ) 
             );
+            if($insert_result === false) {
+                error_log('Insert error: ' . $wpdb->last_error);
+            } else {
 
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
 
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            exit;
-            
+                // 追加後に更新モードにする
+                // リダイレクト
+                $action = 'update';
+                $data_id = $wpdb->insert_id;
+                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
+            }
+
         }
         
         // 複製
@@ -394,6 +422,40 @@ class Kntan_Client_Class {
             exit;
         }
 
+        // 画像削除処理
+        elseif( $query_post == 'delete_image' ) {
+            ob_start(); // 出力バッファリングを開始
+            $data_id = $_POST['data_id'];
+            if ($data_id > 0) {
+                // 画像URLをデフォルトの「no_image.png」に更新
+                $default_image_url = plugins_url('images/default/no-image-icon.png', __DIR__);
+                $update_result = $wpdb->update(
+                    $table_name,
+                    ['image_url' => $default_image_url], // 画像URLをデフォルトに更新
+                    ['id' => $data_id], // WHERE条件
+                    ['%s'], // 値のフォーマット
+                    ['%d']  // WHERE条件のフォーマット
+                );
+
+                if (false === $update_result) {
+                    error_log('画像URLの更新に失敗しました: ' . $wpdb->last_error);
+                } else {
+                    // 更新成功時の処理（必要に応じて）
+                }
+            } else {
+                error_log('無効なdata_idです。');
+            }
+
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+
+            // リダイレクト
+            $action = 'update';
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            ob_end_flush(); // 出力バッファリングを終了し、バッファ内容を送信
+            exit;
+        }
         // どの処理にも当てはまらない場合はロック解除
         else {
             // ロックを解除する
@@ -489,12 +551,19 @@ class Kntan_Client_Class {
        $post_num = count($post_row); // 現在の項目数（可変）
        $page_buck = ''; // 前のスタート位置
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
-       // 現在表示中の詳細
-       if(isset( $_GET['data_id'] )){
-        $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-       } else {
-           $data_id = $wpdb->insert_id;
-       }
+        // 現在表示中の詳細
+        $cookie_name = 'ktp_'. $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name , FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            // 最後のIDを取得して表示
+            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_row = $wpdb->get_row($query);
+            $query_id = $last_id_row ? $last_id_row->id : 1;
+        }
+
        // ページステージ移動
        if( !$page_stage || $page_stage == 1 ){
            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
@@ -575,18 +644,9 @@ class Kntan_Client_Class {
         } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
-            $query_id = $wpdb->insert_id;
+            $query_id = Null; // $query_idが想定外の値の場合、nullを設定
         }
-        echo 'cookie:'. isset($_COOKIE[$cookie_name]).'<br>';
-        echo 'GET data_id:'. isset($_GET['data_id']).'<br>';
-        echo '$wpdb->insert_id:'. $wpdb->insert_id;
 
-        // if(isset($_GET['data_id'])) {
-        //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        // } else {
-        //     $query_id = null; // $query_idが想定外の値の場合、nullを設定
-        // }
-        
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
@@ -851,6 +911,16 @@ class Kntan_Client_Class {
                         
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+            
+            // cookieに保存されたIDを取得
+            $cookie_name = 'ktp_'. $name . '_id';
+            if (isset($_GET['data_id'])) {
+                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+            } elseif (isset($_COOKIE[$cookie_name])) {
+                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+            } else {
+                $data_id = $last_id_row ? $last_id_row->id : Null;
+            }
 
             // 表題
             $data_title = <<<END

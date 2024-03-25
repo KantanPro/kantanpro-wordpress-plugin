@@ -259,7 +259,6 @@ class Kntan_Service_Class {
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
                     $service_name = esc_html($row->service_name);
-                    $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
                     $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} : {$service_name} </a></li>";
                 }
@@ -613,11 +612,6 @@ class Kntan_Service_Class {
             $query_id = Null; // $query_idが想定外の値の場合、nullを設定
         }
 
-        // if(isset($_GET['data_id'])) {
-        //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        // } else {
-        //     $query_id = Null; // $query_idが想定外の値の場合、nullを設定
-        // }
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
