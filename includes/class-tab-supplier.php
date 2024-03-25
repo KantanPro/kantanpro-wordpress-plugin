@@ -119,8 +119,16 @@ class Kantan_Supplier_Class{
             $category
         ]);
         
+        if ($data_id === 0) {
+            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_result = $wpdb->get_row($last_id_query);
+            if ($last_id_result) {
+                $data_id = $last_id_result->id;
+            }
+        }
+
         // 削除
-        if( $query_post == 'delete' ) {
+        if ($query_post == 'delete' && $data_id > 0) {
             $wpdb->delete(
                 $table_name,
                 array(
@@ -251,11 +259,9 @@ class Kantan_Supplier_Class{
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
-                    $company_name = esc_html($row->company_name);
-                    $user_name = esc_html($row->name);
                     $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update'>{$id} : {$company_name} : {$user_name} : {$email}</a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>{$id} </a></li>";
                 }
 
                 // HTMLを閉じる
@@ -320,7 +326,8 @@ class Kantan_Supplier_Class{
 
         // 追加
         elseif( $query_post == 'insert' ) {
-            $wpdb->insert( 
+
+            $insert_result = $wpdb->insert( 
                 $table_name, 
                     array( 
                         'time' => current_time( 'mysql' ),
@@ -345,6 +352,9 @@ class Kantan_Supplier_Class{
                         'search_field' => $search_field_value
                 ) 
             );
+            if($insert_result === false) {
+                error_log('Insert error: ' . $wpdb->last_error);
+            } else {
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -356,7 +366,7 @@ class Kantan_Supplier_Class{
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
-            
+            }
         }
         
         // 複製
@@ -510,12 +520,19 @@ class Kantan_Supplier_Class{
        $page_buck = ''; // 前のスタート位置
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        // 現在表示中の詳細
-       if(isset( $_GET['data_id'] )){
-            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            $data_id = $wpdb->insert_id;
+       $cookie_name = 'ktp_'. $name . '_id';
+       if (isset($_COOKIE[$cookie_name])) {
+           $query_id = filter_input(INPUT_COOKIE, $cookie_name , FILTER_SANITIZE_NUMBER_INT);
+       } elseif (isset($_GET['data_id'])) {
+           $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+       } else {
+           // 最後のIDを取得して表示
+           $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+           $last_id_row = $wpdb->get_row($query);
+           $query_id = $last_id_row ? $last_id_row->id : 1;
        }
-       // ページステージ移動
+
+      // ページステージ移動
        if( !$page_stage || $page_stage == 1 ){
            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
            $page_start ++;
@@ -595,15 +612,8 @@ class Kantan_Supplier_Class{
         } elseif (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
         } else {
-            $query_id = $wpdb->insert_id;
+            $query_id = Null; // $query_idが想定外の値の場合、nullを設定
         }
-        // echo $query_id;
-        
-        // if(isset($_GET['data_id'])) {
-        //     $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        // } else {
-        //     $query_id = null; // $query_idが想定外の値の場合、nullを設定
-        // }
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
@@ -869,6 +879,16 @@ class Kantan_Supplier_Class{
                         
             $data_forms .= "<div class=\"add\">";
             $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
+            
+            // cookieに保存されたIDを取得
+            $cookie_name = 'ktp_'. $name . '_id';
+            if (isset($_GET['data_id'])) {
+                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+            } elseif (isset($_COOKIE[$cookie_name])) {
+                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+            } else {
+                $data_id = $last_id_row ? $last_id_row->id : Null;
+            }
 
             // 表題
             $data_title = <<<END

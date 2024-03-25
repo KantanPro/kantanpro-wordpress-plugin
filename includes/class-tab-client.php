@@ -118,7 +118,7 @@ class Kntan_Client_Class {
             $memo,
             $category
         ]);
-        // data_idが0の場合、データベースから最後のdata_idを取得
+
         if ($data_id === 0) {
             $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
             $last_id_result = $wpdb->get_row($last_id_query);
@@ -256,7 +256,6 @@ class Kntan_Client_Class {
                 // 検索結果を表示するHTMLを初期化
                 $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
 
-
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
@@ -267,8 +266,10 @@ class Kntan_Client_Class {
                 
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
+
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
+
                 // JavaScriptでポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
@@ -324,7 +325,7 @@ class Kntan_Client_Class {
         }
         // 追加
         elseif( $query_post == 'insert' ) {
-            
+
             $insert_result = $wpdb->insert( 
                 $table_name, 
                 array( 
@@ -346,7 +347,8 @@ class Kntan_Client_Class {
                     'payment_method' => $payment_method,
                     'tax_category' => $tax_category,
                     'memo' => $memo,
-                    'category' => $category,                    'search_field' => $search_field_value
+                    'category' => $category,
+                    'search_field' => $search_field_value
                 ) 
             );
             if($insert_result === false) {
@@ -422,40 +424,6 @@ class Kntan_Client_Class {
             exit;
         }
 
-        // 画像削除処理
-        elseif( $query_post == 'delete_image' ) {
-            ob_start(); // 出力バッファリングを開始
-            $data_id = $_POST['data_id'];
-            if ($data_id > 0) {
-                // 画像URLをデフォルトの「no_image.png」に更新
-                $default_image_url = plugins_url('images/default/no-image-icon.png', __DIR__);
-                $update_result = $wpdb->update(
-                    $table_name,
-                    ['image_url' => $default_image_url], // 画像URLをデフォルトに更新
-                    ['id' => $data_id], // WHERE条件
-                    ['%s'], // 値のフォーマット
-                    ['%d']  // WHERE条件のフォーマット
-                );
-
-                if (false === $update_result) {
-                    error_log('画像URLの更新に失敗しました: ' . $wpdb->last_error);
-                } else {
-                    // 更新成功時の処理（必要に応じて）
-                }
-            } else {
-                error_log('無効なdata_idです。');
-            }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            // リダイレクト
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            ob_end_flush(); // 出力バッファリングを終了し、バッファ内容を送信
-            exit;
-        }
         // どの処理にも当てはまらない場合はロック解除
         else {
             // ロックを解除する
@@ -1138,4 +1106,5 @@ class Kntan_Client_Class {
     }
 
 }
+
 ?>
