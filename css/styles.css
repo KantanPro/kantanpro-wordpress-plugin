@@ -555,7 +555,7 @@ input[name="tab_item"] {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin: 10px;
+  margin: 10px 0px; /* Updated margin value */
   border: 1px solid #a9a9a9;
   background-color: #ffffff;
   padding: 10px;
@@ -563,4 +563,11 @@ input[name="tab_item"] {
   font-size: 14px;
   color: #444;
   width: 100%;
+}
+
+.product-image {
+  width: 100%; /* コンテナの幅に合わせて画像を拡大/縮小 */
+  height: 320px; /* 縦横比を保持 */
+  object-fit: contain; /* コンテナ内で縦横比を保ちつつ、全体が見えるように調整 */
+  object-position: left; /* 画像を左寄せにする */
 }

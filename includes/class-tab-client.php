@@ -519,12 +519,13 @@ class Kntan_Client_Class {
        $post_num = count($post_row); // 現在の項目数（可変）
        $page_buck = ''; // 前のスタート位置
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
+
         // 現在表示中の詳細
-        $cookie_name = 'ktp_'. $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name , FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } else {
             // 最後のIDを取得して表示
             $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
@@ -607,12 +608,15 @@ class Kntan_Client_Class {
 
         // 現在表示中の詳細
         $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
+        if (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } else {
-            $query_id = Null; // $query_idが想定外の値の場合、nullを設定
+            // 最後のIDを取得して表示
+            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_row = $wpdb->get_row($query);
+            $query_id = $last_id_row ? $last_id_row->id : 1;
         }
 
         // データを取得し変数に格納

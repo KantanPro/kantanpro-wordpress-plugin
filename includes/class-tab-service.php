@@ -126,6 +126,16 @@ class Kntan_Service_Class {
         $service_name = $_POST['service_name'];
         $memo = $_POST['memo'];
         $category = $_POST['category'];
+        $image_url = $_POST['image_url'];
+
+        // search_fieldの値を設定
+        $search_field_value = implode(', ', [
+            current_time('mysql'),
+            $service_name,
+            $memo,
+            $category,
+            $image_url
+        ]);
 
         // data_idが0の場合、データベースから最後のdata_idを取得
         if ($data_id === 0) {
@@ -148,11 +158,18 @@ class Kntan_Service_Class {
             $image_url = $current_image ? $current_image : $image_url;
         }
         if ($data_id > 0) {
+            // データベースを更新
             $update_result = $wpdb->update(
                 $table_name,
-                ['image_url' => $image_url], // 更新するカラムと値
-                ['id' => $data_id], // WHERE条件
-                ['%s'], // 値のフォーマット
+                [
+                    'service_name' => $service_name,
+                    'memo' => $memo,
+                    'category' => $category,
+                    'image_url' => $image_url,
+                    'search_field' => $search_field_value, // search_fieldを更新
+                ],
+                ['id' => $data_id],
+                ['%s', '%s', '%s', '%s', '%s'], // 値のフォーマット
                 ['%d']  // WHERE条件のフォーマット
             );
 
@@ -265,8 +282,7 @@ class Kntan_Service_Class {
                     $id = esc_html($row->id);
                     $service_name = esc_html($row->service_name);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} サービス名：{$service_name} カテゴリー：{$category}</a></li>";
-                }
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} サービス名：{$service_name} カテゴリー：{$category}</a></li>";                }
 
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
@@ -411,14 +427,22 @@ class Kntan_Service_Class {
             $data_id = $_POST['data_id'];
             if ($data_id > 0) {
                 // 画像URLをデフォルトの「no_image.png」に更新
-                $default_image_url = plugins_url('images/default/no-image-icon.png', __DIR__);
-                $update_result = $wpdb->update(
-                    $table_name,
-                    ['image_url' => $default_image_url], // 画像URLをデフォルトに更新
-                    ['id' => $data_id], // WHERE条件
-                    ['%s'], // 値のフォーマット
-                    ['%d']  // WHERE条件のフォーマット
-                );
+                $default_image_url = plugins_url('images/default/no-image-icon.jpg', __DIR__);
+
+            // データベースを更新
+            $update_result = $wpdb->update(
+                $table_name,
+                [
+                    'service_name' => $service_name,
+                    'memo' => $memo,
+                    'category' => $category,
+                    'image_url' => $image_url,
+                    'search_field' => $search_field_value, // search_fieldを更新
+                ],
+                ['id' => $data_id],
+                ['%s', '%s', '%s', '%s', '%s'], // 値のフォーマット
+                ['%d']  // WHERE条件のフォーマット
+            );
 
                 if (false === $update_result) {
                     error_log('画像URLの更新に失敗しました: ' . $wpdb->last_error);
@@ -522,11 +546,11 @@ class Kntan_Service_Class {
        $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
        
         // 現在表示中の詳細
-        $cookie_name = 'ktp_'. $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name , FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } else {
             // 最後のIDを取得して表示
             $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
@@ -609,12 +633,15 @@ class Kntan_Service_Class {
 
         // 現在表示中の詳細
         $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
+        if (isset($_GET['data_id'])) {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } else {
-            $query_id = Null; // $query_idが想定外の値の場合、nullを設定
+            // 最後のIDを取得して表示
+            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_row = $wpdb->get_row($query);
+            $query_id = $last_id_row ? $last_id_row->id : 1;
         }
 
         
@@ -867,9 +894,8 @@ class Kntan_Service_Class {
                 $image_url = esc_html($row->image_url);
             }
 
-            $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.png';
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" style=\"width: 320px; height: 320px;\"></div>";
-            
+            $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
             // 商品画像アップロードフォームを追加
             $data_forms .= '<div class=image_upload_form>';
             $data_forms .= <<<END
