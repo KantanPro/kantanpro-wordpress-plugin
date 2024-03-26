@@ -334,70 +334,50 @@ class Kntan_Service_Class {
             exit;
         }
 
-        // どの処理にも当てはまらない場合はロック解除
-        else {
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-        }
-
         // 
         // 商品画像処理
         // 
 
-        // デフォルト画像のURL
-        $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
-
-        // 画像URLを取得
-        $image_processor = new Image_Processor();
-        $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-
-        // // 画像URLを更新
-        // $wpdb->update(
-        //     $table_name,
-        //     array(
-        //         'image_url' => $image_url
-        //     ),
-        //     array(
-        //         'id' => $data_id
-        //     ),
-        //     array(
-        //         '%s'
-        //     ),
-        //     array(
-        //         '%d'
-        //     )
-        // );
+        // 画像をアップロード
+        elseif ($query_post == 'upload_image') {
 
 
-// 画像をアップロード
-if ($query_post == 'upload_image') {
-    $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
-    $image_processor = new Image_Processor();
-    $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-    $wpdb->update(
-        $table_name,
-        array(
-            'image_url' => $image_url
-        ),
-        array(
-            'id' => $data_id
-        ),
-        array(
-            '%s'
-        ),
-        array(
-            '%d'
-        )
-    );
+            // 画像URLを取得
+            $image_processor = new Image_Processor();
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
 
-    // リダイレクト
-    $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
-    header("Location: {$url}");
-    exit;
-}
+            // echo '$tab_name：'.$tab_name.'<br>$data_id：'.$data_id.'<br>$default_image_url：'.$default_image_url.'<br>$image_url：'.$image_url;
+            // exit;
+
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // echo $image_url;
+            // exit;
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+        }
+
 
         // 画像削除：デフォルト画像に戻す
-        if ($query_post == 'delete_image') {
+        elseif ($query_post == 'delete_image') {
             $wpdb->update(
                 $table_name,
                 array(
@@ -418,6 +398,12 @@ if ($query_post == 'upload_image') {
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
             header("Location: {$url}");
             exit;
+        }
+
+        // どの処理にも当てはまらない場合はロック解除
+        else {
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
         }
 
 
@@ -842,14 +828,7 @@ if ($query_post == 'upload_image') {
             foreach ($post_row as $row) {
                 $image_url = esc_html($row->image_url);
             }
-
-            // class-image_processor画像URLを取得
-            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
-            $image_processor = new Image_Processor();
-            $image_url = $image_processor->handle_image($name, $data_id, $default_image_url);
-                        
-            // 画像がない場合はデフォルト画像を表示
-            $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
 
             $data_forms .= '<div class=image_upload_form>';
