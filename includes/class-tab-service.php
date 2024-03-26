@@ -119,9 +119,11 @@ class Kntan_Service_Class {
                 $prev_id_result = $wpdb->get_row($prev_id_query);
                 $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
             }
-
+            $cookie_name = 'ktp_' . $name . '_id';
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
+            $cookie_name = 'ktp_' . $tab_name . '_id';
+            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
             exit;
         }    
