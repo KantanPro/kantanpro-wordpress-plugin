@@ -677,7 +677,7 @@ class Kantan_Supplier_Class{
         
         // 表示するフォーム要素を定義
         $fields = [
-            'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
+            // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
             '会社名' => ['type' => 'text', 'name' => 'company_name', 'required' => true, 'placeholder' => '必須 法人名または屋号'],
             '名前' => ['type' => 'text', 'name' => 'user_name', 'placeholder' => '担当者名'],
             'メール' => ['type' => 'email', 'name' => 'email'],

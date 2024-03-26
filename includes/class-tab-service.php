@@ -377,13 +377,16 @@ class Kntan_Service_Class {
             exit;
         }
 
-
         // 画像削除：デフォルト画像に戻す
         elseif ($query_post == 'delete_image') {
+
+            // デフォルト画像のURLを設定
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
             $wpdb->update(
                 $table_name,
                 array(
-                    'image_url' => $default_image
+                    'image_url' => $default_image_url
                 ),
                 array(
                     'id' => $data_id
@@ -599,7 +602,7 @@ class Kntan_Service_Class {
         
         // 表示するフォーム要素を定義
         $fields = [
-            'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
+            // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
             '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
             '画像URL' => ['type' => 'text', 'name' => 'image_url'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
@@ -835,17 +838,17 @@ class Kntan_Service_Class {
 
             $data_forms .= '<div class=image_upload_form>';
 
-// 商品画像アップロードフォームを追加
-$data_forms .= <<<END
-<form action="" method="post" enctype="multipart/form-data">
-    <div style="display: flex; align-items: center;">
-        <input type="file" name="image" style="width: 80%;"> <!-- nameを'image'に変更 -->
-        <input type="hidden" name="data_id" value="$data_id">
-        <input type="hidden" name="query_post" value="upload_image">
-        <input type="submit" value="アップロード" style="width: 50%;">
-    </div>
-</form>
-END;
+            // 商品画像アップロードフォームを追加
+            $data_forms .= <<<END
+            <form action="" method="post" enctype="multipart/form-data">
+            <div style="display: flex; align-items: center;">
+            <input type="file" name="image" style="width: 80%;">
+            <input type="hidden" name="data_id" value="$data_id">
+            <input type="hidden" name="query_post" value="upload_image">
+            <input type="submit" value="アップロード" style="width: 50%; background-color: #0096ff; color: white;">
+            </div>
+            </form>
+            END;
 
             // 商品画像削除ボタンを追加
             $data_forms .= <<<END
