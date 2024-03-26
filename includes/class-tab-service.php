@@ -109,9 +109,19 @@ class Kntan_Service_Class {
             $wpdb->query("UNLOCK TABLES;");
 
             // リダイレクト
-            $data_id = $data_id - 1;
+            // データ削除後に表示するデータIDを適切に設定
+            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
+            $next_id_result = $wpdb->get_row($next_id_query);
+            if ($next_id_result) {
+                $next_data_id = $next_id_result->id;
+            } else {
+                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
+                $prev_id_result = $wpdb->get_row($prev_id_query);
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            }
+
             $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
         }    
