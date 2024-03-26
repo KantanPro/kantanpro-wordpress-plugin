@@ -8,7 +8,7 @@ class Kntan_Service_Class {
     }
 
     //
-    // 次回バグ修正：商品画像が正しく表示されない
+    // 次回バグ修正：アップロードされた画像が表示されない問題
     //
     
     
@@ -340,37 +340,63 @@ class Kntan_Service_Class {
             $wpdb->query("UNLOCK TABLES;");
         }
 
-        // query_postがupload_imageなら画像をアップロード
+        // 
+        // 商品画像処理
+        // 
+
+        // デフォルト画像のURL
         $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
 
+        // 画像URLを取得
+        $image_processor = new Image_Processor();
+        $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
 
-        if ($query_post == 'upload_image') {
-            $image_processor = new Image_Processor();
-            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-            $wpdb->update(
-                $table_name,
-                array(
-                    'image_url' => $image_url
-                ),
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%s'
-                ),
-                array(
-                    '%d'
-                )
-            );
+        // // 画像URLを更新
+        // $wpdb->update(
+        //     $table_name,
+        //     array(
+        //         'image_url' => $image_url
+        //     ),
+        //     array(
+        //         'id' => $data_id
+        //     ),
+        //     array(
+        //         '%s'
+        //     ),
+        //     array(
+        //         '%d'
+        //     )
+        // );
 
-            // リダイレクト
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
-            header("Location: {$url}");
-            exit;
 
-        }
+// 画像をアップロード
+if ($query_post == 'upload_image') {
+    $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+    $image_processor = new Image_Processor();
+    $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
+    $wpdb->update(
+        $table_name,
+        array(
+            'image_url' => $image_url
+        ),
+        array(
+            'id' => $data_id
+        ),
+        array(
+            '%s'
+        ),
+        array(
+            '%d'
+        )
+    );
 
-        // query_postがdelete_imageなら$image_urlをデフォルト画像($default_image)に戻す
+    // リダイレクト
+    $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+    header("Location: {$url}");
+    exit;
+}
+
+        // 画像削除：デフォルト画像に戻す
         if ($query_post == 'delete_image') {
             $wpdb->update(
                 $table_name,
@@ -805,13 +831,10 @@ class Kntan_Service_Class {
             </script>
             END;
             
-            // 画像のURLを取得
-            // global $image_url;
-            // echo $image_url;
-
+            // データを取得
             global $wpdb;
             $table_name = $wpdb->prefix . 'ktp_' . $name;
-        
+            
             // データを取得
             $query = "SELECT * FROM {$table_name} WHERE id = %d";
             $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));
@@ -828,18 +851,20 @@ class Kntan_Service_Class {
             // 画像がない場合はデフォルト画像を表示
             $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
-            // 商品画像アップロードフォームを追加
+
             $data_forms .= '<div class=image_upload_form>';
-            $data_forms .= <<<END
-            <form action="" method="post" enctype="multipart/form-data">
-                <div style="display: flex; align-items: center;">
-                    <input type="file" name="service_image" style="width: 80%;">
-                    <input type="hidden" name="data_id" value="$data_id">
-                    <input type="hidden" name="query_post" value="upload_image">
-                    <input type="submit" value="アップロード" style="width: 50%;">
-                </div>
-            </form>
-            END;
+
+// 商品画像アップロードフォームを追加
+$data_forms .= <<<END
+<form action="" method="post" enctype="multipart/form-data">
+    <div style="display: flex; align-items: center;">
+        <input type="file" name="image" style="width: 80%;"> <!-- nameを'image'に変更 -->
+        <input type="hidden" name="data_id" value="$data_id">
+        <input type="hidden" name="query_post" value="upload_image">
+        <input type="submit" value="アップロード" style="width: 50%;">
+    </div>
+</form>
+END;
 
             // 商品画像削除ボタンを追加
             $data_forms .= <<<END
