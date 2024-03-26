@@ -1,4 +1,5 @@
 <?php
+require_once 'class-image_processor.php';
 
 class Kntan_Service_Class {
 
@@ -7,7 +8,7 @@ class Kntan_Service_Class {
     }
 
     //
-    // 次回バグ修正：追加・複製時に出てくるデーターが違う
+    // 次回バグ修正：商品画像が正しく表示されない
     //
     
     
@@ -15,9 +16,6 @@ class Kntan_Service_Class {
     // テーブル作成
     // -----------------------------
     
-    //
-    // 画像アップロード処理
-    //
 
     // クッキーの設定
     function Set_Cookie($name) {
@@ -29,49 +27,6 @@ class Kntan_Service_Class {
         } else {
             $query_id = 1;
         }
-    }
-
-    public function Upload_Service_Image($tab_name,$data_id) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-    
-        global $image_url;
-        global $data_id;
-
-        // 画像がアップロードされているかどうかを確認
-        if (isset($_FILES['service_image']) && $_FILES['service_image']['error'] === UPLOAD_ERR_OK) {
-            $uploads_dir = WP_CONTENT_DIR . '/plugins/kantan-pro-wp/images/' . $tab_name;
-            if (!file_exists($uploads_dir)) {
-                wp_mkdir_p($uploads_dir);
-            }
-
-            // ファイル名を生成
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-            // 画像ファイルの拡張子を取得
-            $ext = pathinfo($_FILES['service_image']['name'], PATHINFO_EXTENSION);
-            // 画像ファイルの拡張子がjpg, jpeg, png以外の場合はエラー
-            if (!in_array($ext, ['jpg', 'jpeg', 'png'])) {
-                error_log('画像ファイルの拡張子が不正です。');
-                return false;
-            }
-
-            $tmp_name = $_FILES['service_image']['tmp_name'];
-            $file_name = $data_id . '.' . $ext; // ファイル名を$data_idと拡張子で設定
-            $image_path = $uploads_dir . '/' . $file_name;
-            $image_url = plugins_url('../images/' . $tab_name . '/' . $file_name, __FILE__);
-
-            // 画像URLにクエリパラメータを追加（キャッシュ回避）
-            $timestamp = time();
-            $image_url_with_timestamp = $image_url . '?v=' . $timestamp;
-
-            if (move_uploaded_file($tmp_name, $image_path)) {
-                return $image_url_with_timestamp; // タイムスタンプ付きのURLを返す
-            } else {
-                error_log('アップロードファイルの移動に失敗しました。');
-                return false; // 失敗した場合はfalseを返す
-            }
-        }
-        return false; // ファイルがアップロードされていない、またはエラーがある場合はfalseを返す
     }
 
     function Create_Table($tab_name) {
@@ -111,11 +66,10 @@ class Kntan_Service_Class {
     // テーブルの操作（更新・追加・削除・検索）
     // -----------------------------
 
-    function Update_Table( $tab_name ) {
+    function Update_Table( $tab_name) {
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        global $image_url;
 
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
@@ -126,18 +80,15 @@ class Kntan_Service_Class {
         $service_name = $_POST['service_name'];
         $memo = $_POST['memo'];
         $category = $_POST['category'];
-        $image_url = $_POST['image_url'];
-
+        
         // search_fieldの値を設定
         $search_field_value = implode(', ', [
             current_time('mysql'),
             $service_name,
             $memo,
-            $category,
-            $image_url
+            $category
         ]);
 
-        // data_idが0の場合、データベースから最後のdata_idを取得
         if ($data_id === 0) {
             $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
             $last_id_result = $wpdb->get_row($last_id_query);
@@ -146,59 +97,29 @@ class Kntan_Service_Class {
             }
         }
 
-        // 画像のアップロード処理を呼び出す
-        $upload_result = $this->Upload_Service_Image($tab_name,$data_id);
-        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-        // 画像がアップロードされた場合、そのURLを$image_urlに設定
-        if ($upload_result) {
-            $image_url = $upload_result;
-        } else {
-            // 画像がアップロードされていない場合、既存のimage_urlを使用
-            $current_image = $wpdb->get_var($wpdb->prepare("SELECT image_url FROM $table_name WHERE id = %d", $data_id));
-            $image_url = $current_image ? $current_image : $image_url;
-        }
-        if ($data_id > 0) {
-            // データベースを更新
-            $update_result = $wpdb->update(
-                $table_name,
-                [
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'image_url' => $image_url,
-                    'search_field' => $search_field_value, // search_fieldを更新
-                ],
-                ['id' => $data_id],
-                ['%s', '%s', '%s', '%s', '%s'], // 値のフォーマット
-                ['%d']  // WHERE条件のフォーマット
-            );
-
-            if (false === $update_result) {
-                error_log('データベースの更新に失敗しました: ' . $wpdb->last_error);
-            }
-        } elseif (!$upload_result) {
-            error_log('画像のアップロードに失敗しました。');
-        }
-        
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
             $wpdb->delete(
                 $table_name,
-                ['id' => $data_id],
-                ['%d']
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%d'
+                )
             );
-        
+
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
-        
+
             // リダイレクト
             $data_id = $data_id - 1;
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
             header("Location: {$url}");
             exit;
-        }
-
+        }    
+        
         // 更新
         elseif( $query_post == 'update' ){
 
@@ -208,7 +129,6 @@ class Kntan_Service_Class {
                     'service_name' => $service_name,
                     'memo' => $memo,
                     'category' => $category,
-                    'image_url' => $image_url,
                     'search_field' => $search_field_value,
                 ),
                     array( 'id' => $data_id ), 
@@ -216,7 +136,6 @@ class Kntan_Service_Class {
                         '%s',  // service_name
                         '%s',  // memo
                         '%s',  // category
-                        '%s',  // image_url
                         '%s',  // search_field
                     ),
                     array( '%d' ) 
@@ -255,7 +174,7 @@ class Kntan_Service_Class {
 
                 // 検索結果のIDを取得
                 $id = $results[0]->id;
-
+                
                 // 頻度の値を+1する
                 $wpdb->query(
                     $wpdb->prepare(
@@ -264,11 +183,11 @@ class Kntan_Service_Class {
                     )
                 );
 
-                // 検索後に更新モードにする
-                $action = 'update';
-                $data_id = $id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-                header("Location: {$url}");
+                 // 検索後に更新モードにする
+                 $action = 'update';
+                 $data_id = $id;
+                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                 header("Location: {$url}");
 
             }
 
@@ -280,17 +199,18 @@ class Kntan_Service_Class {
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
-                    $service_name = esc_html($row->service_name);
+                    $email = esc_html($row->email);
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} サービス名：{$service_name} カテゴリー：{$category}</a></li>";                }
-
+                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                }
+                
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
 
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
 
-                // JavaScriptでクールなスタイルのポップアップを表示
+                // JavaScriptでポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -343,11 +263,8 @@ class Kntan_Service_Class {
             $wpdb->query("UNLOCK TABLES;");
             exit;
         }
-
         // 追加
         elseif( $query_post == 'insert' ) {
-            // 画像のアップロード処理を呼び出す
-            $upload_result = $this->Upload_Service_Image($tab_name, $data_id);
 
             $insert_result = $wpdb->insert( 
                 $table_name, 
@@ -356,14 +273,13 @@ class Kntan_Service_Class {
                     'service_name' => $service_name,
                     'memo' => $memo,
                     'category' => $category,
-                    'image_url' => $image_url,
                     'search_field' => $search_field_value
                 ) 
             );
-
             if($insert_result === false) {
                 error_log('Insert error: ' . $wpdb->last_error);
             } else {
+
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
 
@@ -375,21 +291,19 @@ class Kntan_Service_Class {
                 header("Location: {$url}");
                 exit;
             }
+
         }
         
         // 複製
         elseif( $query_post == 'duplication' ) {
-            // 画像のアップロード処理を呼び出す
-            $upload_result = $this->Upload_Service_Image($tab_name, $data_id);
-
             // データのIDを取得
             $data_id = $_POST['data_id'];
 
             // データを取得
             $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
 
-            // 商品名の最後に#を追加
-            $data['service_name'] .= '#';
+            // 会社名の最後に#を追加
+            $data['company_name'] .= '#';
 
             // IDを削除
             unset($data['id']);
@@ -402,8 +316,7 @@ class Kntan_Service_Class {
                 $data['time'],
                 $data['service_name'],
                 $data['memo'],
-                $data['category'],
-                $data['image_url']
+                $data['category']
             ]);
 
             // データを挿入
@@ -421,57 +334,70 @@ class Kntan_Service_Class {
             exit;
         }
 
-        // 画像削除処理
-        elseif( $query_post == 'delete_image' ) {
-            ob_start(); // 出力バッファリングを開始
-            $data_id = $_POST['data_id'];
-            if ($data_id > 0) {
-                // 画像URLをデフォルトの「no_image.png」に更新
-                $default_image_url = plugins_url('images/default/no-image-icon.jpg', __DIR__);
-
-            // データベースを更新
-            $update_result = $wpdb->update(
-                $table_name,
-                [
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'image_url' => $image_url,
-                    'search_field' => $search_field_value, // search_fieldを更新
-                ],
-                ['id' => $data_id],
-                ['%s', '%s', '%s', '%s', '%s'], // 値のフォーマット
-                ['%d']  // WHERE条件のフォーマット
-            );
-
-                if (false === $update_result) {
-                    error_log('画像URLの更新に失敗しました: ' . $wpdb->last_error);
-                } else {
-                    // 更新成功時の処理（必要に応じて）
-                }
-            } else {
-                error_log('無効なdata_idです。');
-            }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            // リダイレクト
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            ob_end_flush(); // 出力バッファリングを終了し、バッファ内容を送信
-            exit;
-        }
-
         // どの処理にも当てはまらない場合はロック解除
         else {
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
         }
 
+        // query_postがupload_imageなら画像をアップロード
+        $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
+
+        if ($query_post == 'upload_image') {
+            $image_processor = new Image_Processor();
+            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+
+        }
+
+        // query_postがdelete_imageなら$image_urlをデフォルト画像($default_image)に戻す
+        if ($query_post == 'delete_image') {
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $default_image
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+        }
+
 
     }
+
+
     // -----------------------------
     // テーブルの表示
     // -----------------------------
@@ -894,6 +820,12 @@ class Kntan_Service_Class {
                 $image_url = esc_html($row->image_url);
             }
 
+            // class-image_processor画像URLを取得
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $image_processor = new Image_Processor();
+            $image_url = $image_processor->handle_image($name, $data_id, $default_image_url);
+                        
+            // 画像がない場合はデフォルト画像を表示
             $image_url = !empty($image_url) ? $image_url : plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
             // 商品画像アップロードフォームを追加
@@ -903,6 +835,7 @@ class Kntan_Service_Class {
                 <div style="display: flex; align-items: center;">
                     <input type="file" name="service_image" style="width: 80%;">
                     <input type="hidden" name="data_id" value="$data_id">
+                    <input type="hidden" name="query_post" value="upload_image">
                     <input type="submit" value="アップロード" style="width: 50%;">
                 </div>
             </form>
@@ -1136,6 +1069,6 @@ class Kntan_Service_Class {
     }
 
 }
-?>
 
+?>
 
