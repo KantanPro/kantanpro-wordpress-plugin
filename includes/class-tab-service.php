@@ -6,10 +6,6 @@ class Kntan_Service_Class {
     public function __construct($tab_name = '') {
 
     }
-
-    //
-    // 次回バグ修正：アップロードされた画像が表示されない問題
-    //
     
     
     // -----------------------------
@@ -298,19 +294,19 @@ class Kntan_Service_Class {
         elseif( $query_post == 'duplication' ) {
             // データのIDを取得
             $data_id = $_POST['data_id'];
-
+    
             // データを取得
             $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
-
-            // 会社名の最後に#を追加
-            $data['company_name'] .= '#';
-
+    
+            // 商品名の最後に#を追加
+            $data['service_name'] .= '#';
+    
             // IDを削除
             unset($data['id']);
-
+    
             // 頻度を0に設定
             $data['frequency'] = 0;
-
+    
             // search_fieldの値を更新
             $data['search_field'] = implode(', ', [
                 $data['time'],
@@ -318,22 +314,28 @@ class Kntan_Service_Class {
                 $data['memo'],
                 $data['category']
             ]);
-
+    
             // データを挿入
-            $wpdb->insert($table_name, $data);
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            exit;
+            $insert_result = $wpdb->insert($table_name, $data);
+            if($insert_result === false) {
+                // エラーログに挿入エラーを記録
+                error_log('Duplication error: ' . $wpdb->last_error);
+            } else {
+                // 挿入成功後の処理
+                $new_data_id = $wpdb->insert_id;
+    
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
+                
+                // 追加後に更新モードにする
+                // リダイレクト
+                $action = 'update';
+                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
+            }
         }
-
+        
         // 
         // 商品画像処理
         // 
