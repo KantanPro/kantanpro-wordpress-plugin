@@ -195,11 +195,11 @@ class Kntan_Service_Class {
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
-                    $email = esc_html($row->email);
+                    $service_name = esc_html($row->service_name); // 商品名を取得
+                    $category = esc_html($row->category); // カテゴリーを取得
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
                 }
-                
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
 
@@ -840,7 +840,7 @@ class Kntan_Service_Class {
 
             // 商品画像アップロードフォームを追加
             $data_forms .= <<<END
-            <form action="" method="post" enctype="multipart/form-data">
+            <form action="" method="post" enctype="multipart/form-data" onsubmit="return !!this.image.value;">
             <div style="display: flex; align-items: center;">
             <input type="file" name="image" style="width: 80%;">
             <input type="hidden" name="data_id" value="$data_id">

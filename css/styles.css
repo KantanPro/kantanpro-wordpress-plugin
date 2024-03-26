@@ -571,3 +571,11 @@ input[name="tab_item"] {
   object-fit: contain; /* コンテナ内で縦横比を保ちつつ、全体が見えるように調整 */
   object-position: left; /* 画像を左寄せにする */
 }
+
+.search_list_box {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: left;
+  box-sizing: border-box;
+}

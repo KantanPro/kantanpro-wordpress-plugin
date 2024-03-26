@@ -260,6 +260,9 @@ class Kntan_Client_Class {
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
                     $email = esc_html($row->email);
+                    $company_name = esc_html($row->company_name);
+                    $category = esc_html($row->category);
+                    
                     // 各検索結果に対してリンクを設定
                     $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
