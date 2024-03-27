@@ -449,138 +449,87 @@ class Kntan_Service_Class {
         
         // 表示範囲
         $query_limit = 5;
-        
+
         // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
             <h3>■ 商品リスト（レンジ： $query_limit ）</h3>
         END;
-        
-       // スタート位置を決める
-       $page_stage = $_GET['page_stage'];
-       $page_start = $_GET['page_start'];
-       $flg = $_GET['flg'];
-       if ($page_stage == '') {
-           $page_start = 0;
-       }
-       $query_range = $page_start . ',' . $query_limit;
 
-       $query_order_by = 'frequency';
+        // スタート位置を決める
+        $page_stage = $_GET['page_stage'];
+        $page_start = $_GET['page_start'];
+        $flg = $_GET['flg'];
+        if ($page_stage == '') {
+            $page_start = 0;
+        }
+        $query_range = $page_start . ',' . $query_limit;
 
-       $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
-       $post_row = $wpdb->get_results($query);
-       if( $post_row ){
-           foreach ($post_row as $row){
-               $id = esc_html($row->id);
-               $time = esc_html($row->time);
-               $service_name = esc_html($row->service_name);
-               $memo = esc_html($row->memo);
-               $category = esc_html($row->category);
-               $image_url = esc_html($row->image_url);
-               $frequency = esc_html($row->frequency);
-               
-            // リスト項目
-            $cookie_name = 'ktp_' . $name . '_id';
-            $results[] = <<<END
-            <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                <div class="data_list_item">$id : $service_name : $category : 頻度($frequency)</div>
-            </a>
-            END;
+        $query_order_by = 'frequency';
 
-           }
-           $query_max_num = $wpdb->num_rows;
-       } else {
-           $results[] = <<<END
-           <div class="data_list_item">データーがありません。</div>
-           END;            
-       }
+        // 全データ数を取得
+        $total_query = "SELECT COUNT(*) FROM {$table_name}";
+        $total_rows = $wpdb->get_var($total_query);
+        $total_pages = ceil($total_rows / $query_limit);
 
-       $post_num = count($post_row); // 現在の項目数（可変）
-       $page_buck = ''; // 前のスタート位置
-       $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
-       
-        // 現在表示中の詳細
-        $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        // 現在のページ番号を計算
+        $current_page = floor($page_start / $query_limit) + 1;
+
+        // データを取得
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+        $post_row = $wpdb->get_results($query);
+        if( $post_row ){
+            foreach ($post_row as $row){
+                $id = esc_html($row->id);
+                $time = esc_html($row->time);
+                $service_name = esc_html($row->service_name);
+                $memo = esc_html($row->memo);
+                $category = esc_html($row->category);
+                $image_url = esc_html($row->image_url);
+                $frequency = esc_html($row->frequency);
+                
+                // リスト項目
+                $cookie_name = 'ktp_' . $name . '_id';
+                $results[] = <<<END
+                <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                    <div class="data_list_item">$id : $service_name : $category : 頻度($frequency)</div>
+                </a>
+                END;
+            }
+            $query_max_num = $wpdb->num_rows;
         } else {
-            // 最後のIDを取得して表示
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : 1;
+            $results[] = <<<END
+            <div class="data_list_item">データーがありません。</div>
+            END;            
         }
 
-       // ページステージ移動
-       if( !$page_stage || $page_stage == 1 ){
-           if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
-           $page_start ++;
-           $page_next_start = $query_max_num;
-           $flg ++;
-           $results_f = <<<END
-           <div class="pagination">
-           END;
-           // $page_buck_stage = 2;
-           if( $page_start > 1 && $flg >= 2 ){
-               $page_buck_stage = 2;
-           } else {
-               $page_buck_stage = 1;
-           }
-           if( $post_num >= $query_limit ){
-               $results_f .= <<<END
-               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-               END;
-           } else {
-               $results_f .= <<<END
-               &emsp; $page_start ~ $query_max_num
-               </div>
-               END;
-           }
-           $page_start = $page_start + $query_limit;
+        $results_f = "<div class=\"pagination\">";
 
-       } elseif( $page_stage == 2 ) {
-            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
-            $page_buck = $page_start - $query_limit;
-            $page_next_start = $page_start + $post_num;
-            $query_max_num = $query_max_num + $page_start;
-            $page_start ++;
-            $flg = 2;
-            $results_f = <<<END
+        // 前へリンク
+        if ($current_page > 1) {
+            $prev_start = ($current_page - 2) * $query_limit;
+            $results_f .= <<<END
+            <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg">前へ</a>
             END;
-            if( $page_start > 1 && $flg >= 2 ){
-                $page_buck_stage = 2;
-                $results_f .= <<<END
-                END;
-            } else {
-                $page_buck_stage = 1;
-            }
-            // データの総数が一定の制限を超えているかどうかを確認します
-            // 次へ問題
-            if( $post_num >= $query_limit ){
-                if($page_start > 1){
-                    $results_f .= <<<END
-                    <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
-                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                    END;
-                }
-                else{
-                    $results_f .= <<<END
-                    <div class="pagination">
-                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                    END;
-                }
-            // データの総数が制限未満の場合、$results_fには「前へ」リンクと現在のページ範囲のみが追加され、「次へ」リンクは追加されません
-            } else {
-                $results_f .= <<<END
-                <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
-                END;
-            }
         }
-        
-       $results_f .= '</div>';
-       $data_list = $results_h . implode( $results ) . $results_f;
+
+        // 現在のページ範囲表示と総数
+        $page_end = min($total_rows, $current_page * $query_limit);
+        $page_start_display = ($current_page - 1) * $query_limit + 1;
+        $results_f .= " &emsp; $page_start_display ~ $page_end / $total_rows";
+
+        // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
+        if ($current_page < $total_pages) {
+            $next_start = $current_page * $query_limit;
+            $results_f .= <<<END
+            &emsp;<a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">次へ</a>
+            END;
+        }
+
+        $results_f .= "</div></div>";
+
+        $data_list = $results_h . implode( $results ) . $results_f;
 
         // -----------------------------
         // 詳細表示(GET)
