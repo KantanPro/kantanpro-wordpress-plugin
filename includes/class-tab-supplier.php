@@ -6,14 +6,22 @@ class Kantan_Supplier_Class{
 
     }
 
-    //
-    // 次回バグ修正：追加・複製時に出てくるデーターが違う
-    //
-
     // -----------------------------
     // テーブル作成
     // -----------------------------
     
+
+    // クッキーの設定
+    function Set_Cookie($name) {
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = 1;
+        }
+    }
 
     function Create_Table($tab_name) {
         global $wpdb;
@@ -174,9 +182,21 @@ class Kantan_Supplier_Class{
             $wpdb->query("UNLOCK TABLES;");
 
             // リダイレクト
-            $data_id = $data_id - 1;
+            // データ削除後に表示するデータIDを適切に設定
+            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
+            $next_id_result = $wpdb->get_row($next_id_query);
+            if ($next_id_result) {
+                $next_data_id = $next_id_result->id;
+            } else {
+                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
+                $prev_id_result = $wpdb->get_row($prev_id_query);
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            }
+            $cookie_name = 'ktp_' . $name . '_id';
             $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
+$cookie_name = 'ktp_' . $tab_name . '_id';
+            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
             exit;
         }    
@@ -304,7 +324,7 @@ class Kantan_Supplier_Class{
                 // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
 
-                // JavaScriptでクールなスタイルのポップアップを表示
+                // JavaScriptでポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -357,7 +377,7 @@ class Kantan_Supplier_Class{
             $wpdb->query("UNLOCK TABLES;");
             exit;
         }
-
+        
         // 追加
         elseif( $query_post == 'insert' ) {
 
@@ -401,6 +421,7 @@ class Kantan_Supplier_Class{
             header("Location: {$url}");
             exit;
             }
+
         }
         
         // 複製
@@ -444,7 +465,13 @@ class Kantan_Supplier_Class{
             ]);
 
             // データを挿入
-            $wpdb->insert($table_name, $data);
+            $insert_result = $wpdb->insert($table_name, $data);
+if($insert_result === false) {
+                // エラーログに挿入エラーを記録
+                error_log('Duplication error: ' . $wpdb->last_error);
+            } else {
+                // 挿入成功後の処理
+                $new_data_id = $wpdb->insert_id;
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -452,8 +479,77 @@ class Kantan_Supplier_Class{
             // 追加後に更新モードにする
             // リダイレクト
             $action = 'update';
-            $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                header("Location: {$url}");
+                exit;
+            }
+        }
+        
+        // 
+        // 商品画像処理
+        // 
+
+        // 画像をアップロード
+        elseif ($query_post == 'upload_image') {
+
+
+            // 画像URLを取得
+            $image_processor = new Image_Processor();
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
+
+            // echo '$tab_name：'.$tab_name.'<br>$data_id：'.$data_id.'<br>$default_image_url：'.$default_image_url.'<br>$image_url：'.$image_url;
+            // exit;
+
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // echo $image_url;
+            // exit;
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+        }
+
+        // 画像削除：デフォルト画像に戻す
+        elseif ($query_post == 'delete_image') {
+
+            // デフォルト画像のURLを設定
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $default_image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
             header("Location: {$url}");
             exit;
         }
@@ -466,6 +562,7 @@ class Kantan_Supplier_Class{
 
 
     }
+
     
     // -----------------------------
     // テーブルの表示
@@ -508,6 +605,15 @@ class Kantan_Supplier_Class{
 
        $query_order_by = 'frequency';
 
+// 全データ数を取得
+        $total_query = "SELECT COUNT(*) FROM {$table_name}";
+        $total_rows = $wpdb->get_var($total_query);
+        $total_pages = ceil($total_rows / $query_limit);
+
+        // 現在のページ番号を計算
+        $current_page = floor($page_start / $query_limit) + 1;
+
+        // データを取得
        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
        $post_row = $wpdb->get_results($query);
        if( $post_row ){
@@ -550,89 +656,31 @@ class Kantan_Supplier_Class{
            END;            
        }
 
-       $post_num = count($post_row); // 現在の項目数（可変）
-       $page_buck = ''; // 前のスタート位置
-       $flg = ''; // ステージが２回目以降かどうかを判別するフラグ
-       // 現在表示中の詳細
-       $cookie_name = 'ktp_' . $name . '_id';
-       if (isset($_GET['data_id'])) {
-           $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-       } elseif (isset($_COOKIE[$cookie_name])) {
-           $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-       } else {
-           // 最後のIDを取得して表示
-           $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-           $last_id_row = $wpdb->get_row($query);
-           $query_id = $last_id_row ? $last_id_row->id : 1;
-       }
+       $results_f = "<div class=\"pagination\">";
 
-      // ページステージ移動
-       if( !$page_stage || $page_stage == 1 ){
-           if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3;  $page_buck_stage = 2; }
-           $page_start ++;
-           $page_next_start = $query_max_num;
-           $flg ++;
-           $results_f = <<<END
-           <div class="pagination">
-           END;
-           // $page_buck_stage = 2;
-           if( $page_start > 1 && $flg >= 2 ){
-               $page_buck_stage = 2;
-           } else {
-               $page_buck_stage = 1;
-           }
-           if( $post_num >= $query_limit ){
+        // 前へリンク
+        if ($current_page > 1) {
+            $prev_start = ($current_page - 2) * $query_limit;
                $results_f .= <<<END
-               $page_start ~ $query_max_num &emsp;<a href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-               END;
-           } else {
-               $results_f .= <<<END
-               &emsp; $page_start ~ $query_max_num
-               </div>
+               <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg">前へ</a>
                END;
            }
-           $page_start = $page_start + $query_limit;
+           
+        // 現在のページ範囲表示と総数
+        $page_end = min($total_rows, $current_page * $query_limit);
+        $page_start_display = ($current_page - 1) * $query_limit + 1;
+        $results_f .= " &emsp; $page_start_display ~ $page_end / $total_rows";
 
-       } elseif( $page_stage == 2 ) {
-            if( $post_num >= $query_limit ){ $page_stage = 2; $page_buck = $post_num - $page_start; $page_buck_stage = 1; } else { $page_stage = 3; $page_buck_stage = 2; }
-            $page_buck = $page_start - $query_limit;
-            $page_next_start = $page_start + $post_num;
-            $query_max_num = $query_max_num + $page_start;
-            $page_start ++;
-            $flg = 2;
-            $results_f = <<<END
-            END;
-            if( $page_start > 1 && $flg >= 2 ){
-                $page_buck_stage = 2;
+        // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
+        if ($current_page < $total_pages) {
+            $next_start = $current_page * $query_limit;
                 $results_f .= <<<END
+                &emsp;<a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">次へ</a>
                 END;
-            } else {
-                $page_buck_stage = 1;
-            }
-            // データの総数が一定の制限を超えているかどうかを確認します
-            // 次へ問題
-            if( $post_num >= $query_limit ){
-                if($page_start > 1){
-                    $results_f .= <<<END
-                    <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a>
-                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                    END;
                 }
-                else{
-                    $results_f .= <<<END
-                    <div class="pagination">
-                    &emsp; $page_start ~ $query_max_num &emsp;<a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_next_start&page_stage=$page_stage&flg=$flg"> 次へ </a></div>
-                    END;
-                }
-            // データの総数が制限未満の場合、$results_fには「前へ」リンクと現在のページ範囲のみが追加され、「次へ」リンクは追加されません
-            } else {
-                $results_f .= <<<END
-                <div class="pagination"><a class="pagination-links" href="?tab_name=$name&data_id=$data_id&page_start=$page_buck&page_stage=$page_buck_stage&flg=$flg"> 前へ </a></div>
-                END;
-            }
-        }
-        
-       $results_f .= '</div>';
+                
+        $results_f .= "</div></div>";
+
        $data_list = $results_h . implode( $results ) . $results_f;
 
         // -----------------------------
