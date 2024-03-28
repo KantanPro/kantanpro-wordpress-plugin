@@ -567,7 +567,8 @@ input[name="tab_item"] {
 
 .product-image {
   width: 100%; /* コンテナの幅に合わせて画像を拡大/縮小 */
-  height: 320px; /* 縦横比を保持 */
+  height: auto; /* 画像の高さを画像に合わせる */
+  max-height: 320px; /* モバイル時以外は高さ320pxに制限 */
   object-fit: contain; /* コンテナ内で縦横比を保ちつつ、全体が見えるように調整 */
   object-position: left; /* 画像を左寄せにする */
 }
@@ -578,4 +579,8 @@ input[name="tab_item"] {
   box-sizing: border-box;
   text-align: left;
   box-sizing: border-box;
+}
+
+.stage {
+  margin-top: 5px;
 }
