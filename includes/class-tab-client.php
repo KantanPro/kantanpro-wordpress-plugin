@@ -629,27 +629,43 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
        $results_f = "<div class=\"pagination\">";
 
+        // 最初へリンク
+        if ($current_page > 1) {
+            $first_start = 0; // 最初のページ
+            $results_f .= <<<END
+            <a href="?tab_name=$name&page_start=$first_start&page_stage=2&flg=$flg">|<</a> 
+            END;
+        }
+
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
-               $results_f .= <<<END
-               <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg">前へ</a>
-               END;
-           }
-           
+            $results_f .= <<<END
+            <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg"><</a>
+            END;
+        }
+
         // 現在のページ範囲表示と総数
         $page_end = min($total_rows, $current_page * $query_limit);
         $page_start_display = ($current_page - 1) * $query_limit + 1;
-        $results_f .= " &emsp; $page_start_display ~ $page_end / $total_rows";
+        $results_f .= "<div class='stage'> $page_start_display ~ $page_end / $total_rows</div>";
 
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
             $results_f .= <<<END
-            &emsp;<a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">次へ</a>
+             <a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">></a>
             END;
         }
-                
+
+        // 最後へリンク
+        if ($current_page < $total_pages) {
+            $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
+            $results_f .= <<<END
+             <a href="?tab_name=$name&page_start=$last_start&page_stage=2&flg=$flg">>|</a>
+            END;
+        }
+                        
         $results_f .= "</div></div>";
 
        $data_list = $results_h . implode( $results ) . $results_f;
