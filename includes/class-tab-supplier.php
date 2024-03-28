@@ -466,20 +466,22 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
             // データを挿入
             $insert_result = $wpdb->insert($table_name, $data);
-if($insert_result === false) {
+            if($insert_result === false) {
                 // エラーログに挿入エラーを記録
                 error_log('Duplication error: ' . $wpdb->last_error);
             } else {
                 // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
 
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
+                
+                // 追加後に更新モードにする
+                // リダイレクト
+                $action = 'update';
+                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
                 header("Location: {$url}");
                 exit;
             }
