@@ -443,7 +443,23 @@ class Kntan_Service_Class {
         
         // テーブル名
         $table_name = $wpdb->prefix . 'ktp_' . $name;
-        
+
+        // データが存在しない場合、デフォルト画像を使用
+        // デフォルト画像のURLを設定
+        $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
+        // データを取得し変数に格納
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+        $post_row = $wpdb->get_results($query);
+        if(empty($post_row)) {
+            // データが存在しない場合、デフォルト画像を使用
+            $image_url = $default_image_url;
+        } else {
+            foreach ($post_row as $row){
+                // 画像URLが空、または設定されていない場合、デフォルト画像を使用
+                $image_url = !empty($row->image_url) ? esc_html($row->image_url) : $default_image_url;
+            }
+        }        
         
         // -----------------------------
         // ページネーションリンク
