@@ -459,7 +459,7 @@ class Kntan_Service_Class {
                 // 画像URLが空、または設定されていない場合、デフォルト画像を使用
                 $image_url = !empty($row->image_url) ? esc_html($row->image_url) : $default_image_url;
             }
-        }        
+        }
         
         // -----------------------------
         // ページネーションリンク
