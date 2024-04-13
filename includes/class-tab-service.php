@@ -67,6 +67,28 @@ class Kntan_Service_Class {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
+    // データが0の場合、デフォルトデータを1つ作成する
+    $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    if($data_count == 0) {
+        // デフォルトデータの作成
+        $default_data = array(
+            'time' => current_time('mysql'),
+            'service_name' => 'デフォルトサービス名',
+            'memo' => 'デフォルトメモ',
+            'category' => '一般',
+            'image_url' => plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg', // デフォルト画像URL
+            'search_field' => 'デフォルト',
+            'frequency' => 0
+        );
+        $wpdb->insert($table_name, $default_data);
+        $data_id = $wpdb->insert_id;
+        // 作成したデータIDをクッキーに保存し、リダイレクトする
+        $cookie_name = 'ktp_' . $tab_name . '_id';
+        setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+        wp_redirect( home_url( '/?tab_name=' . $tab_name . '&data_id=' . $data_id ) );
+        exit;
+    }
+
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
@@ -164,6 +186,8 @@ class Kntan_Service_Class {
                 // 例: IDが指定されていない、または不正な値の場合
                 error_log('Invalid or missing data_id in Update_Table function');
             }
+
+
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -273,6 +297,11 @@ class Kntan_Service_Class {
         }
         // 追加
         elseif( $query_post == 'insert' ) {
+            // デフォルト画像のURLを設定
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
+            // 画像URLが空の場合、デフォルト画像のURLを使用
+            $image_url = empty($_POST['image_url']) ? $default_image_url : $_POST['image_url'];
 
             $insert_result = $wpdb->insert( 
                 $table_name, 
@@ -281,25 +310,16 @@ class Kntan_Service_Class {
                     'service_name' => $service_name,
                     'memo' => $memo,
                     'category' => $category,
+                    'image_url' => $image_url, // 修正された部分
                     'search_field' => $search_field_value
                 ) 
             );
             if($insert_result === false) {
                 error_log('Insert error: ' . $wpdb->last_error);
             } else {
-
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
-
-                // 追加後に更新モードにする
-                // リダイレクト
-                $action = 'update';
-                $data_id = $wpdb->insert_id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-                header("Location: {$url}");
-                exit;
             }
-
         }
         
         // 複製
@@ -460,7 +480,7 @@ class Kntan_Service_Class {
                 $image_url = !empty($row->image_url) ? esc_html($row->image_url) : $default_image_url;
             }
         }
-        
+
         // -----------------------------
         // ページネーションリンク
         // -----------------------------
