@@ -82,11 +82,9 @@ class Kntan_Service_Class {
         );
         $wpdb->insert($table_name, $default_data);
         $data_id = $wpdb->insert_id;
-        // 作成したデータIDをクッキーに保存し、リダイレクトする
+        // 作成したデータIDをクッキーに保存する
         $cookie_name = 'ktp_' . $tab_name . '_id';
         setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
-        wp_redirect( home_url( '/?tab_name=' . $tab_name . '&data_id=' . $data_id ) );
-        exit;
     }
 
         // テーブル名にロックをかける
