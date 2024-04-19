@@ -36,7 +36,7 @@ class Kntan_Client_Class {
                 time BIGINT(11) DEFAULT '0' NOT NULL,
                 name TINYTEXT NOT NULL,
                 url VARCHAR(55) NOT NULL,
-                company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者',
+                company_name VARCHAR(100) NOT NULL DEFAULT 'いつものお客様',
                 email VARCHAR(100) NOT NULL,
                 phone VARCHAR(20) NOT NULL,
                 postal_code VARCHAR(10) NOT NULL,
@@ -143,7 +143,7 @@ class Kntan_Client_Class {
                 'time' => current_time('mysql'),
                 'name' => 'デフォルト名',
                 'url' => '',
-                'company_name' => 'いつもの業者',
+                'company_name' => 'いつものお客様',
                 'representative_name' => '',
                 'email' => '',
                 'phone' => '',
@@ -751,10 +751,10 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税'], 'default' => '内税'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
-                'type' => 'text',
+                'type' => 'select',
                 'name' => 'category',
-                'options' => '一般',
-                'suggest' => true,
+                'options' => ['一般', '業者'],
+                'default' => '一般',
             ],
         ];
         
@@ -808,6 +808,9 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 $data_forms .= '<form method="post" action="">';
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
+                    if ($field['name'] === 'category') { // カテゴリーの値をデフォルトの「一般」に設定
+                        $value = '一般';
+                    }
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
                     $fieldName = $field['name'];

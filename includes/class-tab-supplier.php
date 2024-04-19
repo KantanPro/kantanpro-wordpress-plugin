@@ -751,10 +751,10 @@ class Kantan_Supplier_Class{
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税'], 'default' => '内税'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
-                'type' => 'text',
+                'type' => 'select',
                 'name' => 'category',
-                'options' => '一般',
-                'suggest' => true,
+                'options' => ['一般', '業者'],
+                'default' => '一般',
             ],
         ];
         
@@ -808,6 +808,9 @@ class Kantan_Supplier_Class{
                 $data_forms .= '<form method="post" action="">';
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
+                    if ($field['name'] === 'category') { // カテゴリーの値をデフォルトの「一般」に設定
+                        $value = '一般';
+                    }
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
                     $fieldName = $field['name'];
