@@ -31,6 +31,22 @@ class Kntan_Service_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
         // テーブルが存在しない場合は作成
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+            $sql = "CREATE TABLE $table_name (
+                id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
+                time BIGINT(11) DEFAULT '0' NOT NULL,
+                service_name TINYTEXT,
+                image_url VARCHAR(255),
+                memo TEXT,
+                search_field TEXT,
+                frequency INT NOT NULL DEFAULT 0,
+                category VARCHAR(100) NOT NULL DEFAULT '一般',
+                UNIQUE KEY id (id)
+            ) {$charset_collate};";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            add_option("{$table_name}_version", $my_table_version);
+        }
         
 
         $columns = [
@@ -69,17 +85,43 @@ class Kntan_Service_Class {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
+// POSTデーター受信
+        $data_id = $_POST['data_id'];
+        // その他のPOSTデータを受信...
+
+        // データIDが指定されているか確認
+        if (!empty($data_id)) {
+        // データが存在するか確認
+        $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE id = %d", $data_id));
+        if ($exists) {
+        // 既存のデータを更新
+        $wpdb->update(
+            $table_name,
+            array( /* 更新するデータの配列 */ ),
+            array('id' => $data_id) // 条件
+        );
+        } else {
+        // 新しいデータを追加
+        $wpdb->insert(
+            $table_name,
+            array( /* 追加するデータの配列 */ )
+        );
+        }
+        } else {
+        // $data_idが不適切な場合のエラーハンドリング
+        }
+
     // データが0の場合、デフォルトデータを1つ作成する
     $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
     if($data_count == 0) {
         // デフォルトデータの作成
         $default_data = array(
             'time' => current_time('mysql'),
-            'service_name' => '最初の商品',
-            'memo' => 'デフォルトメモ',
+            'service_name' => '初めての商品',
+            'memo' => '',
             'category' => '一般',
             'image_url' => plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg', // デフォルト画像URL
-            'search_field' => 'デフォルト',
+            'search_field' => '',
             'frequency' => 0
         );
         $wpdb->insert($table_name, $default_data);
@@ -101,8 +143,8 @@ class Kntan_Service_Class {
         $memo = $_POST['memo'];
         $category = $_POST['category'];
         
-        // search_fieldの値を設定
         $search_field_value = implode(', ', [
+            $data_id,
             current_time('mysql'),
             $service_name,
             $memo,
@@ -137,15 +179,15 @@ class Kntan_Service_Class {
             
             if($data_count == 0) {
                 // デフォルトデータの作成
-                $default_data = array(
+                $default_data = [
                     'time' => current_time('mysql'),
-                    'service_name' => '最初の商品',
-                    'memo' => 'デフォルトメモ',
+                    'service_name' => '初めての商品',
+                    'memo' => '',
                     'category' => '一般',
                     'image_url' => plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg', // デフォルト画像URL
                     'search_field' => 'デフォルト',
                     'frequency' => 0
-                );
+                ];
                 $wpdb->insert($table_name, $default_data);
                 $data_id = $wpdb->insert_id;
                 if ($data_id != 0) {
@@ -165,6 +207,7 @@ class Kntan_Service_Class {
 }
 
             exit;
+
         }    
         
         // 更新
@@ -203,8 +246,6 @@ class Kntan_Service_Class {
                 // 例: IDが指定されていない、または不正な値の場合
                 error_log('Invalid or missing data_id in Update_Table function');
             }
-
-
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
@@ -253,6 +294,7 @@ class Kntan_Service_Class {
                     // 各検索結果に対してリンクを設定
                     $search_results_html .= "<li style='text-align:left; width:100%;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
                 }
+
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
 
@@ -312,6 +354,7 @@ class Kntan_Service_Class {
             $wpdb->query("UNLOCK TABLES;");
             exit;
         }
+
         // 追加
         elseif( $query_post == 'insert' ) {
             // デフォルト画像のURLを設定
@@ -334,9 +377,20 @@ class Kntan_Service_Class {
             if($insert_result === false) {
                 error_log('Insert error: ' . $wpdb->last_error);
             } else {
+
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
+            
+                // 追加後に更新モードにしてリダイレクトしIDをクッキーに保存
+                $new_data_id = $wpdb->insert_id;
+                $action = 'update';
+                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
+                header("Location: {$url}");
+                exit;
             }
+
         }
         
         // 複製
@@ -551,6 +605,7 @@ class Kntan_Service_Class {
                     <div class="data_list_item">$id : $service_name : $category : 頻度($frequency)</div>
                 </a>
                 END;
+
             }
             $query_max_num = $wpdb->num_rows;
         } else {
@@ -597,6 +652,7 @@ class Kntan_Service_Class {
              <a href="?tab_name=$name&page_start=$last_start&page_stage=2&flg=$flg">>|</a>
             END;
         }
+
         
         $results_f .= "</div></div>";
 
@@ -636,7 +692,7 @@ class Kntan_Service_Class {
         $fields = [
             // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
             '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
-            '画像URL' => ['type' => 'text', 'name' => 'image_url'],
+            // '画像URL' => ['type' => 'text', 'name' => 'image_url'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
                 'type' => 'text',
@@ -666,36 +722,14 @@ class Kntan_Service_Class {
                     <h3>■ 商品の詳細</h3>
                 END;
 
-                // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-                $data_forms = <<<END
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var postalCode = document.querySelector('input[name="postal_code"]');
-                    var prefecture = document.querySelector('input[name="prefecture"]');
-                    var city = document.querySelector('input[name="city"]');
-                    var address = document.querySelector('input[name="address"]');
-                    postalCode.addEventListener('blur', function() {
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                        xhr.addEventListener('load', function() {
-                            var response = JSON.parse(xhr.responseText);
-                            if (response.results) {
-                                var data = response.results[0];
-                                prefecture.value = data.address1;
-                                city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                                address.value = ''; // 番地は空欄に
-                            }
-                        });
-                        xhr.send();
-                    });
-                });
-                </script>
-                END;
 
                 // 空のフォームフィールドを生成
                 $data_forms .= '<form method="post" action="">';
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
+                    if ($field['name'] === 'category') { // カテゴリーの値をデフォルトの「一般」に設定
+                        $value = '一般';
+                    }
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
                     $fieldName = $field['name'];
@@ -723,7 +757,6 @@ class Kntan_Service_Class {
                 if( $action === 'istmode'){
                     // 追加実行ボタン
                     $action = 'insert';
-                    $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
@@ -910,6 +943,9 @@ class Kntan_Service_Class {
                 $data_id = $last_id_row ? $last_id_row->id : Null;
             }
 
+            // URLからdata_idを取得、なければ、クッキーから取得
+            $data_id = isset($_GET['data_id']) ? $_GET['data_id'] : $_COOKIE[$cookie_name];
+            
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">

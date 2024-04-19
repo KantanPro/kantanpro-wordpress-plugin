@@ -246,6 +246,7 @@ class Kntan_Client_Class {
             $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
             if($data_count == 0) {
+                // デフォルトデータの作成
                 $default_data = [
                     'time' => current_time('mysql'),
                     'name' => '',
@@ -869,7 +870,6 @@ class Kntan_Client_Class {
                 if( $action === 'istmode'){
                     // 追加実行ボタン
                     $action = 'insert';
-                    // $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
@@ -1019,7 +1019,7 @@ class Kntan_Client_Class {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
+                <h3>■ 顧客の詳細（ ID： $data_id ）</h3>
             END;
 
             foreach ($fields as $label => $field) {
