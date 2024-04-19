@@ -110,6 +110,65 @@ class Kantan_Supplier_Class{
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
+        // POSTデーター受信
+        $data_id = $_POST['data_id'];
+        // その他のPOSTデータを受信...
+
+        // データIDが指定されているか確認
+        if (!empty($data_id)) {
+        // データが存在するか確認
+        $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE id = %d", $data_id));
+        if ($exists) {
+        // 既存のデータを更新
+        $wpdb->update(
+            $table_name,
+            array( /* 更新するデータの配列 */ ),
+            array('id' => $data_id) // 条件
+        );
+        } else {
+        // 新しいデータを追加
+        $wpdb->insert(
+            $table_name,
+            array( /* 追加するデータの配列 */ )
+        );
+        }
+        } else {
+        // $data_idが不適切な場合のエラーハンドリング
+        }
+
+        // データが0の場合、デフォルトデータを1つ作成する
+        $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        if($data_count == 0) {
+            $default_data = [
+                'time' => current_time('mysql'),
+                'name' => 'デフォルト名',
+                'url' => '',
+                'company_name' => 'いつもの業者',
+                'representative_name' => '',
+                'email' => '',
+                'phone' => '',
+                'postal_code' => '',
+                'prefecture' => '',
+                'city' => '',
+                'address' => '',
+                'building' => '',
+                'closing_day' => '',
+                'payment_month' => '',
+                'payment_day' => '',
+                'payment_method' => '',
+                'tax_category' => '税込',
+                'memo' => '',
+                'search_field' => '',
+                'frequency' => 0,
+                'category' => '一般'
+            ];
+            $wpdb->insert($table_name, $default_data);
+            $data_id = $wpdb->insert_id;
+            // 作成したデータIDをクッキーに保存する
+            $cookie_name = 'ktp_' . $tab_name . '_id';
+            setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+        }
+
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
@@ -195,7 +254,7 @@ class Kantan_Supplier_Class{
             $cookie_name = 'ktp_' . $name . '_id';
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
-$cookie_name = 'ktp_' . $tab_name . '_id';
+            $cookie_name = 'ktp_' . $tab_name . '_id';
             setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
             exit;
@@ -413,13 +472,14 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
-            header("Location: {$url}");
-            exit;
+                // 追加後に更新モードにしてリダイレクトしIDをクッキーに保存
+                $new_data_id = $wpdb->insert_id;
+                $action = 'update';
+                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
+                header("Location: {$url}");
+                exit;
             }
 
         }
@@ -485,81 +545,6 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 header("Location: {$url}");
                 exit;
             }
-        }
-        
-        // 
-        // 商品画像処理
-        // 
-
-        // 画像をアップロード
-        elseif ($query_post == 'upload_image') {
-
-
-            // 画像URLを取得
-            $image_processor = new Image_Processor();
-            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
-            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-
-            // echo '$tab_name：'.$tab_name.'<br>$data_id：'.$data_id.'<br>$default_image_url：'.$default_image_url.'<br>$image_url：'.$image_url;
-            // exit;
-
-            $wpdb->update(
-                $table_name,
-                array(
-                    'image_url' => $image_url
-                ),
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%s'
-                ),
-                array(
-                    '%d'
-                )
-            );
-
-            // echo $image_url;
-            // exit;
-
-            // リダイレクト
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
-            header("Location: {$url}");
-            exit;
-        }
-
-        // 画像削除：デフォルト画像に戻す
-        elseif ($query_post == 'delete_image') {
-
-            // デフォルト画像のURLを設定
-            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
-
-            $wpdb->update(
-                $table_name,
-                array(
-                    'image_url' => $default_image_url
-                ),
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%s'
-                ),
-                array(
-                    '%d'
-                )
-            );
-
-            // リダイレクト
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
-            header("Location: {$url}");
-            exit;
-        }
-
-        // どの処理にも当てはまらない場合はロック解除
-        else {
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
         }
 
 
@@ -850,7 +835,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 if( $action === 'istmode'){
                     // 追加実行ボタン
                     $action = 'insert';
-                    $data_id = $data_id + 1;
+                    // $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
