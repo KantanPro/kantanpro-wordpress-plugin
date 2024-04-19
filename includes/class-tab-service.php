@@ -30,7 +30,9 @@ class Kntan_Service_Class {
         $my_table_version = '1.0.0';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
-    
+        // テーブルが存在しない場合は作成
+        
+
         $columns = [
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
             "time BIGINT(11) DEFAULT '0' NOT NULL",
@@ -73,7 +75,7 @@ class Kntan_Service_Class {
         // デフォルトデータの作成
         $default_data = array(
             'time' => current_time('mysql'),
-            'service_name' => 'デフォルトサービス名',
+            'service_name' => '最初の商品',
             'memo' => 'デフォルトメモ',
             'category' => '一般',
             'image_url' => plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg', // デフォルト画像URL
@@ -82,9 +84,11 @@ class Kntan_Service_Class {
         );
         $wpdb->insert($table_name, $default_data);
         $data_id = $wpdb->insert_id;
-        // 作成したデータIDをクッキーに保存する
-        $cookie_name = 'ktp_' . $tab_name . '_id';
-        setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+        if ($data_id != 0) {
+                // 作成したデータIDをクッキーに保存する
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+        }
     }
 
         // テーブル名にロックをかける
@@ -128,23 +132,38 @@ class Kntan_Service_Class {
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-            // リダイレクト
-            // データ削除後に表示するデータIDを適切に設定
-            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
-            $next_id_result = $wpdb->get_row($next_id_query);
-            if ($next_id_result) {
-                $next_data_id = $next_id_result->id;
-            } else {
-                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
-                $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            // データ削除後にデーターが0ならデフォルトデータを1つ作成する
+            $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            
+            if($data_count == 0) {
+                // デフォルトデータの作成
+                $default_data = array(
+                    'time' => current_time('mysql'),
+                    'service_name' => '最初の商品',
+                    'memo' => 'デフォルトメモ',
+                    'category' => '一般',
+                    'image_url' => plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg', // デフォルト画像URL
+                    'search_field' => 'デフォルト',
+                    'frequency' => 0
+                );
+                $wpdb->insert($table_name, $default_data);
+                $data_id = $wpdb->insert_id;
+                if ($data_id != 0) {
+                    // 作成したデータIDをクッキーに保存する
+                    $cookie_name = 'ktp_' . $tab_name . '_id';
+                    setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+                }
             }
-            $cookie_name = 'ktp_' . $name . '_id';
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$url}");
+
+            // 最後のデータにリダイレクト
+            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_result = $wpdb->get_row($last_id_query);
+            if ($last_id_result) {
+                $last_id = $last_id_result->id;
+                $url = '?tab_name='. $tab_name . '&data_id=' . $last_id;
+                header("Location: {$url}");
+}
+
             exit;
         }    
         

@@ -36,7 +36,7 @@ class Kntan_Client_Class {
                 time BIGINT(11) DEFAULT '0' NOT NULL,
                 name TINYTEXT NOT NULL,
                 url VARCHAR(55) NOT NULL,
-                company_name VARCHAR(100) NOT NULL DEFAULT 'いつものお客様',
+                company_name VARCHAR(100) NOT NULL DEFAULT '初めてのお客様',
                 email VARCHAR(100) NOT NULL,
                 phone VARCHAR(20) NOT NULL,
                 postal_code VARCHAR(10) NOT NULL,
@@ -141,9 +141,9 @@ class Kntan_Client_Class {
         if($data_count == 0) {
             $default_data = [
                 'time' => current_time('mysql'),
-                'name' => 'デフォルト名',
+                'name' => '',
                 'url' => '',
-                'company_name' => 'いつものお客様',
+                'company_name' => '初めてのお客様',
                 'representative_name' => '',
                 'email' => '',
                 'phone' => '',
@@ -164,9 +164,11 @@ class Kntan_Client_Class {
             ];
             $wpdb->insert($table_name, $default_data);
             $data_id = $wpdb->insert_id;
-            // 作成したデータIDをクッキーに保存する
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+            if ($data_id != 0) {
+                // 作成したデータIDをクッキーに保存する
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+            }
         }
 
         // テーブル名にロックをかける
@@ -240,24 +242,53 @@ class Kntan_Client_Class {
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-            // リダイレクト
-            // データ削除後に表示するデータIDを適切に設定
-            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
-            $next_id_result = $wpdb->get_row($next_id_query);
-            if ($next_id_result) {
-                $next_data_id = $next_id_result->id;
-            } else {
-                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
-                $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            // データ削除後にデーターが0ならデフォルトデータを1つ作成する
+            $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+            if($data_count == 0) {
+                $default_data = [
+                    'time' => current_time('mysql'),
+                    'name' => '',
+                    'url' => '',
+                    'company_name' => '初めてのお客様',
+                    'representative_name' => '',
+                    'email' => '',
+                    'phone' => '',
+                    'postal_code' => '',
+                    'prefecture' => '',
+                    'city' => '',
+                    'address' => '',
+                    'building' => '',
+                    'closing_day' => '',
+                    'payment_month' => '',
+                    'payment_day' => '',
+                    'payment_method' => '',
+                    'tax_category' => '税込',
+                    'memo' => '',
+                    'search_field' => '',
+                    'frequency' => 0,
+                    'category' => '一般'
+                ];
+                $wpdb->insert($table_name, $default_data);
+                $data_id = $wpdb->insert_id;
+                if ($data_id != 0) {
+                    // 作成したデータIDをクッキーに保存する
+                    $cookie_name = 'ktp_' . $tab_name . '_id';
+                    setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+                }
             }
-            $cookie_name = 'ktp_' . $name . '_id';
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
-$cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$url}");
+
+            // 最後のデータにリダイレクト
+            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_result = $wpdb->get_row($last_id_query);
+            if ($last_id_result) {
+                $last_id = $last_id_result->id;
+                $url = '?tab_name='. $tab_name . '&data_id=' . $last_id;
+                header("Location: {$url}");
+            }
+
             exit;
+
         }    
         
         // 更新
@@ -592,7 +623,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
        $query_order_by = 'frequency';
 
-// 全データ数を取得
+        // 全データ数を取得
         $total_query = "SELECT COUNT(*) FROM {$table_name}";
         $total_rows = $wpdb->get_var($total_query);
         $total_pages = ceil($total_rows / $query_limit);
@@ -982,6 +1013,9 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 $data_id = $last_id_row ? $last_id_row->id : Null;
             }
 
+            // URLからdata_idを取得、なければ、クッキーから取得
+            $data_id = isset($_GET['data_id']) ? $_GET['data_id'] : $_COOKIE[$cookie_name];
+
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
@@ -1200,3 +1234,4 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 }
 
 ?>
+
