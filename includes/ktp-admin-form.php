@@ -64,6 +64,20 @@ do_settings_sections( 'default' );
 <input type="text" id="ktp_activation_key" name="ktp_activation_key" value="<?php echo esc_attr( $activation_key ); ?>" />
 </td>
 </tr>
+<!-- データインポートフォームの追加 -->
+<tr>
+<th scope="row"><label for="ktp_data_import">データインポート</label></th>
+<td>
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="ktp_import_data">
+    <input type="hidden" name="file_path" value="<?php echo WP_PLUGIN_DIR . '/kantan-pro-wp/data'; ?>">
+    <input type="file" id="ktp_data_import" name="ktp_data_import" accept=".csv" />
+    <input type="submit" value="インポート" name="submit">
+    <p class="description">インポートするデータファイルを選択してください。ファイルは <code><?php echo WP_PLUGIN_DIR . '/kantan-pro-wp/data'; ?></code> に格納されます。</p>
+</form>
+</td>
+</tr>
+<!-- データインポートフォームの追加ここまで -->
 </tbody>
 </table>
 
