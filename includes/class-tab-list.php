@@ -2,13 +2,15 @@
 
 class Kantan_List_Class{
 
-    // public $name;
+    public $name;
 
     public function __construct() {
-        // $this->name = 'list';
+        $this->$name;
+        // add_action('');
+        // add_filter('');
     }
     
-    function List_Tab_View( $tab_name ) {
+    function List_Tab_View( $name ) {
         
         // 表示する内容
         $content = <<<END

@@ -1,6 +1,6 @@
 <?php
 
-class Kntan_Report_Class {
+class Kantan_Report_Class {
 
     // public $name;
 

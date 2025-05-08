@@ -1,6 +1,8 @@
 <?php
 
-class Kntan_Client_Class {
+class Kantan_Client_Class{
+
+    public $name;
 
     public function __construct() {
 

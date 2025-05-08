@@ -1,95 +1,12 @@
 <?php
 
-class Kntan_Setting_Class {
+class Kantan_Setting_Class {
+
+    public $name;
 
     public function __construct() {
-    }
-    
-    // DBにカラムがなければ作成（会社情報、メールアドレス、消費税率、自社締め日、インボイス、振込先口座）
-    function Create_Table( $tab_name ) {
-        global $wpdb;
-        $my_table_version = '1.0.1';
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $charset_collate = $wpdb->get_charset_collate();
-
-        $columns = [
-            'id mediumint(9) NOT NULL AUTO_INCREMENT',
-
-            'template_content longtext DEFAULT "" NOT NULL',
-            'PRIMARY KEY  (id)'
-        ];
-
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-            $sql = "CREATE TABLE $table_name (" . implode(", ", $columns) . ") $charset_collate;";
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-            add_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-
-            // 最初に1行を追加
-            $wpdb->insert($table_name,
-                array(
-                    'id' => '1', // 1行目のIDは1で固定
-                    'email_address' => '',
-                    'tax_rate' => '',
-                    'closing_date' => '',
-                    'invoice' => '',
-                    'bank_account' => '',
-                    'my_company_content' => '',
-                    'template_content' => ''
-                )
-            );
-        } else {
-            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
-            $missing_columns = array_diff($columns, $existing_columns);
-            foreach ($missing_columns as $missing_column) {
-                $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
-            }
-            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-
-            // 最初に1行を追加
-            $wpdb->insert($table_name,
-                array(
-                    'id' => '1', // 1行目のIDは1で固定
-                    'email_address' => '',
-                    'tax_rate' => '',
-                    'closing_date' => '',
-                    'invoice' => '',
-                    'bank_account' => '',
-                    'my_company_content' => '',
-                    'template_content' => ''
-                )
-            );
-        }
-    }
-
-    // Update_Table
-    function Update_Table( $tab_name ) {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $my_table_version = '1.0.2';
-
-        // テーブルバージョンが違う場合はテーブルを更新
-        if (get_option('ktp_' . $tab_name . '_table_version') != $my_table_version) {
-            $columns = [
-                'id mediumint(9) NOT NULL AUTO_INCREMENT',
-                'email_address varchar(255) DEFAULT "" NOT NULL',
-                'tax_rate varchar(255) DEFAULT "" NOT NULL',
-                'closing_date varchar(255) DEFAULT "" NOT NULL',
-                'invoice varchar(255) DEFAULT "" NOT NULL',
-                'bank_account varchar(255) DEFAULT "" NOT NULL',
-                'my_company_content longtext DEFAULT "" NOT NULL',
-                'template_content longtext DEFAULT "" NOT NULL',
-                'PRIMARY KEY  (id)'
-            ];
-
-            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
-            $missing_columns = array_diff($columns, $existing_columns);
-            foreach ($missing_columns as $missing_column) {
-                $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
-            }
-            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-        }
-
+        // プロパティを初期化
+        $this->name = ''; 
     }
     
     function Setting_Tab_View( $tab_name ) {
