@@ -31,5 +31,3 @@ class Print_Class {
         return $html;
     }
 }
-
-?>

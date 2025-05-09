@@ -13,5 +13,3 @@ class Kantan_Order_Class{
     }
 
 }
-
-?>

@@ -74,5 +74,3 @@ class view_tabs_Class{
     }
     
 }
-
-?>

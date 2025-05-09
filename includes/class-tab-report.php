@@ -36,5 +36,3 @@ class Kantan_Report_Class {
         }
     }
 }
-
-?>

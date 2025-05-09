@@ -321,5 +321,3 @@ class Kantan_Setting_Class {
         return $content;
     }
 }
-
-?>

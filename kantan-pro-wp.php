@@ -50,6 +50,14 @@ function register_ktpwp_styles() {
 }
 add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
+// スクリプトとスタイルの読み込み関数を追加
+function ktpwp_scripts_and_styles() {
+    // 必要に応じてスクリプトやスタイルを登録・読み込み
+    // 例:
+    // wp_enqueue_style('ktpwp-style', plugins_url('assets/style.css', __FILE__));
+    // wp_enqueue_script('ktpwp-script', plugins_url('assets/script.js', __FILE__), array('jquery'), null, true);
+}
+
 // テーブル用の関数を登録
 register_activation_hook( __FILE__, 'Create_Table' ); // テーブル作成
 register_activation_hook( __FILE__, 'Update_Table' ); // テーブル更新
@@ -167,7 +175,11 @@ function KTPWP_Index(){
 				
 				//商品・サービス
 				$tabs = new Kantan_Service_Class();
+				$tab_name = 'service';
+				$tabs->Create_Table( $tab_name );
 				$service_content = $tabs->Service_Tab_View( 'service' );
+				// $tabs->Update_Table( $tab_name );
+				// $view = $tabs->View_Table( $tab_name );	
 				
 				//協力会社
 				$tabs = new Kantan_Supplier_Class();

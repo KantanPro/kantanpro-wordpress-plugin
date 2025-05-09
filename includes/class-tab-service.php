@@ -1146,6 +1146,3 @@ class Kntan_Service_Class {
     }
 
 }
-
-?>
-

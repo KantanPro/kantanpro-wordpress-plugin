@@ -1232,6 +1232,4 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
     }
 
 }
-        
-?>
 

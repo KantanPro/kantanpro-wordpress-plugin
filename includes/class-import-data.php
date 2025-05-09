@@ -111,5 +111,3 @@ function handle_file_upload() {
 
 // Redirect without using options.php
 add_action('admin_init', 'handle_file_upload');
-
-?>

@@ -89,5 +89,3 @@ do_settings_sections( 'default' );
 
 <?php
 }
-
-?>

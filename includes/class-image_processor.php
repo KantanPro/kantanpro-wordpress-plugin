@@ -33,6 +33,5 @@ class Image_Processor {
         }
     
         return $image_url;
-    }}
-
-?>
+    }
+}

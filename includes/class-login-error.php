@@ -30,5 +30,3 @@ class Kantan_Login_Error{
 
     // }
 }
-
-?>
