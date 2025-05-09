@@ -4,9 +4,23 @@ class Kantan_Setting_Class {
 
     public $name;
 
-    public function __construct() {
-        // プロパティを初期化
-        $this->name = ''; 
+    public function __construct($name = '') {
+        $this->name = $name;
+    }
+
+    public function Create_Table($tab_name = '') {
+        return true;
+    }
+
+    public function View_Table($tab_name = '') {
+        return <<<HTML
+        <h3>ここは [{$tab_name}] です。</h3>
+        プラグインの設定画面です。<br>
+        <form>
+            <label>通知メール: <input type="email" name="notify_email" value="admin@example.com"></label><br>
+            <button type="submit" disabled>保存（ダミー）</button>
+        </form>
+        HTML;
     }
     
     function Setting_Tab_View( $tab_name ) {

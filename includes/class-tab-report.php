@@ -2,12 +2,12 @@
 
 class Kantan_Report_Class {
 
-    // public $name;
+    public $name;
 
-    public function __construct() {
-        // $this->name = 'report';
+    public function __construct($name = '') {
+        $this->name = $name;
     }
-    
+
     function Report_Tab_View( $tab_name ) {
 
         
@@ -34,5 +34,20 @@ class Kantan_Report_Class {
             END;
             return $content;
         }
+    }
+
+    public function Create_Table($tab_name = '') {
+        return true;
+    }
+
+    public function View_Table($tab_name = '') {
+        return <<<HTML
+        <h3>ここは [{$tab_name}] です。</h3>
+        レポートの内容を表示します。
+        <ul>
+            <li>2025/05/01：月次売上レポート作成</li>
+            <li>2025/05/05：案件進捗レポート更新</li>
+        </ul>
+        HTML;
     }
 }

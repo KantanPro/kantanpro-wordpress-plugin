@@ -1,29 +1,18 @@
 <?php
 
-class Kantan_Supplier_Class{
+class Kantan_Supplier_Class {
 
-    public function __construct() {
+    public $name;
 
+    public function __construct($name = '') {
+        $this->name = $name;
     }
 
     // -----------------------------
     // テーブル作成
     // -----------------------------
-    
 
-    // クッキーの設定
-    function Set_Cookie($name) {
-        $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            $query_id = 1;
-        }
-    }
-
-    function Create_Table($tab_name) {
+    public function Create_Table($tab_name = '') {
         global $wpdb;
         $my_table_version = '1.0.0';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
@@ -586,7 +575,19 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
     // テーブルの表示
     // -----------------------------
 
-    function View_Table( $name ) {
+    public function View_Table($tab_name = '') {
+        return <<<HTML
+        <h3>ここは [{$tab_name}] です。</h3>
+        協力会社のリストを表示します。
+        <table>
+            <tr><th>会社名</th><th>担当者</th><th>電話番号</th></tr>
+            <tr><td>ABC制作所</td><td>高橋</td><td>03-1234-5678</td></tr>
+            <tr><td>XYZ開発</td><td>伊藤</td><td>06-9876-5432</td></tr>
+        </table>
+        HTML;
+    }
+
+    function View_Table_Old( $name ) {
 
         global $wpdb;
 
