@@ -1,7 +1,11 @@
 <?php
 /*
 Plugin Name: kantan pro wp
-Description: カンタンProWP
+Description: 固定ページにショートコード[kantanAllTab]を記載することで表示されます。
+// ここに他のショートコードがあれば追記
+// 例: [kantanOrderTab] ・・・受注書タブのみ表示
+//     [kantanClientTab] ・・・クライアントタブのみ表示
+
 Version: 1.0
 */
 
