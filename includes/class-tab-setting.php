@@ -1,26 +1,109 @@
 <?php
 
-class Kantan_Setting_Class {
+class Kntan_Setting_Class {
 
-    public $name;
+    public function __construct() {
+    }
+    
+    // DBにカラムがなければ作成（会社情報、メールアドレス、消費税率、自社締め日、インボイス、振込先口座）
+    function Create_Table( $tab_name ) {
+        global $wpdb;
+        $my_table_version = '1.0.1';
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        $charset_collate = $wpdb->get_charset_collate();
 
-    public function __construct($name = '') {
-        $this->name = $name;
+        // カラム定義（カラム名 => SQL定義）
+        $columns_def = [
+            'id' => 'id mediumint(9) NOT NULL AUTO_INCREMENT',
+            'email_address' => 'email_address varchar(255) DEFAULT "" NOT NULL',
+            'tax_rate' => 'tax_rate varchar(255) DEFAULT "" NOT NULL',
+            'closing_date' => 'closing_date varchar(255) DEFAULT "" NOT NULL',
+            'invoice' => 'invoice varchar(255) DEFAULT "" NOT NULL',
+            'bank_account' => 'bank_account varchar(255) DEFAULT "" NOT NULL',
+            'my_company_content' => 'my_company_content longtext DEFAULT "" NOT NULL',
+            'template_content' => 'template_content longtext DEFAULT "" NOT NULL',
+        ];
+        $columns_sql = array_values($columns_def);
+        $columns_names = array_keys($columns_def);
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
+            $sql = "CREATE TABLE $table_name (" . implode(", ", $columns_sql) . ", PRIMARY KEY  (id)) $charset_collate;";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+            add_option('ktp_' . $tab_name . '_table_version', $my_table_version);
+
+            // 最初に1行を追加（ID=1がなければ）
+            $exists = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE id = 1");
+            if (!$exists) {
+                $wpdb->insert($table_name,
+                    array(
+                        'id' => '1',
+                        'email_address' => '',
+                        'tax_rate' => '',
+                        'closing_date' => '',
+                        'invoice' => '',
+                        'bank_account' => '',
+                        'my_company_content' => '',
+                        'template_content' => ''
+                    )
+                );
+            }
+        } else {
+            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
+            // 追加が必要なカラムだけ抽出
+            foreach ($columns_def as $col_name => $col_def) {
+                if (!in_array($col_name, $existing_columns)) {
+                    $wpdb->query("ALTER TABLE $table_name ADD COLUMN $col_def");
+                }
+            }
+            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
+
+            // 最初に1行を追加（ID=1がなければ）
+            $exists = $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE id = 1");
+            if (!$exists) {
+                $wpdb->insert($table_name,
+                    array(
+                        'id' => '1',
+                        'email_address' => '',
+                        'tax_rate' => '',
+                        'closing_date' => '',
+                        'invoice' => '',
+                        'bank_account' => '',
+                        'my_company_content' => '',
+                        'template_content' => ''
+                    )
+                );
+            }
+        }
     }
 
-    public function Create_Table($tab_name = '') {
-        return true;
-    }
+    // Update_Table
+    function Update_Table( $tab_name ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+        $my_table_version = '1.0.2';
 
-    public function View_Table($tab_name = '') {
-        return <<<HTML
-        <h3>ここは [{$tab_name}] です。</h3>
-        プラグインの設定画面です。<br>
-        <form>
-            <label>通知メール: <input type="email" name="notify_email" value="admin@example.com"></label><br>
-            <button type="submit" disabled>保存（ダミー）</button>
-        </form>
-        HTML;
+        // テーブルバージョンが違う場合はテーブルを更新
+        if (get_option('ktp_' . $tab_name . '_table_version') != $my_table_version) {
+            $columns_def = [
+                'id' => 'id mediumint(9) NOT NULL AUTO_INCREMENT',
+                'email_address' => 'email_address varchar(255) DEFAULT "" NOT NULL',
+                'tax_rate' => 'tax_rate varchar(255) DEFAULT "" NOT NULL',
+                'closing_date' => 'closing_date varchar(255) DEFAULT "" NOT NULL',
+                'invoice' => 'invoice varchar(255) DEFAULT "" NOT NULL',
+                'bank_account' => 'bank_account varchar(255) DEFAULT "" NOT NULL',
+                'my_company_content' => 'my_company_content longtext DEFAULT "" NOT NULL',
+                'template_content' => 'template_content longtext DEFAULT "" NOT NULL',
+            ];
+            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
+            foreach ($columns_def as $col_name => $col_def) {
+                if (!in_array($col_name, $existing_columns)) {
+                    $wpdb->query("ALTER TABLE $table_name ADD COLUMN $col_def");
+                }
+            }
+            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
+        }
+
     }
     
     function Setting_Tab_View( $tab_name ) {
@@ -222,6 +305,30 @@ class Kantan_Setting_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $template_content = $wpdb->get_var( "SELECT template_content FROM $table_name" );
 
+        // 顧客データ例（本来は顧客テーブル等から取得してください）
+        // テーブルが存在しない場合はダミーデータを使う
+        $customer_data = [
+            'customer' => 'ダミー顧客名',
+            'postal_code' => '123-4567',
+            'prefecture' => '東京都',
+            'city' => '千代田区',
+            'address' => '1-2-3',
+            'building' => 'サンプルビル',
+            'user_name' => '担当 太郎',
+        ];
+        $customer_table = $wpdb->prefix . 'ktp_customer';
+        if ($wpdb->get_var("SHOW TABLES LIKE '$customer_table'") == $customer_table) {
+            $customer_data = [
+                'customer' => $wpdb->get_var("SELECT customer FROM {$customer_table} WHERE id = 1") ?: 'ダミー顧客名',
+                'postal_code' => $wpdb->get_var("SELECT postal_code FROM {$customer_table} WHERE id = 1") ?: '123-4567',
+                'prefecture' => $wpdb->get_var("SELECT prefecture FROM {$customer_table} WHERE id = 1") ?: '東京都',
+                'city' => $wpdb->get_var("SELECT city FROM {$customer_table} WHERE id = 1") ?: '千代田区',
+                'address' => $wpdb->get_var("SELECT address FROM {$customer_table} WHERE id = 1") ?: '1-2-3',
+                'building' => $wpdb->get_var("SELECT building FROM {$customer_table} WHERE id = 1") ?: 'サンプルビル',
+                'user_name' => $wpdb->get_var("SELECT user_name FROM {$customer_table} WHERE id = 1") ?: '担当 太郎',
+            ];
+        }
+
         if ( isset( $_POST['template_content'] ) ) {
             $new_template_content = $_POST['template_content'];
 
@@ -247,6 +354,19 @@ class Kantan_Setting_Class {
             $template_content = $new_template_content;
             // $atena .= '<script>alert("テンプレートを保存しました！");</script>';
         }
+
+        // --- ここから置換プレビュー処理を修正 ---
+        $replace_words = [
+            '_%customer%_' => $customer_data['customer'] ?: 'ダミー顧客名',
+            '_%postal_code%_' => $customer_data['postal_code'] ?: '123-4567',
+            '_%prefecture%_' => $customer_data['prefecture'] ?: '東京都',
+            '_%city%_' => $customer_data['city'] ?: '千代田区',
+            '_%address%_' => $customer_data['address'] ?: '1-2-3',
+            '_%building%_' => $customer_data['building'] ?: 'サンプルビル',
+            '_%user_name%_' => $customer_data['user_name'] ?: '担当 太郎',
+        ];
+        $template_preview = strtr($template_content, $replace_words);
+        // --- ここまで ---
         
         // ビジュアルエディターを表示（宛名印刷）
         ob_start();
@@ -298,11 +418,11 @@ class Kantan_Setting_Class {
                     <td>郵便番号</td>
                 </tr>
                 <tr>
-                    <td>_％prefecture％_</td>
+                    <td>_%prefecture%_</td>
                     <td>都道府県</td>
                 </tr>
                 <tr>
-                    <td>_％city％_</td>
+                    <td>_%city%_</td>
                     <td>市区町村</td>
                 </tr>
                 <tr>
@@ -326,6 +446,17 @@ class Kantan_Setting_Class {
         ※ ショートコードを挿入ボタンは使用できません。
         </div>
         END;
+
+        // プレビュー表示を追加
+        $atena .= <<<END
+        <div class="data_detail_box" style="margin-top:20px;">
+            <div style="font-weight:bold;">プレビュー（ダミー顧客データで置換）</div>
+            <div style="border:1px solid #ccc; padding:10px; margin-top:5px;">
+                {$template_preview}
+            </div>
+        </div>
+        END;
+
         $atena .= '</div>';
         $atena .= '</div>';
         

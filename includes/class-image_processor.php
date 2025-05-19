@@ -12,26 +12,21 @@ class Image_Processor {
      */
     public function handle_image($tab_name, $data_id, $default_image_url) {
         global $wpdb;
-        $upload_dir = plugin_dir_path(__FILE__) . '../images/service/'; // ファイルシステムのパスを使用
-        $image_url = '';
-    
-        if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-            $file = $_FILES['image'];
-            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-            $filename = $data_id . '.' . $extension;
-            $upload_file = $upload_dir . $filename;
-    
-            if (move_uploaded_file($file['tmp_name'], $upload_file)) {
-                // ウェブアクセス可能なURLを生成
-                $upload_url = plugin_dir_url(__FILE__) . '../images/service/' . $filename;
-                $image_url = $upload_url;
-            }
+        // 保存先ディレクトリを images/default/upload/ に固定
+        $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
+        // ディレクトリがなければ作成
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
         }
-    
-        if (isset($_POST['delete_image']) && $_POST['delete_image'] == 'true') {
-            $image_url = $default_image_url;
+        // 保存ファイル名
+        $file_path = $upload_dir . $data_id . '.jpeg';
+        if (isset($_FILES['image']) && is_uploaded_file($_FILES['image']['tmp_name'])) {
+            move_uploaded_file($_FILES['image']['tmp_name'], $file_path);
+            // URL生成
+            $plugin_url = plugin_dir_url(dirname(__FILE__));
+            $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
+            return $image_url;
         }
-    
-        return $image_url;
+        return $default_image_url;
     }
 }

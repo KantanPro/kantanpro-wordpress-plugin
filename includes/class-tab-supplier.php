@@ -1,18 +1,29 @@
 <?php
 
-class Kantan_Supplier_Class {
+class Kantan_Supplier_Class{
 
-    public $name;
+    public function __construct() {
 
-    public function __construct($name = '') {
-        $this->name = $name;
     }
 
     // -----------------------------
     // テーブル作成
     // -----------------------------
+    
 
-    public function Create_Table($tab_name = '') {
+    // クッキーの設定
+    function Set_Cookie($name) {
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_COOKIE[$cookie_name])) {
+            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_GET['data_id'])) {
+            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $query_id = 1;
+        }
+    }
+
+    function Create_Table($tab_name) {
         global $wpdb;
         $my_table_version = '1.0.0';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
@@ -25,7 +36,7 @@ class Kantan_Supplier_Class {
                 time BIGINT(11) DEFAULT '0' NOT NULL,
                 name TINYTEXT NOT NULL,
                 url VARCHAR(55) NOT NULL,
-                company_name VARCHAR(100) NOT NULL DEFAULT '初めての業者',
+                company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者',
                 email VARCHAR(100) NOT NULL,
                 phone VARCHAR(20) NOT NULL,
                 postal_code VARCHAR(10) NOT NULL,
@@ -48,45 +59,55 @@ class Kantan_Supplier_Class {
             dbDelta($sql);
             add_option("{$table_name}_version", $my_table_version);
         }
-    
-        $columns = [
-            "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
-            "time BIGINT(11) DEFAULT '0' NOT NULL",
-            "name TINYTEXT",
-            "url VARCHAR(55)",
-            "company_name VARCHAR(100) NOT NULL DEFAULT '初めての業者'",
-            "representative_name TINYTEXT",
-            "email VARCHAR(100)",
-            "phone VARCHAR(20)",
-            "postal_code VARCHAR(10)",
-            "prefecture TINYTEXT",
-            "city TINYTEXT",
-            "address TEXT",
-            "building TINYTEXT",
-            "closing_day TINYTEXT",
-            "payment_month TINYTEXT",
-            "payment_day TINYTEXT",
-            "payment_method TINYTEXT",
-            "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
-            "memo TEXT",
-            "search_field TEXT", // 検索用フィールドを追加
-            "frequency INT NOT NULL DEFAULT 0", // 頻度
-            "category VARCHAR(100) NOT NULL DEFAULT '一般'",
-            "UNIQUE KEY id (id)"
+
+        // カラム追加前に存在チェック
+        $columns = $wpdb->get_col("SHOW COLUMNS FROM {$table_name}", 0);
+
+        // カラム名リスト
+        $column_defs = [
+            'id' => "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
+            'time' => "time BIGINT(11) DEFAULT '0' NOT NULL",
+            'name' => "name TINYTEXT",
+            'url' => "url VARCHAR(55)",
+            'company_name' => "company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者'",
+            'representative_name' => "representative_name TINYTEXT",
+            'email' => "email VARCHAR(100)",
+            'phone' => "phone VARCHAR(20)",
+            'postal_code' => "postal_code VARCHAR(10)",
+            'prefecture' => "prefecture TINYTEXT",
+            'city' => "city TINYTEXT",
+            'address' => "address TEXT",
+            'building' => "building TINYTEXT",
+            'closing_day' => "closing_day TINYTEXT",
+            'payment_month' => "payment_month TINYTEXT",
+            'payment_day' => "payment_day TINYTEXT",
+            'payment_method' => "payment_method TINYTEXT",
+            'tax_category' => "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
+            'memo' => "memo TEXT",
+            'search_field' => "search_field TEXT",
+            'frequency' => "frequency INT NOT NULL DEFAULT 0",
+            'category' => "category VARCHAR(100) NOT NULL DEFAULT '一般'",
         ];
-    
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-            $sql = "CREATE TABLE $table_name (" . implode(", ", $columns) . ") $charset_collate;";
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-            add_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-        } else {
-            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
-            $missing_columns = array_diff($columns, $existing_columns);
-            foreach ($missing_columns as $missing_column) {
-                $wpdb->query("ALTER TABLE $table_name ADD COLUMN $missing_column");
+
+        foreach ($column_defs as $col => $def) {
+            if (!in_array($col, $columns)) {
+                $wpdb->query("ALTER TABLE {$table_name} ADD COLUMN $def");
             }
-            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
+        }
+
+        // UNIQUE KEY追加（存在チェック）
+        $indexes = $wpdb->get_results("SHOW INDEX FROM {$table_name}");
+        $has_unique_id = false;
+        foreach ($indexes as $idx) {
+            if ($idx->Key_name === 'id' && $idx->Non_unique == 0) {
+                $has_unique_id = true;
+                break;
+            }
+        }
+        // ALTER TABLE ... ADD UNIQUE (id) は既にUNIQUEがなければのみ実行
+        // ただし、UNIQUE KEYは「ADD COLUMN」ではなく「ADD UNIQUE」なので、重複エラー防止のため下記のように修正
+        if (!$has_unique_id) {
+            $wpdb->query("ALTER TABLE {$table_name} ADD UNIQUE (id)");
         }
     }
 
@@ -99,91 +120,33 @@ class Kantan_Supplier_Class {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
-        // POSTデーター受信
-        $data_id = $_POST['data_id'];
-        // その他のPOSTデータを受信...
-
-        // データIDが指定されているか確認
-        if (!empty($data_id)) {
-        // データが存在するか確認
-        $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE id = %d", $data_id));
-        if ($exists) {
-        // 既存のデータを更新
-        $wpdb->update(
-            $table_name,
-            array( /* 更新するデータの配列 */ ),
-            array('id' => $data_id) // 条件
-        );
-        } else {
-        // 新しいデータを追加
-        $wpdb->insert(
-            $table_name,
-            array( /* 追加するデータの配列 */ )
-        );
-        }
-        } else {
-        // $data_idが不適切な場合のエラーハンドリング
-        }
-
-        // データが0の場合、デフォルトデータを1つ作成する
-        $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
-        if($data_count == 0) {
-            $default_data = [
-                'time' => current_time('mysql'),
-                'name' => '',
-                'url' => '',
-                'company_name' => '初めての業者',
-                'representative_name' => '',
-                'email' => '',
-                'phone' => '',
-                'postal_code' => '',
-                'prefecture' => '',
-                'city' => '',
-                'address' => '',
-                'building' => '',
-                'closing_day' => '',
-                'payment_month' => '',
-                'payment_day' => '',
-                'payment_method' => '',
-                'tax_category' => '税込',
-                'memo' => '',
-                'search_field' => '',
-                'frequency' => 0,
-                'category' => '一般'
-            ];
-            $wpdb->insert($table_name, $default_data);
-            $data_id = $wpdb->insert_id;
-        if ($data_id != 0) {
-            // 作成したデータIDをクッキーに保存する
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
-        }
-        }
-
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
         // POSTデーター受信
-        $data_id = $_POST['data_id'];
-        $query_post = $_POST['query_post'];
-        $company_name = $_POST['company_name'];
-        $user_name = $_POST['user_name'];
-        $email = $_POST['email'];
-        $url = $_POST['url'];
-        $representative_name = $_POST['representative_name'];
-        $phone = $_POST['phone'];
-        $postal_code = $_POST['postal_code'];
-        $prefecture = $_POST['prefecture'];
-        $city = $_POST['city'];
-        $address = $_POST['address'];
-        $building = $_POST['building'];
-        $closing_day = $_POST['closing_day'];
-        $payment_month = $_POST['payment_month'];
-        $payment_day = $_POST['payment_day'];
-        $payment_method = $_POST['payment_method'];
-        $tax_category = $_POST['tax_category'];
-        $memo = $_POST['memo'];
-        $category = $_POST['category'];
+        $data_id = $_POST['data_id'] ?? '';
+        $query_post = $_POST['query_post'] ?? '';
+        $company_name = $_POST['company_name'] ?? '';
+        $user_name = $_POST['user_name'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $url = $_POST['url'] ?? '';
+        $representative_name = $_POST['representative_name'] ?? '';
+        $phone = $_POST['phone'] ?? '';
+        $postal_code = $_POST['postal_code'] ?? '';
+        $prefecture = $_POST['prefecture'] ?? '';
+        $city = $_POST['city'] ?? '';
+        $address = $_POST['address'] ?? '';
+        $building = $_POST['building'] ?? '';
+        $closing_day = $_POST['closing_day'] ?? '';
+        $payment_month = $_POST['payment_month'] ?? '';
+        $payment_day = $_POST['payment_day'] ?? '';
+        $payment_method = $_POST['payment_method'] ?? '';
+        $tax_category = $_POST['tax_category'] ?? '';
+        $memo = $_POST['memo'] ?? '';
+        $category = $_POST['category'] ?? '';
+        $page_stage = $_POST['page_stage'] ?? '';
+        $page_start = $_POST['page_start'] ?? '';
+        $flg = $_POST['flg'] ?? '';
         
         $search_field_value = implode(', ', [
             $data_id,
@@ -231,53 +194,24 @@ class Kantan_Supplier_Class {
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-            // データ削除後にデーターが0ならデフォルトデータを1つ作成する
-$data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
-
-            if($data_count == 0) {
-            $default_data = [
-                'time' => current_time('mysql'),
-                'name' => '',
-                'url' => '',
-                'company_name' => '初めての業者',
-                'representative_name' => '',
-                'email' => '',
-                'phone' => '',
-                'postal_code' => '',
-                'prefecture' => '',
-                'city' => '',
-                'address' => '',
-                'building' => '',
-                'closing_day' => '',
-                'payment_month' => '',
-                'payment_day' => '',
-                'payment_method' => '',
-                'tax_category' => '税込',
-                'memo' => '',
-                'search_field' => '',
-                'frequency' => 0,
-                'category' => '一般'
-            ];
-            $wpdb->insert($table_name, $default_data);
-            $data_id = $wpdb->insert_id;
-            if ($data_id != 0) {
-                // 作成したデータIDをクッキーに保存する
-                $cookie_name = 'ktp_' . $tab_name . '_id';
-                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
-}
+            // リダイレクト
+            // データ削除後に表示するデータIDを適切に設定
+            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
+            $next_id_result = $wpdb->get_row($next_id_query);
+            if ($next_id_result) {
+                $next_data_id = $next_id_result->id;
+            } else {
+                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
+                $prev_id_result = $wpdb->get_row($prev_id_query);
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
             }
-
-            // 最後のデータにリダイレクト
-            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_result = $wpdb->get_row($last_id_query);
-            if ($last_id_result) {
-                $last_id = $last_id_result->id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $last_id;
+            $cookie_name = 'ktp_' . $name . '_id';
+            $action = 'update';
+            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
+$cookie_name = 'ktp_' . $tab_name . '_id';
+            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
-}
-
             exit;
-
         }    
         
         // 更新
@@ -492,14 +426,13 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-                // 追加後に更新モードにしてリダイレクトしIDをクッキーに保存
-                $new_data_id = $wpdb->insert_id;
-                $action = 'update';
-                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header("Location: {$url}");
-                exit;
+            // 追加後に更新モードにする
+            // リダイレクト
+            $action = 'update';
+            $data_id = $wpdb->insert_id;
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            header("Location: {$url}");
+            exit;
             }
 
         }
@@ -566,6 +499,81 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
                 exit;
             }
         }
+        
+        // 
+        // 商品画像処理
+        // 
+
+        // 画像をアップロード
+        elseif ($query_post == 'upload_image') {
+
+
+            // 画像URLを取得
+            $image_processor = new Image_Processor();
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
+
+            // echo '$tab_name：'.$tab_name.'<br>$data_id：'.$data_id.'<br>$default_image_url：'.$default_image_url.'<br>$image_url：'.$image_url;
+            // exit;
+
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // echo $image_url;
+            // exit;
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+        }
+
+        // 画像削除：デフォルト画像に戻す
+        elseif ($query_post == 'delete_image') {
+
+            // デフォルト画像のURLを設定
+            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+
+            $wpdb->update(
+                $table_name,
+                array(
+                    'image_url' => $default_image_url
+                ),
+                array(
+                    'id' => $data_id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+
+            // リダイレクト
+            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            header("Location: {$url}");
+            exit;
+        }
+
+        // どの処理にも当てはまらない場合はロック解除
+        else {
+            // ロックを解除する
+            $wpdb->query("UNLOCK TABLES;");
+        }
 
 
     }
@@ -575,21 +583,13 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
     // テーブルの表示
     // -----------------------------
 
-    public function View_Table($tab_name = '') {
-        return <<<HTML
-        <h3>ここは [{$tab_name}] です。</h3>
-        協力会社のリストを表示します。
-        <table>
-            <tr><th>会社名</th><th>担当者</th><th>電話番号</th></tr>
-            <tr><td>ABC制作所</td><td>高橋</td><td>03-1234-5678</td></tr>
-            <tr><td>XYZ開発</td><td>伊藤</td><td>06-9876-5432</td></tr>
-        </table>
-        HTML;
-    }
-
-    function View_Table_Old( $name ) {
-
+    function View_Table( $name ) {
         global $wpdb;
+
+        // $search_results_listの使用前に初期化
+        if (!isset($search_results_list)) {
+            $search_results_list = '';
+        }
 
         // -----------------------------
         // リスト表示
@@ -614,9 +614,9 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
         END;
         
        // スタート位置を決める
-       $page_stage = $_GET['page_stage'];
-       $page_start = $_GET['page_start'];
-       $flg = $_GET['flg'];
+       $page_stage = $_GET['page_stage'] ?? '';
+       $page_start = $_GET['page_start'] ?? 0;
+       $flg = $_GET['flg'] ?? '';
        if ($page_stage == '') {
            $page_start = 0;
        }
@@ -783,10 +783,10 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
             '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税'], 'default' => '内税'],
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
-                'type' => 'select',
+                'type' => 'text',
                 'name' => 'category',
-                'options' => ['一般', '業者'],
-                'default' => '一般',
+                'options' => '一般',
+                'suggest' => true,
             ],
         ];
         
@@ -840,9 +840,6 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
                 $data_forms .= '<form method="post" action="">';
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                    if ($field['name'] === 'category') { // カテゴリーの値をデフォルトの「一般」に設定
-                        $value = '一般';
-                    }
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
                     $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
                     $fieldName = $field['name'];
@@ -870,7 +867,7 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
                 if( $action === 'istmode'){
                     // 追加実行ボタン
                     $action = 'insert';
-                    // $data_id = $data_id + 1;
+                    $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
@@ -972,6 +969,58 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
             $data_forms .= '</div>';
         }            
 
+        // 空のフォームを表示(検索モードの場合)
+        elseif ($action === 'srcmode') {
+
+            // 表題
+            $data_title = <<<END
+            <div class="data_detail_box">
+                <h3>■ 協力会社の詳細（ 検索モード ）</h3>
+            END;
+
+            // 検索フォームを生成
+            $data_forms = '<form method="post" action="">';
+            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
+               
+            // 検索リストを生成
+            $data_forms .= $search_results_list;
+
+            // ボタン<div>タグを追加
+            $data_forms .= "<div class='button'>";
+            
+            // 検索実行ボタン
+            $action = 'search';
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <button type='submit' name='send_post' title="検索実行">
+            <span class="material-symbols-outlined">
+            select_check_box
+            </span>
+            </button>
+            </form>
+            END;
+
+            // キャンセルボタン
+            $action = 'update';
+            $data_id = $data_id - 1;
+            $data_forms .= <<<END
+            <form method='post' action=''>
+            <input type='hidden' name='data_id' value=''>
+            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='data_id' value='$data_id'>
+            <button type='submit' name='send_post' title="キャンセル">
+            <span class="material-symbols-outlined">
+            disabled_by_default
+            </span>            
+            </button>
+            </form>
+            END;
+
+            $data_forms .= "<div class=\"add\">";
+            $data_forms .= '</div>';
+        }            
+
         // 追加・検索 以外なら更新フォームを表示
         elseif ($action !== 'srcmode' || $action !== 'istmode') {
 
@@ -1013,9 +1062,6 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
             } else {
                 $data_id = $last_id_row ? $last_id_row->id : Null;
             }
-
-            // URLからdata_idを取得、なければ、クッキーから取得
-            $data_id = isset($_GET['data_id']) ? $_GET['data_id'] : $_COOKIE[$cookie_name];
 
             // 表題
             $data_title = <<<END
@@ -1185,6 +1231,7 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
                 printWindow.document.open();
                 printWindow.document.write('<html><head><title>印刷</title></head><body>');
                 printWindow.document.write(printContent);
+                printWindow.document.write('<script>window.onafterprint = function(){ window.close(); }<\/script>');
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
                 printWindow.print();  // Add this line
@@ -1234,3 +1281,7 @@ $data_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
 }
 
+// $search_results_listの初期化
+if (!isset($search_results_list)) {
+    $search_results_list = '';
+}

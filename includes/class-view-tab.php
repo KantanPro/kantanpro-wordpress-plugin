@@ -38,33 +38,37 @@ class view_tabs_Class{
           $view .= "<input id=\"$key\" type=\"radio\" name=\"tab_item\"$checked>";
           $view .= "<label class=\"tab_item\"><a href=\"?tab_name=$key\">$value</a></label>";
         }
+
         $view .= <<<EOF
               <div class="tab_content" id="list_content">
-              $list_content
               <br />
               </div>
+EOF;
+        // タブ外に各タブ本体を出す
+        $view .= $list_content;
+        $view .= $order_content;
+        $view .= $client_content;
+        $view .= $service_content;
+        $view .= $supplier_content;
+        $view .= $report_content;
+        $view .= $setting_content;
+        $view .= <<<EOF
               <div class="tab_content" id="order_content">
-              $order_content
               <br />
               </div>
               <div class="tab_content" id="client_content">
-              $client_content
               <br />
               </div>
               <div class="tab_content" id="service_content">
-              $service_content
               <br />
               </div>
               <div class="tab_content" id="supplier_content">
-              $supplier_content
               <br />
               </div>
               <div class="tab_content" id="report_content">
-              $report_content
               <br />
               </div>
               <div class="tab_content" id="setting_content">
-              $setting_content
               <br />
               </div>
             </div>

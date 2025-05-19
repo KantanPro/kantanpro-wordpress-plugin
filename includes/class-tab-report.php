@@ -1,53 +1,79 @@
 <?php
 
-class Kantan_Report_Class {
+class Kntan_Report_Class {
 
-    public $name;
+    // public $name;
 
-    public function __construct($name = '') {
-        $this->name = $name;
+    public function __construct() {
+        // $this->name = 'report';
     }
-
+    
     function Report_Tab_View( $tab_name ) {
 
         
         // 表示する内容
+        // プレビュー用HTML（ダミー）
+        $preview_html = "<div><strong>レポートプレビュー（ダミー）</strong><br>ここは [{$tab_name}] です。</div>";
+        $preview_html_json = json_encode($preview_html);
+
         $content = <<<END
-        <h3>ここは [$tab_name] です。</h3>
+        <script>
+        var isReportPreviewOpen = false;
+        function printReportContent() {
+            var printContent = $preview_html_json;
+            var printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write('<html><head><title>印刷</title></head><body>');
+            printWindow.document.write(printContent);
+            printWindow.document.write('<script>window.onafterprint = function(){ window.close(); }<\/script>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+        function toggleReportPreview() {
+            var previewWindow = document.getElementById('reportPreviewWindow');
+            var previewButton = document.getElementById('reportPreviewButton');
+            if (isReportPreviewOpen) {
+                previewWindow.style.display = 'none';
+                previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
+                isReportPreviewOpen = false;
+            } else {
+                var printContent = $preview_html_json;
+                previewWindow.innerHTML = printContent;
+                previewWindow.style.display = 'block';
+                previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="閉じる">close</span>';
+                isReportPreviewOpen = true;
+            }
+        }
+        </script>
+        <div class="controller">
+            <div class="printer">
+                <div class="up-title">レポート：</div>
+                <button id="reportPreviewButton" onclick="toggleReportPreview()" title="プレビュー">
+                    <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
+                </button>
+                <button onclick="printReportContent()" title="印刷する">
+                    <span class="material-symbols-outlined" aria-label="印刷">print</span>
+                </button>
+            </div>
+        </div>
+        <div id="reportPreviewWindow" style="display: none;"></div>
         END;
-        // return $content;
 
         // 有効化を確認
         $activation_key = get_site_option( 'ktp_activation_key' );
         if ( empty( $activation_key ) ) {
             $content .= <<<END
-            カンタンProWPは有効化されていません。<br />
-            WordPressの管理画面で、設定→カンタンProWPで有効化キーを設定してください。<br />
-            売上などのレポートを表示できます。
+            各種統計データをレポートします。<br />
             END;
             return $content;
         } else {
             $content .= <<<END
-            <span style='color:red;'>カンタンProWPの有効化ありがとうございます！</span><br />
+            <span style='color:red;'>KTPWPの有効化ありがとうございます！</span><br />
             売上などのレポートを表示できます。<br />
             今、開発中なので、しばらくお待ちください。
             END;
             return $content;
         }
-    }
-
-    public function Create_Table($tab_name = '') {
-        return true;
-    }
-
-    public function View_Table($tab_name = '') {
-        return <<<HTML
-        <h3>ここは [{$tab_name}] です。</h3>
-        レポートの内容を表示します。
-        <ul>
-            <li>2025/05/01：月次売上レポート作成</li>
-            <li>2025/05/05：案件進捗レポート更新</li>
-        </ul>
-        HTML;
     }
 }

@@ -16,14 +16,23 @@ class Print_Class {
         $template_row = $wpdb->get_row("SELECT * FROM $table_name WHERE id = 1");
         $template = $template_row->template_content;
 
+        // $this->data から値を取得
+        $postal_code = $this->data['postal_code'] ?? '';
+        $prefecture = $this->data['prefecture'] ?? '';
+        $city = $this->data['city'] ?? '';
+        $address = $this->data['address'] ?? '';
+        $building = $this->data['building'] ?? '';
+        $customer = $this->data['customer'] ?? '';
+        $user_name = $this->data['user_name'] ?? '';
+
         $replacements = array(
-            '_%postal_code%_' => $this->data['postal_code'],
-            '_％prefecture％_' => $this->data['prefecture'],
-            '_％city％_' => $this->data['city'],
-            '_%address%_' => $this->data['address'],
-            '_%building%_' => $this->data['building'],
-            '_%customer%_' => $this->data['customer'],
-            '_%user_name%_' => $this->data['user_name']
+            '_%postal_code%_' => $postal_code,
+            '_%prefecture%_' => $prefecture,
+            '_%city%_' => $city,
+            '_%address%_' => $address,
+            '_%building%_' => $building,
+            '_%customer%_' => $customer,
+            '_%user_name%_' => $user_name
         );
 
         $html = strtr($template, $replacements);

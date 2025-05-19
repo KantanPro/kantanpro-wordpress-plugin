@@ -1,3 +1,117 @@
+/* 仕事リストタブ専用 全幅レイアウト */
+.work_list_box {
+  width: 100%;
+  max-width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: left;
+}
+@media screen and (max-width: 767px) {
+  .work_list_box {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    padding: 10px !important;
+  }
+  .work_list_box ul {
+    padding-left: 0;
+    margin: 0;
+  }
+  .work_list_box li {
+    font-size: 15px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
+    list-style: none;
+  }
+  .work_list_box a {
+    display: block;
+    color: #1976d2;
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .work_list_box a:hover {
+    text-decoration: underline;
+  }
+}
+/* 仕事リストタブのcontroller/printerをモバイルで全幅に */
+@media screen and (max-width: 767px) {
+  .controller,
+  .printer {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+/* 仕事リストタブ専用 レスポンシブ調整 */
+@media screen and (max-width: 767px) {
+  .data_list_box {
+    width: 100% !important;
+    float: none !important;
+    padding: 10px !important;
+    box-sizing: border-box;
+  }
+  .data_list_box ul {
+    padding-left: 0;
+    margin: 0;
+  }
+  .data_list_box li {
+    font-size: 15px;
+    padding: 8px 4px;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
+    list-style: none;
+  }
+  .data_list_box a {
+    display: block;
+    color: #1976d2;
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .data_list_box a:hover {
+    text-decoration: underline;
+  }
+}
+/* 伝票処理・レポートタブの内容を全幅に */
+.order_contents,
+#report_content,
+#order_content {
+  width: 100%;
+  max-width: 100%;
+  margin: 24px 0;
+}
+.order_contents .box {
+  background: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  padding: 16px;
+}
+.order_contents h4 {
+  margin-top: 0;
+  font-size: 1.1em;
+  color: #333;
+}
+.order-btn-box {
+  text-align: right;
+}
+.create-order-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 18px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.create-order-btn:hover {
+  background: #1565c0;
+}
 .user_icon{
   margin-top: 5px;
 }
@@ -178,7 +292,6 @@ input[name="tab_item"] {
 /*タブ切り替えの中身のスタイル*/
 .tab_content {
   display: none;
-  clear: both;
   overflow: auto;
   background-color: #fcfcfc;
 }
@@ -202,34 +315,24 @@ input[name="tab_item"] {
 
 /* モバイル表示時のタブスタイル */
 @media screen and (max-width: 768px) {
-  .tab_item {
-    width: 100%;
-    /* タブの幅を100%に設定 */
-    box-sizing: border-box;
-    /* ボックスサイズの計算方法を変更 */
-    border-bottom: none;
-    /* 下線を非表示に */
-    border-right: 1px solid #cdcccc;
-    /* 右側に境界線を追加 */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
-
-  /* 最後のタブの右側の境界線を非表示に */
-  .tab_item:last-child {
+  .tab_item {
+    width: 50%;
+    min-width: 50%;
+    box-sizing: border-box;
+    border-bottom: none;
+    border-right: 1px solid #cdcccc;
+    /* 2列に並べる */
+  }
+  .tab_item:nth-child(2n) {
     border-right: none;
   }
-
-  /* タブコンテンツのスタイル */
   .tab_content {
     clear: both;
-    /* クリアフィックス */
-  }
-}
-
-/* タブが縦に並ぶようにするための追加スタイル */
-@media screen and (max-width: 768px) {
-  .tabs {
-    display: block;
-    /* タブをブロック要素として表示 */
   }
 }
 
@@ -415,7 +518,6 @@ input[name="tab_item"] {
 #previewWindow img {
   max-width: 100%;
   height: auto;
-  display: block;
   margin: 0 auto;
 }
 
