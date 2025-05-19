@@ -2,7 +2,7 @@
 /*
 Plugin Name: KTPWP
 Description: 仕事のワークフローを管理するためのプラグインです。
-Version: 0.0.0beta
+Version: beta
 */
 
 if (!defined('ABSPATH')) {
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 
 // 定数を定義
 if (!defined('MY_PLUGIN_VERSION')) {
-    define('MY_PLUGIN_VERSION', '0.0.0beta'); // プラグインのバージョン
+    define('MY_PLUGIN_VERSION', 'beta'); // プラグインのバージョン
 }
 if (!defined('MY_PLUGIN_PATH')) {
     define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
