@@ -207,6 +207,15 @@ class Kntan_Order_Class{
                 END;
 
 
+                // 進捗ラベルを明示的に定義
+                $progress_labels = [
+                    1 => '受付中',
+                    2 => '見積中',
+                    3 => '作成中',
+                    4 => '完成未請求',
+                    5 => '請求済',
+                    6 => '入金済'
+                ];
                 $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
                 $content .= '<form method="post" action="" style="display:inline;">';
                 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
