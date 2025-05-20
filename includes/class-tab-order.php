@@ -22,6 +22,7 @@ class Kntan_Order_Class{
             "time BIGINT(11) DEFAULT '0' NOT NULL", // 作成日時
             "customer_name VARCHAR(100) NOT NULL", // 顧客名
             "user_name TINYTEXT", // 担当者名
+            "project_name VARCHAR(255)", // 案件名
             "progress TINYINT(1) NOT NULL DEFAULT 1", // 進捗状況 1:受付中 2:見積中 3:作成中 4:完成未請求 5:請求済 6:入金済
             "invoice_items TEXT", // 請求項目 (JSONまたはシリアライズされたデータ用)
             "cost_items TEXT", // コスト項目 (JSONまたはシリアライズされたデータ用)
@@ -71,6 +72,18 @@ class Kntan_Order_Class{
     function Order_Tab_View( $tab_name ) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
+        // 案件名の保存処理
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project_name_id'], $_POST['order_project_name'])) {
+            $update_id = intval($_POST['update_project_name_id']);
+            $project_name = sanitize_text_field($_POST['order_project_name']);
+            if ($update_id > 0) {
+                $wpdb->update($table_name, ['project_name' => $project_name], ['id' => $update_id]);
+                // POSTリダブミット防止のためリダイレクト
+                $redirect_url = $_SERVER['REQUEST_URI'];
+                header('Location: ' . $redirect_url);
+                exit;
+            }
+        }
         // 進捗更新処理（POST時）
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress_id'], $_POST['update_progress'])) {
             $update_id = intval($_POST['update_progress_id']);
@@ -194,12 +207,14 @@ class Kntan_Order_Class{
                 </script>
                 <div class="controller">
                     <div class="printer">
-                        <div class="up-title">伝票処理：</div>
                         <button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー">
                             <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
                         </button>
                         <button onclick="printOrderContent()" title="印刷する">
                             <span class="material-symbols-outlined" aria-label="印刷">print</span>
+                        </button>
+                        <button id="orderMailButton" title="メール">
+                            <span class="material-symbols-outlined" aria-label="メール">mail</span>
                         </button>
                     </div>
                 </div>
@@ -217,6 +232,14 @@ class Kntan_Order_Class{
                     6 => '入金済'
                 ];
                 $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
+                // 案件名入力欄（進捗の上に1行テキストボックス）
+                $project_name = isset($order_data->project_name) ? esc_html($order_data->project_name) : '';
+                $content .= '<form method="post" action="" style="margin-bottom:8px;">';
+                $content .= '<input type="hidden" name="update_project_name_id" value="' . esc_html($order_data->id) . '" />';
+                $content .= '<label for="order_project_name" style="margin-right:8px;">案件名</label>';
+                $content .= '<input type="text" id="order_project_name" name="order_project_name" value="' . $project_name . '" style="width:60%;max-width:320px;" placeholder="案件名を入力" />';
+                $content .= '<button type="submit" style="margin-left:8px;">保存</button>';
+                $content .= '</form>';
                 $content .= '<form method="post" action="" style="display:inline;">';
                 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
                 $content .= '<label for="order_progress_select">進捗：</label>';
