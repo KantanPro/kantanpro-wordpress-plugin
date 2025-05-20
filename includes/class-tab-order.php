@@ -69,6 +69,8 @@ class Kntan_Order_Class{
     }
 
     function Order_Tab_View( $tab_name ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
         // 進捗更新処理（POST時）
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress_id'], $_POST['update_progress'])) {
             $update_id = intval($_POST['update_progress_id']);
@@ -81,8 +83,6 @@ class Kntan_Order_Class{
                 exit;
             }
         }
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
 
         // 受注書テーブルが存在しない場合は作成
         $this->Create_Order_Table();

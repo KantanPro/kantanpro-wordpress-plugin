@@ -53,10 +53,10 @@ class Kantan_List_Class{
         $page_stage = isset($_GET['page_stage']) ? $_GET['page_stage'] : '';
         $page_start = isset($_GET['page_start']) ? intval($_GET['page_start']) : 0;
         $flg = isset($_GET['flg']) ? $_GET['flg'] : '';
+        $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
         if ($page_stage == '') {
             $page_start = 0;
         }
-        $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
         // 総件数取得
         $total_query = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE progress = %d", $selected_progress);
         $total_rows = $wpdb->get_var($total_query);
@@ -120,16 +120,22 @@ class Kantan_List_Class{
         }
         // --- ページネーション ---
         if ($total_pages > 1) {
+            // 現在のGETパラメータを維持
+            $base_params = $_GET;
+            $base_params['tab_name'] = $tab_name;
+            $base_params['page_stage'] = 2;
+            $base_params['flg'] = $flg;
+            $base_params['progress'] = $selected_progress;
             $content .= '<div class="pagination">';
             // 最初へ
             if ($current_page > 1) {
-                $first_start = 0;
-                $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&page_start=' . $first_start . '&page_stage=2&flg=' . $flg . '">|&lt;</a>';
+                $base_params['page_start'] = 0;
+                $content .= '<a href="?' . http_build_query($base_params) . '">|&lt;</a>';
             }
             // 前へ
             if ($current_page > 1) {
-                $prev_start = ($current_page - 2) * $query_limit;
-                $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&page_start=' . $prev_start . '&page_stage=2&flg=' . $flg . '">&lt;</a>';
+                $base_params['page_start'] = ($current_page - 2) * $query_limit;
+                $content .= '<a href="?' . http_build_query($base_params) . '">&lt;</a>';
             }
             // 現在のページ範囲表示と総数
             $page_end = min($total_rows, $current_page * $query_limit);
@@ -137,13 +143,13 @@ class Kantan_List_Class{
             $content .= "<div class='stage'> $page_start_display ~ $page_end / $total_rows</div>";
             // 次へ
             if ($current_page < $total_pages) {
-                $next_start = $current_page * $query_limit;
-                $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&page_start=' . $next_start . '&page_stage=2&flg=' . $flg . '">&gt;</a>';
+                $base_params['page_start'] = $current_page * $query_limit;
+                $content .= '<a href="?' . http_build_query($base_params) . '">&gt;</a>';
             }
             // 最後へ
             if ($current_page < $total_pages) {
-                $last_start = ($total_pages - 1) * $query_limit;
-                $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&page_start=' . $last_start . '&page_stage=2&flg=' . $flg . '">&gt;|</a>';
+                $base_params['page_start'] = ($total_pages - 1) * $query_limit;
+                $content .= '<a href="?' . http_build_query($base_params) . '">&gt;|</a>';
             }
             $content .= '</div>';
         }
