@@ -72,6 +72,82 @@ class Kntan_Order_Class{
     function Order_Tab_View( $tab_name ) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
+        $client_table = $wpdb->prefix . 'ktp_client'; // 顧客テーブル名
+
+        // メール送信処理
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_order_mail_id'])) {
+            $order_id = intval($_POST['send_order_mail_id']);
+            $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $order_id));
+            if ($order) {
+                // 顧客情報取得
+                $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE company_name = %s AND name = %s", $order->customer_name, $order->user_name));
+                $to = $client && !empty($client->email) ? $client->email : '';
+                if (empty($to)) {
+                    echo '<script>alert("得意先のメールアドレスが未入力です。顧客管理画面でメールアドレスを登録してください。");</script>';
+                } else {
+                    // 自社情報取得
+                    $setting_table = $wpdb->prefix . 'ktp_setting';
+                    $setting = $wpdb->get_row("SELECT * FROM {$setting_table} WHERE id = 1");
+                    $my_company = $setting ? strip_tags($setting->my_company_content) : '';
+                    $my_email = $setting ? $setting->email_address : '';
+                    $my_name = $my_company;
+
+                    // 請求項目リスト・金額（仮実装）
+                    $invoice_items = $order->invoice_items ? $order->invoice_items : '';
+                    $amount = '';
+                    if ($invoice_items) {
+                        $items = @json_decode($invoice_items, true);
+                        if (is_array($items)) {
+                            $amount = 0;
+                            foreach ($items as $item) {
+                                $amount += isset($item['amount']) ? (int)$item['amount'] : 0;
+                            }
+                            $invoice_list = "\n";
+                            foreach ($items as $item) {
+                                $invoice_list .= (isset($item['name']) ? $item['name'] : '') . '：' . (isset($item['amount']) ? $item['amount'] : '') . "円\n";
+                            }
+                        } else {
+                            $invoice_list = $invoice_items;
+                        }
+                    } else {
+                        $invoice_list = '（請求項目未入力）';
+                    }
+                    $amount_str = $amount ? number_format($amount) . '円' : '';
+
+                    // 進捗ごとに件名・本文
+                    $progress = (int)$order->progress;
+                    $project_name = $order->project_name ? $order->project_name : '';
+                    $customer_name = $order->customer_name;
+                    $user_name = $order->user_name;
+                    $body = $subject = '';
+                    if ($progress === 1) {
+                        $subject = "お見積り：{$project_name}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご依頼ありがとうございます。\n{$project_name}につきましてお見積させていただきます。\n\n＜お見積り＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                    } elseif ($progress === 2) {
+                        $subject = "ご注文ありがとうございます：{$project_name}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご注文頂きありがとうございます。\n{$project_name}につきまして対応させていただきます。\n\n＜ご注文内容＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                    } elseif ($progress === 3) {
+                        $subject = "現在お進めている{$project_name}につきまして質問です";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n現在お進めている{$project_name}につきまして質問させていただきます。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                    } elseif ($progress === 4) {
+                        $subject = "{$project_name}の請求書です";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                    } elseif ($progress === 5) {
+                        $subject = "{$project_name}のご入金を確認しました";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきましてご入金いただきありがとうございます。\n今後ともよろしくお願い申し上げます。\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                    }
+
+                    $headers = [];
+                    if ($my_email) $headers[] = 'From: ' . $my_email;
+                    $sent = wp_mail($to, $subject, $body, $headers);
+                    if ($sent) {
+                        echo '<script>alert("メールを送信しました。\n宛先: ' . esc_js($to) . '");</script>';
+                    } else {
+                        echo '<script>alert("メール送信に失敗しました。サーバー設定をご確認ください。");</script>';
+                    }
+                }
+            }
+        }
         // 案件名の保存処理
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project_name_id'], $_POST['order_project_name'])) {
             $update_id = intval($_POST['update_project_name_id']);
@@ -173,53 +249,75 @@ class Kntan_Order_Class{
                 $preview_html_json = json_encode($preview_html);
 
                 // プレビュー・印刷ボタンのJavaScriptとHTMLを先に生成
-                $content .= <<<END
-                <script>
-                var isOrderPreviewOpen = false;
-                function printOrderContent() {
-                    var printContent = $preview_html_json;
-                    var printWindow = window.open('', '_blank');
-                    printWindow.document.open();
-                    printWindow.document.write('<html><head><title>印刷</title></head><body>');
-                    printWindow.document.write(printContent);
-                    printWindow.document.write('<script>window.onafterprint = function(){ window.close(); }<\/script>');
-                    printWindow.document.write('</body></html>');
-                    printWindow.document.close();
-                    printWindow.print();
-                }
-                function toggleOrderPreview() {
-                    var previewWindow = document.getElementById('orderPreviewWindow');
-                    var previewButton = document.getElementById('orderPreviewButton');
-                    if (isOrderPreviewOpen) {
-                        previewWindow.style.display = 'none';
-                        previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
-                        isOrderPreviewOpen = false;
-                        return; // 得意先タブに合わせてreturnを追加
-                    } else {
-                        var printContent = $preview_html_json;
-                        previewWindow.innerHTML = printContent;
-                        previewWindow.style.display = 'block';
-                        previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="閉じる">close</span>';
-                        isOrderPreviewOpen = true;
-                        return; // 得意先タブに合わせてreturnを追加
-                    }
-                }
-                </script>
-                <div class="controller">
-                    <div class="printer">
-                        <button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー">
-                            <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
-                        </button>
-                        <button onclick="printOrderContent()" title="印刷する">
-                            <span class="material-symbols-outlined" aria-label="印刷">print</span>
-                        </button>
-                        <button id="orderMailButton" title="メール">
-                            <span class="material-symbols-outlined" aria-label="メール">mail</span>
-                        </button>
-                    </div>
-                </div>
-                <div id="orderPreviewWindow" style="display: none;"></div>
-                END;
+                $content .= '<script>';
+                $content .= 'var isOrderPreviewOpen = false;';
+                $content .= 'function printOrderContent() {';
+                $content .= '    var printContent = ' . $preview_html_json . ';';
+                $content .= '    var printWindow = window.open("", "_blank");';
+                $content .= '    printWindow.document.open();';
+                $content .= '    printWindow.document.write("<html><head><title>印刷</title></head><body>");';
+                $content .= '    printWindow.document.write(printContent);';
+                $content .= '    printWindow.document.write("<script>window.onafterprint = function(){ window.close(); }<\\/script>");';
+                $content .= '    printWindow.document.write("</body></html>");';
+                $content .= '    printWindow.document.close();';
+                $content .= '    printWindow.print();';
+                $content .= '}';
+                $content .= 'function toggleOrderPreview() {';
+                $content .= '    var previewWindow = document.getElementById("orderPreviewWindow");';
+                $content .= '    var previewButton = document.getElementById("orderPreviewButton");';
+                $content .= '    if (isOrderPreviewOpen) {';
+                $content .= '        previewWindow.style.display = "none";';
+                $content .= '        previewButton.innerHTML = "<span class=\"material-symbols-outlined\" aria-label=\"プレビュー\">preview</span>";';
+                $content .= '        isOrderPreviewOpen = false;';
+                $content .= '        return;';
+                $content .= '    } else {';
+                $content .= '        var printContent = ' . $preview_html_json . ';';
+                $content .= '        previewWindow.innerHTML = printContent;';
+                $content .= '        previewWindow.style.display = "block";';
+                $content .= '        previewButton.innerHTML = "<span class=\"material-symbols-outlined\" aria-label=\"閉じる\">close</span>";';
+                $content .= '        isOrderPreviewOpen = true;';
+                $content .= '        return;';
+                $content .= '    }';
+                $content .= '}';
+                $content .= '</script>';
+
+                $content .= '<div class="controller">';
+                $content .= '<div class="printer">';
+                $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー">';
+                $content .= '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
+                $content .= '</button>';
+                $content .= '<button onclick="printOrderContent()" title="印刷する">';
+                $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
+                $content .= '</button>';
+                $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;">';
+                $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
+                $content .= '<button type="submit" id="orderMailButton" title="メール">';
+                $content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
+                $content .= '</button>';
+                $content .= '</form>';
+                $content .= '</div>';
+                $content .= '</div>';
+                $content .= '<div id="orderPreviewWindow" style="display: none;"></div>';
+                // JSで質問内容入力プロンプト（進捗3のみ）
+                $content .= '<script>';
+                $content .= 'document.addEventListener("DOMContentLoaded", function() {';
+                $content .= '    var mailForm = document.getElementById("orderMailForm");';
+                $content .= '    if (mailForm) {';
+                $content .= '        mailForm.addEventListener("submit", function(e) {';
+                $content .= '            var progress = ' . (int)$order_data->progress . ';';
+                $content .= '            if (progress === 3) {';
+                $content .= '                var question = prompt("質問内容を入力してください。\n（メール本文に挿入されます）");';
+                $content .= '                if (question === null) { e.preventDefault(); return false; }';
+                $content .= '                var hidden = document.createElement("input");';
+                $content .= '                hidden.type = "hidden";';
+                $content .= '                hidden.name = "order_question";';
+                $content .= '                hidden.value = question;';
+                $content .= '                mailForm.appendChild(hidden);';
+                $content .= '            }';
+                $content .= '        });';
+                $content .= '    }';
+                $content .= '});';
+                $content .= '</script>';
 
 
                 // 進捗ラベルを明示的に定義
@@ -250,7 +348,18 @@ class Kntan_Order_Class{
                 $content .= '<div class="order_info_box box">';
                 $content .= '<h4>■ 受注書概要</h4>';
                 $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span></div>';
-                $content .= '<div>担当者名：<span id="order_user_name">' . esc_html($order_data->user_name) . '</span></div>';
+                // 担当者名の横に得意先メールアドレスのmailtoリンク（あれば）
+                $client_email = '';
+                $client = $wpdb->get_row($wpdb->prepare("SELECT email FROM {$client_table} WHERE company_name = %s AND name = %s", $order_data->customer_name, $order_data->user_name));
+                if ($client && !empty($client->email)) {
+                    $client_email = esc_attr($client->email);
+                    $content .= '<div>担当者名：<span id="order_user_name">' . esc_html($order_data->user_name) . '</span>';
+                    $content .= ' <a href="mailto:' . $client_email . '" style="margin-left:8px;vertical-align:middle;" title="メール送信">';
+                    $content .= '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;color:#2196f3;">mail</span>';
+                    $content .= '</a></div>';
+                } else {
+                    $content .= '<div>担当者名：<span id="order_user_name">' . esc_html($order_data->user_name) . '</span></div>';
+                }
                 // 作成日時の表示
                 $raw_time = $order_data->time;
                 $formatted_time = '';
