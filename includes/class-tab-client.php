@@ -777,12 +777,28 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
-        // 受注書作成ボタン追加
-        $data_forms .= '<div class="order-btn-box" style="margin:16px 0;">';
-        $data_forms .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
-        $data_forms .= '<button type="submit" class="create-order-btn">受注書作成</button>';
-        $data_forms .= '</form>';
-        $data_forms .= '</div>';
+
+        // controllerブロックを必ず先頭に追加
+        $controller_html = '<div class="controller">'
+            . '<div class="printer">'
+            . '<div class="up-title">宛名印刷：</div>'
+            . '<button id="previewButton" onclick="togglePreview()" title="プレビュー">'
+            . '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>'
+            . '</button>'
+            . '<button onclick="printContent()" title="印刷する">'
+            . '<span class="material-symbols-outlined" aria-label="印刷">print</span>'
+            . '</button>'
+            . '</div>'
+            . '</div>';
+
+        // 受注書作成ボタンはoperationブロックに分離
+        $operation_html = '<div class="operation">';
+        $operation_html .= '<div class="order-btn-box" style="margin:16px 0;">';
+        $operation_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
+        $operation_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
+        $operation_html .= '</form>';
+        $operation_html .= '</div>';
+        $operation_html .= '</div>';
 
         // データー量を取得
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
@@ -1200,22 +1216,13 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             // }
 
         </script>
-        <div class="controller">
-            <div class="printer">
-                <div class="up-title">宛名印刷：</div>
-                <button id="previewButton" onclick="togglePreview()" title="プレビュー">
-                    <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
-                </button>
-                <button onclick="printContent()" title="印刷する">
-                    <span class="material-symbols-outlined" aria-label="印刷">print</span>
-                </button>
-            </div>
-        </div>
         <div id="previewWindow" style="display: none;"></div>
         END;
 
         // コンテンツを返す
-        $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        // controller, operation（受注書作成ボタン）を$print直後に追加
+        // controller_html, operation_htmlが重複しないようにcontroller_htmlは1回のみ出力
+        $content = $print . $controller_html . $operation_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
     }

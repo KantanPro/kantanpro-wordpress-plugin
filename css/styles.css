@@ -1,3 +1,11 @@
+/* operation（得意先タブ上部の操作ボタン用） */
+.operation {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0 0 8px 0;
+  padding: 0 10px;
+}
 /* 進捗フィルタボタン */
 .progress-filter {
   margin: 10px 0;
