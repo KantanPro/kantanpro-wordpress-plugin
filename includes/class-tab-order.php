@@ -22,6 +22,7 @@ class Kntan_Order_Class{
             "time BIGINT(11) DEFAULT '0' NOT NULL", // 作成日時
             "customer_name VARCHAR(100) NOT NULL", // 顧客名
             "user_name TINYTEXT", // 担当者名
+            "progress TINYINT(1) NOT NULL DEFAULT 1", // 進捗状況 1:受付中 2:見積中 3:作成中 4:完成未請求 5:請求済 6:入金済
             "invoice_items TEXT", // 請求項目 (JSONまたはシリアライズされたデータ用)
             "cost_items TEXT", // コスト項目 (JSONまたはシリアライズされたデータ用)
             "memo TEXT", // メモ
@@ -68,6 +69,18 @@ class Kntan_Order_Class{
     }
 
     function Order_Tab_View( $tab_name ) {
+        // 進捗更新処理（POST時）
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress_id'], $_POST['update_progress'])) {
+            $update_id = intval($_POST['update_progress_id']);
+            $update_progress = intval($_POST['update_progress']);
+            if ($update_id > 0 && $update_progress >= 1 && $update_progress <= 6) {
+                $wpdb->update($table_name, ['progress' => $update_progress], ['id' => $update_id]);
+                // リダイレクトで再読み込み（POSTリダブミット防止）
+                $redirect_url = $_SERVER['REQUEST_URI'];
+                header('Location: ' . $redirect_url);
+                exit;
+            }
+        }
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
 
@@ -192,6 +205,28 @@ class Kntan_Order_Class{
                 </div>
                 <div id="orderPreviewWindow" style="display: none;"></div>
                 END;
+
+                // 進捗プルダウン
+                $progress_labels = [
+                    1 => '受付中',
+                    2 => '見積中',
+                    3 => '作成中',
+                    4 => '完成未請求',
+                    5 => '請求済',
+                    6 => '入金済'
+                ];
+                $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
+                $content .= '<form method="post" action="" style="display:inline;">';
+                $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
+                $content .= '<label for="order_progress_select">進捗：</label>';
+                $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()">';
+                foreach ($progress_labels as $num => $label) {
+                    $selected = ($order_data->progress == $num) ? 'selected' : '';
+                    $content .= '<option value="' . $num . '" ' . $selected . '>' . $label . '</option>';
+                }
+                $content .= '</select>';
+                $content .= '</form>';
+                $content .= '</div>';
 
                 // 受注書詳細の表示（以前のレイアウト）
                 $content .= '<div class="order_contents">';

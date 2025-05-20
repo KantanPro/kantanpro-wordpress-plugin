@@ -23,7 +23,27 @@ class Kantan_List_Class{
         $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
         $content .= '</button>';
         $content .= '</div>'; // .printer 終了
+
+        // 進捗状況ボタン
+        $progress_labels = [
+            1 => '受付中',
+            2 => '見積中',
+            3 => '作成中',
+            4 => '完成未請求',
+            5 => '請求済'
+        ];
+        $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
         $content .= '</div>'; // .controller 終了
+
+        // 進捗ボタンを全幅で表示するworkflowエリア
+        $content .= '<div class="workflow" style="width:100%;margin:10px 0 20px 0;">';
+        $content .= '<div class="progress-filter" style="display:flex;gap:8px;width:100%;justify-content:center;">';
+        foreach ($progress_labels as $num => $label) {
+            $active = ($selected_progress === $num) ? 'style=\"font-weight:bold;background:#1976d2;color:#fff;\"' : '';
+            $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $label . '</a>';
+        }
+        $content .= '</div>';
+        $content .= '</div>';
 
         // 受注書リスト表示
         // $content .= '<h3>■ 受注書リスト</h3>';
@@ -36,36 +56,67 @@ class Kantan_List_Class{
         if ($page_stage == '') {
             $page_start = 0;
         }
-        $query_range = $page_start . ',' . $query_limit;
-
+        $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
         // 総件数取得
-        $total_query = "SELECT COUNT(*) FROM {$table_name}";
+        $total_query = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE progress = %d", $selected_progress);
         $total_rows = $wpdb->get_var($total_query);
         $total_pages = ceil($total_rows / $query_limit);
         $current_page = floor($page_start / $query_limit) + 1;
-
         // データ取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY time DESC LIMIT %d, %d", $page_start, $query_limit);
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE progress = %d ORDER BY time DESC LIMIT %d, %d", $selected_progress, $page_start, $query_limit);
         $order_list = $wpdb->get_results($query);
 
         // --- ここからラッパー追加 ---
         $content .= '<div class="work_list_box">';
         if ($order_list) {
+            // 進捗ラベル
+            $progress_labels = [
+                1 => '受付中',
+                2 => '見積中',
+                3 => '作成中',
+                4 => '完成未請求',
+                5 => '請求済',
+                6 => '入金済'
+            ];
             $content .= '<ul>';
             foreach ($order_list as $order) {
                 $order_id = esc_html($order->id);
                 $customer_name = esc_html($order->customer_name);
                 $user_name = esc_html($order->user_name);
                 $time = esc_html($order->time);
-
-                // 受注書詳細（伝票処理タブ）へのリンク
+                $progress = intval($order->progress);
                 $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
 
-                $content .= "<li><a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name}) - {$time}</a></li>";
+                // プルダウンフォーム
+                $content .= "<li style='display:flex;align-items:center;gap:8px;'>";
+                $content .= "<a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name}) - {$time}</a>";
+                $content .= "<form method='post' action='' style='margin:0;display:inline;'>";
+                $content .= "<input type='hidden' name='update_progress_id' value='{$order_id}' />";
+                $content .= "<select name='update_progress' onchange='this.form.submit()' style='margin-left:8px;'>";
+                foreach ($progress_labels as $num => $label) {
+                    if ($num == 6) continue; // 入金済はリストで管理しない
+                    $selected = ($progress === $num) ? 'selected' : '';
+                    $content .= "<option value='{$num}' {$selected}>{$label}</option>";
+                }
+                $content .= "</select>";
+                $content .= "</form>";
+                $content .= "</li>";
             }
             $content .= '</ul>';
         } else {
             $content .= '<p>受注書データがありません。</p>';
+        }
+        // 進捗更新処理
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress_id'], $_POST['update_progress'])) {
+            $update_id = intval($_POST['update_progress_id']);
+            $update_progress = intval($_POST['update_progress']);
+            if ($update_id > 0 && $update_progress >= 1 && $update_progress <= 6) {
+                $wpdb->update($table_name, ['progress' => $update_progress], ['id' => $update_id]);
+                // リダイレクトで再読み込み（POSTリダブミット防止）
+                $redirect_url = $_SERVER['REQUEST_URI'];
+                header('Location: ' . $redirect_url);
+                exit;
+            }
         }
         // --- ページネーション ---
         if ($total_pages > 1) {
