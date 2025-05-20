@@ -210,33 +210,33 @@ class Kntan_Setting_Class {
         // 自社情報を表示
         $my_company_info = '<div id="MyCompany" class="tabcontent" style="display:none;">';
 
-        // DBから自社コンテンツを読み込む
+
+        // DBから自社情報・メールアドレスを取得
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $my_company_content = $wpdb->get_var( "SELECT my_company_content FROM $table_name" );
+        $email_address = $wpdb->get_var( "SELECT email_address FROM $table_name" );
 
-
-        if ( isset( $_POST['my_company_content'] ) ) {
-            $new_my_company_content = $_POST['my_company_content'];
-
-            // エスケープ処理を追加
-            $new_my_company_content = stripslashes($new_my_company_content);
-
-            // 全角スペースを半角スペースに変換する処理を追加
-            // $new_my_company_content = str_replace("　", " ", $new_my_company_content);
+        // 保存処理
+        if ( isset( $_POST['my_company_content'] ) || isset($_POST['email_address']) ) {
+            $new_my_company_content = isset($_POST['my_company_content']) ? stripslashes($_POST['my_company_content']) : $my_company_content;
+            $new_email_address = isset($_POST['email_address']) ? sanitize_email($_POST['email_address']) : $email_address;
 
             // DBへの保存
             $result = $wpdb->update(
                 $table_name,
-                array('my_company_content' => $new_my_company_content),
-                array('id' => 1) 
+                array(
+                    'my_company_content' => $new_my_company_content,
+                    'email_address' => $new_email_address
+                ),
+                array('id' => 1)
             );
-
-            // データの更新が成功したかどうかを確認
             if ($result === false) {
                 die('Error: データーベースの更新に失敗しました。');
             }
-
+            // 保存後はリロード
+            header("Location: ". $_SERVER['REQUEST_URI']);
+            exit;
         }
 
         // ビジュアルエディターを表示（自社情報）
@@ -260,13 +260,13 @@ class Kntan_Setting_Class {
         $my_company_info .= '<div class="atena_contents">';
         $my_company_info .= '<div class="data_list_box">';
 
-        // // フォームの出現前にactive_tab＝MyCompanyをクッキーに保存
-        // setcookie('active_tab', 'MyCompany');
-        // $active_tab = 'MyCompany';
-        
-        // ビジュアルエディターを表示（自社情報）
+        // 入力フォーム
         $my_company_info .= <<<END
         <form method="post" action="">
+        <div style="margin-bottom:12px;">
+            <label for="email_address"><b>自社メールアドレス</b>：</label>
+            <input type="email" id="email_address" name="email_address" value="{$email_address}" style="width:320px;max-width:100%;" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" placeholder="info@example.com">
+        </div>
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
@@ -278,17 +278,17 @@ class Kntan_Setting_Class {
         </form>
         <script>
             function togglePreview() {
-                // Set the cookie 'active_tab' to 'MyCompany'
                 document.cookie = "active_tab=MyCompany";
             }
         </script>
         END;
         $my_company_info .= '</div>';
-        
+
         // 自社情報のプレビュー
         $my_company_info .= <<<END
         <div class="data_detail_box">
-        $my_company_content
+        <div><b>現在の自社メールアドレス：</b> <span style="color:#0073aa;">{$email_address}</span></div>
+        <div style="margin-top:8px;">{$my_company_content}</div>
         </div>
         END;
         $my_company_info .= '</div>';
