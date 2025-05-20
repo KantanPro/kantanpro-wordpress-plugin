@@ -33,6 +33,13 @@ class Kantan_List_Class{
             5 => '請求済'
         ];
         $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
+
+        // 各進捗ごとの件数を取得
+        $progress_counts = [];
+        foreach ($progress_labels as $num => $label) {
+            $progress_counts[$num] = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE progress = %d", $num));
+        }
+
         $content .= '</div>'; // .controller 終了
 
         // 進捗ボタンを全幅で表示するworkflowエリア
@@ -40,7 +47,8 @@ class Kantan_List_Class{
         $content .= '<div class="progress-filter" style="display:flex;gap:8px;width:100%;justify-content:center;">';
         foreach ($progress_labels as $num => $label) {
             $active = ($selected_progress === $num) ? 'style=\"font-weight:bold;background:#1976d2;color:#fff;\"' : '';
-            $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $label . '</a>';
+            $btn_label = $label . ' (' . $progress_counts[$num] . ')';
+            $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
         }
         $content .= '</div>';
         $content .= '</div>';
