@@ -232,14 +232,7 @@ class Kntan_Order_Class{
                     6 => '入金済'
                 ];
                 $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
-                // 案件名入力欄（進捗の上に1行テキストボックス）
-                $project_name = isset($order_data->project_name) ? esc_html($order_data->project_name) : '';
-                $content .= '<form method="post" action="" style="margin-bottom:8px;">';
-                $content .= '<input type="hidden" name="update_project_name_id" value="' . esc_html($order_data->id) . '" />';
-                $content .= '<label for="order_project_name" style="margin-right:8px;">案件名</label>';
-                $content .= '<input type="text" id="order_project_name" name="order_project_name" value="' . $project_name . '" style="width:60%;max-width:320px;" placeholder="案件名を入力" />';
-                $content .= '<button type="submit" style="margin-left:8px;">保存</button>';
-                $content .= '</form>';
+                // 案件名入力欄は order_info_box 内に移動
                 $content .= '<form method="post" action="" style="display:inline;">';
                 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
                 $content .= '<label for="order_progress_select">進捗：</label>';
@@ -255,9 +248,35 @@ class Kntan_Order_Class{
                 // 受注書詳細の表示（以前のレイアウト）
                 $content .= '<div class="order_contents">';
                 $content .= '<div class="order_info_box box">';
-                $content .= '<h4>■ 得意先情報</h4>';
+                $content .= '<h4>■ 受注書概要</h4>';
                 $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span></div>';
                 $content .= '<div>担当者名：<span id="order_user_name">' . esc_html($order_data->user_name) . '</span></div>';
+                // 作成日時の表示
+                $raw_time = $order_data->time;
+                $formatted_time = '';
+                if (!empty($raw_time)) {
+                    if (is_numeric($raw_time) && strlen($raw_time) >= 10) {
+                        $timestamp = (int)$raw_time;
+                        $dt = new DateTime('@' . $timestamp);
+                        $dt->setTimezone(new DateTimeZone('Asia/Tokyo'));
+                    } else {
+                        $dt = date_create($raw_time, new DateTimeZone('Asia/Tokyo'));
+                    }
+                    if ($dt) {
+                        $week = ['日','月','火','水','木','金','土'];
+                        $w = $dt->format('w');
+                        $formatted_time = $dt->format('Y/n/j') . '（' . $week[$w] . '）' . $dt->format(' H:i');
+                    }
+                }
+                $content .= '<div>作成日時：<span id="order_created_time">' . esc_html($formatted_time) . '</span></div>';
+                // 案件名入力欄をここに移動
+                $project_name = isset($order_data->project_name) ? esc_html($order_data->project_name) : '';
+                $content .= '<form method="post" action="" style="margin:8px 0;">';
+                $content .= '<input type="hidden" name="update_project_name_id" value="' . esc_html($order_data->id) . '" />';
+                $content .= '<label for="order_project_name" style="margin-right:8px;">案件名</label>';
+                $content .= '<input type="text" id="order_project_name" name="order_project_name" value="' . $project_name . '" style="width:60%;max-width:320px;" placeholder="案件名を入力" />';
+                $content .= '<button type="submit" style="margin-left:8px;">保存</button>';
+                $content .= '</form>';
                 $content .= '</div>'; // .order_info_box 終了
 
                 $content .= '<div class="order_invoice_box box">';

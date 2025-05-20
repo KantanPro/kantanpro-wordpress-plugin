@@ -91,13 +91,38 @@ class Kantan_List_Class{
                 $order_id = esc_html($order->id);
                 $customer_name = esc_html($order->customer_name);
                 $user_name = esc_html($order->user_name);
-                $time = esc_html($order->time);
+                $project_name = isset($order->project_name) ? esc_html($order->project_name) : '';
+                // 日時フォーマット変換
+                $raw_time = $order->time;
+                $formatted_time = '';
+                if (!empty($raw_time)) {
+                    // UNIXタイムスタンプかMySQL日付か判定
+                    if (is_numeric($raw_time) && strlen($raw_time) >= 10) {
+                        // UNIXタイムスタンプ（秒単位）
+                        $timestamp = (int)$raw_time;
+                        $dt = new DateTime('@' . $timestamp);
+                        $dt->setTimezone(new DateTimeZone('Asia/Tokyo'));
+                    } else {
+                        // MySQL DATETIME形式
+                        $dt = date_create($raw_time, new DateTimeZone('Asia/Tokyo'));
+                    }
+                    if ($dt) {
+                        $week = ['日','月','火','水','木','金','土'];
+                        $w = $dt->format('w');
+                        $formatted_time = $dt->format('n/j') . '（' . $week[$w] . '）' . $dt->format(' H:i');
+                    }
+                }
+                $time = esc_html($formatted_time);
                 $progress = intval($order->progress);
                 $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
 
                 // プルダウンフォーム
                 $content .= "<li style='display:flex;align-items:center;gap:8px;'>";
-                $content .= "<a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name}) - {$time}</a>";
+                $content .= "<a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name})";
+                if ($project_name !== '') {
+                    $content .= " - <span class='project_name'>{$project_name}</span>";
+                }
+                $content .= " - {$time}</a>";
                 $content .= "<form method='post' action='' style='margin:0;display:inline;'>";
                 $content .= "<input type='hidden' name='update_progress_id' value='{$order_id}' />";
                 $content .= "<select name='update_progress' onchange='this.form.submit()' style='margin-left:8px;'>";
