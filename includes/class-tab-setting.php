@@ -1,4 +1,38 @@
+
 <?php
+// SMTP設定をWordPressのメール送信に反映（エラー非表示）
+add_action('phpmailer_init', function($phpmailer) {
+    try {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_setting';
+        if (!$wpdb->get_var("SHOW TABLES LIKE '$table_name'")) return;
+        $smtp_host = $wpdb->get_var("SELECT smtp_host FROM $table_name WHERE id = 1");
+        $smtp_port = $wpdb->get_var("SELECT smtp_port FROM $table_name WHERE id = 1");
+        $smtp_user = $wpdb->get_var("SELECT smtp_user FROM $table_name WHERE id = 1");
+        $smtp_pass = $wpdb->get_var("SELECT smtp_pass FROM $table_name WHERE id = 1");
+        $smtp_secure = $wpdb->get_var("SELECT smtp_secure FROM $table_name WHERE id = 1");
+        $from_name = $wpdb->get_var("SELECT smtp_from_name FROM $table_name WHERE id = 1");
+        $from_email = $wpdb->get_var("SELECT email_address FROM $table_name WHERE id = 1");
+        if ($smtp_host && $smtp_port && $smtp_user && $smtp_pass) {
+            $phpmailer->isSMTP();
+            $phpmailer->Host = $smtp_host;
+            $phpmailer->Port = $smtp_port;
+            $phpmailer->SMTPAuth = true;
+            $phpmailer->Username = $smtp_user;
+            $phpmailer->Password = $smtp_pass;
+            if ($smtp_secure) {
+                $phpmailer->SMTPSecure = $smtp_secure;
+            }
+            $phpmailer->CharSet = 'UTF-8';
+            // 送信者名・送信元アドレスを明示的にセット
+            if ($from_email) {
+                $phpmailer->setFrom($from_email, $from_name ?: $from_email, false);
+            }
+        }
+    } catch (Throwable $e) {
+        error_log($e->getMessage()); // エラー内容をログに出力
+    }
+});
 
 class Kntan_Setting_Class {
 
@@ -212,29 +246,77 @@ class Kntan_Setting_Class {
 
 
         // DBから自社情報・メールアドレスを取得
+
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $my_company_content = $wpdb->get_var( "SELECT my_company_content FROM $table_name" );
         $email_address = $wpdb->get_var( "SELECT email_address FROM $table_name" );
+        // SMTP設定取得
+        $smtp_host = $wpdb->get_var("SELECT smtp_host FROM $table_name");
+        $smtp_port = $wpdb->get_var("SELECT smtp_port FROM $table_name");
+        $smtp_user = $wpdb->get_var("SELECT smtp_user FROM $table_name");
+        $smtp_pass = $wpdb->get_var("SELECT smtp_pass FROM $table_name");
+        $smtp_secure = $wpdb->get_var("SELECT smtp_secure FROM $table_name");
+        $smtp_from_name = $wpdb->get_var("SELECT smtp_from_name FROM $table_name");
+
+        // テストメール送信処理
+        $test_mail_result = '';
+        if (isset($_POST['send_test_mail'])) {
+            $to = $email_address;
+            $subject = '【KTPWP】SMTPテストメール';
+            $body = "このメールはKTPWPプラグインのSMTPテスト送信です。\n\n送信元: $email_address";
+            $headers = [];
+            if ($smtp_from_name) {
+                $headers[] = 'From: ' . $smtp_from_name . ' <' . $email_address . '>';
+            } else {
+                $headers[] = 'From: ' . $email_address;
+            }
+            $sent = wp_mail($to, $subject, $body, $headers);
+            if ($sent) {
+                $test_mail_result = '<div class="updated" style="background:#e6ffed;color:#155724;border:1px solid #c3e6cb;padding:12px 20px;margin:20px 0 8px 0;border-radius:6px;font-size:16px;max-width:480px;">テストメールを送信しました。メールボックスをご確認ください。</div>';
+            } else {
+                // PHPMailerのエラー情報を取得してログ出力
+                global $phpmailer;
+                if (isset($phpmailer) && is_object($phpmailer)) {
+                    error_log('KTPWP SMTPテストメール送信失敗: ' . $phpmailer->ErrorInfo);
+                } else {
+                    error_log('KTPWP SMTPテストメール送信失敗: PHPMailerインスタンスが取得できませんでした');
+                }
+                $test_mail_result = '<div class="error" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;padding:12px 20px;margin:20px 0 8px 0;border-radius:6px;font-size:16px;max-width:480px;">テストメールの送信に失敗しました。SMTP設定をご確認ください。</div>';
+            }
+        }
 
         // 保存処理
-        if ( isset( $_POST['my_company_content'] ) || isset($_POST['email_address']) ) {
+        if (
+            isset($_POST['my_company_content']) || isset($_POST['email_address']) ||
+            isset($_POST['smtp_host']) || isset($_POST['smtp_port']) || isset($_POST['smtp_user']) || isset($_POST['smtp_pass']) || isset($_POST['smtp_secure']) || isset($_POST['smtp_from_name'])
+        ) {
             $new_my_company_content = isset($_POST['my_company_content']) ? stripslashes($_POST['my_company_content']) : $my_company_content;
             $new_email_address = isset($_POST['email_address']) ? sanitize_email($_POST['email_address']) : $email_address;
+            $new_smtp_host = isset($_POST['smtp_host']) ? sanitize_text_field($_POST['smtp_host']) : $smtp_host;
+            $new_smtp_port = isset($_POST['smtp_port']) ? sanitize_text_field($_POST['smtp_port']) : $smtp_port;
+            $new_smtp_user = isset($_POST['smtp_user']) ? sanitize_text_field($_POST['smtp_user']) : $smtp_user;
+            $new_smtp_pass = isset($_POST['smtp_pass']) ? $_POST['smtp_pass'] : $smtp_pass;
+            $new_smtp_secure = isset($_POST['smtp_secure']) ? sanitize_text_field($_POST['smtp_secure']) : $smtp_secure;
+            $new_smtp_from_name = isset($_POST['smtp_from_name']) ? sanitize_text_field($_POST['smtp_from_name']) : $smtp_from_name;
 
-            // DBへの保存
             $result = $wpdb->update(
                 $table_name,
                 array(
                     'my_company_content' => $new_my_company_content,
-                    'email_address' => $new_email_address
+                    'email_address' => $new_email_address,
+                    'smtp_host' => $new_smtp_host,
+                    'smtp_port' => $new_smtp_port,
+                    'smtp_user' => $new_smtp_user,
+                    'smtp_pass' => $new_smtp_pass,
+                    'smtp_secure' => $new_smtp_secure,
+                    'smtp_from_name' => $new_smtp_from_name
                 ),
                 array('id' => 1)
             );
             if ($result === false) {
                 die('Error: データーベースの更新に失敗しました。');
             }
-            // 保存後はリロード
             header("Location: ". $_SERVER['REQUEST_URI']);
             exit;
         }
@@ -261,27 +343,57 @@ class Kntan_Setting_Class {
         $my_company_info .= '<div class="data_list_box">';
 
         // 入力フォーム
-        $my_company_info .= <<<END
-        <form method="post" action="">
-        <div style="margin-bottom:12px;">
-            <label for="email_address"><b>自社メールアドレス</b>：</label>
-            <input type="email" id="email_address" name="email_address" value="{$email_address}" style="width:320px;max-width:100%;" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" placeholder="info@example.com">
-        </div>
-        $visual_editor
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-        <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
-        <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
-        <span class="material-symbols-outlined">
-        save_as
-        </span>
-        </button>
-        </form>
-        <script>
-            function togglePreview() {
-                document.cookie = "active_tab=MyCompany";
-            }
-        </script>
-        END;
+        $my_company_info .= $test_mail_result;
+        // プルダウンの選択肢をPHPで生成
+        $smtp_secure_options = '';
+        $smtp_secure_options .= '<option value=""'  . ($smtp_secure==''  ? ' selected' : '') . '>なし</option>';
+        $smtp_secure_options .= '<option value="ssl"' . ($smtp_secure=='ssl' ? ' selected' : '') . '>SSL</option>';
+        $smtp_secure_options .= '<option value="tls"' . ($smtp_secure=='tls' ? ' selected' : '') . '>TLS</option>';
+
+        $my_company_info .= '<form method="post" action="">';
+        $my_company_info .= '<div style="margin-bottom:12px;">';
+        $my_company_info .= '<label for="email_address"><b>自社メールアドレス</b>：</label>';
+        $my_company_info .= '<input type="email" id="email_address" name="email_address" value="'.esc_attr($email_address).'" style="width:320px;max-width:100%;" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" placeholder="info@example.com">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<fieldset style="margin-bottom:16px;padding:10px 12px;border:1px solid #ccc;">';
+        $my_company_info .= '<legend><b>SMTP設定（WP Mail SMTP風）</b></legend>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_host">SMTPホスト：</label>';
+        $my_company_info .= '<input type="text" id="smtp_host" name="smtp_host" value="'.esc_attr($smtp_host).'" style="width:220px;max-width:100%;" placeholder="smtp.example.com">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_port">SMTPポート：</label>';
+        $my_company_info .= '<input type="text" id="smtp_port" name="smtp_port" value="'.esc_attr($smtp_port).'" style="width:80px;max-width:100%;" placeholder="587">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_user">SMTPユーザー：</label>';
+        $my_company_info .= '<input type="text" id="smtp_user" name="smtp_user" value="'.esc_attr($smtp_user).'" style="width:220px;max-width:100%;" placeholder="user@example.com">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_pass">SMTPパスワード：</label>';
+        $my_company_info .= '<input type="password" id="smtp_pass" name="smtp_pass" value="'.esc_attr($smtp_pass).'" style="width:220px;max-width:100%;" autocomplete="off">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_secure">暗号化方式：</label>';
+        $my_company_info .= '<select id="smtp_secure" name="smtp_secure">'.$smtp_secure_options.'</select>';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="margin-bottom:8px;">';
+        $my_company_info .= '<label for="smtp_from_name">送信者名：</label>';
+        $my_company_info .= '<input type="text" id="smtp_from_name" name="smtp_from_name" value="'.esc_attr($smtp_from_name).'" style="width:220px;max-width:100%;" placeholder="会社名や担当者名">';
+        $my_company_info .= '</div>';
+        $my_company_info .= '<div style="font-size:12px;color:#888;">※ SMTPを利用しない場合は空欄のままにしてください。</div>';
+        $my_company_info .= '</fieldset>';
+        $my_company_info .= $visual_editor;
+        $my_company_info .= '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />';
+        $my_company_info .= '<input type="hidden" id="my_saved_content" name="my_saved_content" value="">';
+        $my_company_info .= '<button type="submit" name="save_setting" value="1" style="margin-top: 10px;background:#4caf50;color:#fff;padding:8px 18px;border:none;border-radius:4px;font-size:15px;vertical-align:middle;">';
+        $my_company_info .= '<span class="material-symbols-outlined" style="vertical-align:middle;">save_as</span> 保存';
+        $my_company_info .= '</button>';
+        $my_company_info .= '<button type="submit" name="send_test_mail" value="1" style="margin-left:16px;margin-top:10px;background:#2196f3;color:#fff;padding:8px 18px;border:none;border-radius:4px;font-size:15px;vertical-align:middle;">';
+        $my_company_info .= '<span class="material-symbols-outlined" style="vertical-align:middle;">mail</span> テストメール送信';
+        $my_company_info .= '</button>';
+        $my_company_info .= '</form>';
+        $my_company_info .= '<script>function togglePreview() { document.cookie = "active_tab=MyCompany"; }</script>';
         $my_company_info .= '</div>';
 
         // 自社情報のプレビュー

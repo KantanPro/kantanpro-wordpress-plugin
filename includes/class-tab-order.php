@@ -90,7 +90,7 @@ class Kntan_Order_Class{
                     $setting = $wpdb->get_row("SELECT * FROM {$setting_table} WHERE id = 1");
                     $my_company = $setting ? strip_tags($setting->my_company_content) : '';
                     $my_email = $setting ? $setting->email_address : '';
-                    $my_name = $my_company;
+                    $my_name = '';
 
                     // 請求項目リスト・金額（仮実装）
                     $invoice_items = $order->invoice_items ? $order->invoice_items : '';
@@ -122,19 +122,19 @@ class Kntan_Order_Class{
                     $body = $subject = '';
                     if ($progress === 1) {
                         $subject = "お見積り：{$project_name}";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご依頼ありがとうございます。\n{$project_name}につきましてお見積させていただきます。\n\n＜お見積り＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご依頼ありがとうございます。\n{$project_name}につきましてお見積させていただきます。\n\n＜お見積り＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 2) {
                         $subject = "ご注文ありがとうございます：{$project_name}";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご注文頂きありがとうございます。\n{$project_name}につきまして対応させていただきます。\n\n＜ご注文内容＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご注文頂きありがとうございます。\n{$project_name}につきまして対応させていただきます。\n\n＜ご注文内容＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 3) {
                         $subject = "現在お進めている{$project_name}につきまして質問です";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n現在お進めている{$project_name}につきまして質問させていただきます。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n現在お進めている{$project_name}につきまして質問させていただきます。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 4) {
                         $subject = "{$project_name}の請求書です";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 5) {
                         $subject = "{$project_name}のご入金を確認しました";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきましてご入金いただきありがとうございます。\n今後ともよろしくお願い申し上げます。\n\n—\n{$my_company}\n{$my_name}\n{$my_email}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきましてご入金いただきありがとうございます。\n今後ともよろしくお願い申し上げます。\n\n—\n{$my_company}\n{$my_email}";
                     }
 
                     $headers = [];
