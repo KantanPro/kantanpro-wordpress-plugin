@@ -339,25 +339,22 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 // 受注書詳細の表示（以前のレイアウト）
                 $content .= '<div class="order_contents">';
                 $content .= '<div class="order_info_box box">';
-$content .= '<h4 style="display:flex;align-items:center;margin-top:0;margin-bottom:4px;">■ 受注書概要';
-                // --- zengoナビ削除済み ---
-                // <div id="zengo" class="zengo">
-                // 	<a href="#" id="zengoBack" class="zengoButton"> &lt; </a>　<a href="#" id="zengoForward" class="zengoButton"> &gt; </a>
-                // </div>
-                // 受注書IDを概要タイトルの横に左寄せで追加（表記・マージン修正）
-                $content .= '<span style="font-size:0.95em;color:#555;">（ID: ' . esc_html($order_data->id) . '）</span>';
-                // 進捗プルダウンをh4の右横に配置
-                $content .= '<form method="post" action="" class="progress-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-left:auto;">';
-                $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
-                $content .= '<label for="order_progress_select" style="white-space:nowrap;margin-right:4px;font-weight:bold;">進捗：</label>';
-                $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()" style="min-width:120px;max-width:200px;width:auto;">';
-                foreach ($progress_labels as $num => $label) {
-                    $selected = ($order_data->progress == $num) ? 'selected' : '';
-                    $content .= '<option value="' . $num . '" ' . $selected . '>' . $label . '</option>';
-                }
-                $content .= '</select>';
-                $content .= '</form>';
-                $content .= '</h4>';
+// ■ 受注書概要（ID: *）案件名フィールドを同一div内で横並びに
+$content .= '<div class="order-header-flex order-header-inline-summary">';
+$content .= '<span class="order-header-title-id">■ 受注書概要（ID: ' . esc_html($order_data->id) . '）'
+    . '<input type="text" id="order_project_name_inline" name="order_project_name_inline" value="' . (isset($order_data->project_name) ? esc_html($order_data->project_name) : '') . '" data-order-id="' . esc_html($order_data->id) . '" class="order-header-projectname" placeholder="案件名" autocomplete="off" />'
+    . '</span>';
+$content .= '<form method="post" action="" class="progress-filter order-header-progress-form" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-left:auto;">';
+$content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
+$content .= '<label for="order_progress_select" style="white-space:nowrap;margin-right:4px;font-weight:bold;">進捗：</label>';
+$content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()" style="min-width:120px;max-width:200px;width:auto;">';
+foreach ($progress_labels as $num => $label) {
+    $selected = ($order_data->progress == $num) ? 'selected' : '';
+    $content .= '<option value="' . $num . '" ' . $selected . '>' . $label . '</option>';
+}
+$content .= '</select>';
+$content .= '</form>';
+$content .= '</div>';
                 $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span></div>';
                 // 担当者名の横に得意先メールアドレスのmailtoリンク（あれば）
                 $client_email = '';

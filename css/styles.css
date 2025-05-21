@@ -1,3 +1,51 @@
+/* 受注書概要ヘッダーのレイアウト調整 */
+.order-header-flex {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.order-header-title-id {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.08em;
+  white-space: nowrap;
+  gap: 8px;
+}
+
+.order-header-projectname {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 1em;
+  min-width: 60px;
+  max-width: 220px;
+  width: auto;
+  flex: 1 1 auto;
+  margin-left: 8px;
+  box-sizing: border-box;
+  transition: width 0.2s;
+}
+
+@media (max-width: 600px) {
+  .order-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .order-header-title-id {
+    font-size: 1em;
+    gap: 4px;
+  }
+  .order-header-projectname {
+    min-width: 40px;
+    max-width: 100%;
+    width: 100%;
+    margin-left: 4px;
+  }
+}
 .avatar,
 .user_icon {
   border-radius: 50% !important;
