@@ -389,14 +389,17 @@ $content .= '<h4 style="display:flex;align-items:center;margin-top:0;margin-bott
                     }
                 }
                 $content .= '<div>作成日時：<span id="order_created_time">' . esc_html($formatted_time) . '</span></div>';
-                // 案件名入力欄をここに移動
+                // 案件名インライン入力をh4タイトル行に移動
                 $project_name = isset($order_data->project_name) ? esc_html($order_data->project_name) : '';
-                $content .= '<form method="post" action="" style="margin:8px 0;">';
-                $content .= '<input type="hidden" name="update_project_name_id" value="' . esc_html($order_data->id) . '" />';
-                $content .= '<label for="order_project_name" style="margin-right:8px;">案件名</label>';
-                $content .= '<input type="text" id="order_project_name" name="order_project_name" value="' . $project_name . '" style="width:60%;max-width:320px;" placeholder="案件名を入力" />';
-                $content .= '<button type="submit" style="margin-left:8px;">保存</button>';
-                $content .= '</form>';
+                $content = preg_replace(
+                  '/(<h4[^>]*>■ 受注書概要.*?)(<span[^>]*>（ID:.*?）<\/span>)/s',
+                  '$1$2'
+                  . '<input type="text" id="order_project_name_inline" name="order_project_name_inline" value="' . $project_name . '" '
+                  . 'data-order-id="' . esc_html($order_data->id) . '" '
+                  . 'style="margin-left:12px;width:220px;max-width:40vw;display:inline-block;font-size:1em;vertical-align:middle;" '
+                  . 'placeholder="案件名" autocomplete="off" />',
+                  $content
+                );
                 $content .= '</div>'; // .order_info_box 終了
 
                 $content .= '<div class="order_invoice_box box">';

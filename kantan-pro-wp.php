@@ -1,3 +1,5 @@
+
+
 <?php
 /*
 Plugin Name: KTPWP
@@ -47,6 +49,7 @@ function ktpwp_scripts_and_styles() {
 	wp_enqueue_style('ktp-css');
 	wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
 	wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
+	wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), '1.0.0', true);
 }
 add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
