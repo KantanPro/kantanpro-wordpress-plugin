@@ -74,7 +74,8 @@ class Kntan_Order_Class{
         $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
         $client_table = $wpdb->prefix . 'ktp_client'; // 顧客テーブル名
 
-        // メール送信処理
+        // メール送信処理（編集フォームのみ）
+        $mail_form_html = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_order_mail_id'])) {
             $order_id = intval($_POST['send_order_mail_id']);
             $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $order_id));
@@ -137,13 +138,32 @@ class Kntan_Order_Class{
                         $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきましてご入金いただきありがとうございます。\n今後ともよろしくお願い申し上げます。\n\n—\n{$my_company}\n{$my_email}";
                     }
 
-                    $headers = [];
-                    if ($my_email) $headers[] = 'From: ' . $my_email;
-                    $sent = wp_mail($to, $subject, $body, $headers);
-                    if ($sent) {
-                        echo '<script>alert("メールを送信しました。\n宛先: ' . esc_js($to) . '");</script>';
+                    $edit_subject = isset($_POST['edit_subject']) ? stripslashes($_POST['edit_subject']) : $subject;
+                    $edit_body = isset($_POST['edit_body']) ? stripslashes($_POST['edit_body']) : $body;
+
+                    // 送信ボタンが押された場合
+                    if (isset($_POST['do_send_mail']) && $_POST['do_send_mail'] == '1') {
+                        $headers = [];
+                        if ($my_email) $headers[] = 'From: ' . $my_email;
+                        $sent = wp_mail($to, $edit_subject, $edit_body, $headers);
+                        if ($sent) {
+                            echo '<script>alert("メールを送信しました。\n宛先: ' . esc_js($to) . '");</script>';
+                        } else {
+                            echo '<script>alert("メール送信に失敗しました。サーバー設定をご確認ください。");</script>';
+                        }
                     } else {
-                        echo '<script>alert("メール送信に失敗しました。サーバー設定をご確認ください。");</script>';
+                        // 編集フォームHTMLを生成
+                        $mail_form_html = '<div id="order-mail-form" style="background:#fff;border:2px solid #2196f3;padding:24px;max-width:520px;margin:32px auto 16px auto;border-radius:8px;box-shadow:0 2px 12px #0002;z-index:9999;">';
+                        $mail_form_html .= '<h3 style="margin-top:0;">メール送信内容の編集</h3>';
+                        $mail_form_html .= '<form method="post" action="">';
+                        $mail_form_html .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_id) . '">';
+                        $mail_form_html .= '<div style="margin-bottom:12px;"><label>宛先：</label><input type="email" value="' . esc_attr($to) . '" readonly style="width:320px;max-width:100%;background:#f5f5f5;"></div>';
+                        $mail_form_html .= '<div style="margin-bottom:12px;"><label>件名：</label><input type="text" name="edit_subject" value="' . esc_attr($edit_subject) . '" style="width:320px;max-width:100%;"></div>';
+                        $mail_form_html .= '<div style="margin-bottom:12px;"><label>本文：</label><textarea name="edit_body" rows="10" style="width:100%;max-width:480px;">' . esc_textarea($edit_body) . '</textarea></div>';
+                        $mail_form_html .= '<button type="submit" name="do_send_mail" value="1" style="background:#2196f3;color:#fff;padding:8px 18px;border:none;border-radius:4px;font-size:15px;">送信</button>';
+                        $mail_form_html .= '<button type="button" onclick="document.getElementById(\'order-mail-form\').style.display=\'none\';" style="margin-left:16px;padding:8px 18px;border:none;border-radius:4px;font-size:15px;">キャンセル</button>';
+                        $mail_form_html .= '</form>';
+                        $mail_form_html .= '</div>';
                     }
                 }
             }
@@ -318,6 +338,11 @@ class Kntan_Order_Class{
                 $content .= '    }';
                 $content .= '});';
                 $content .= '</script>';
+
+                // メール編集フォームがあればcontrollerの直後で$contentに追加
+                if (!empty($mail_form_html)) {
+                    $content .= $mail_form_html;
+                }
 
 
                 // 進捗ラベルを明示的に定義
