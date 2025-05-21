@@ -285,3 +285,39 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
 	// ここに必要な処理を追加する場合は記述
 	return $res;
 }
+
+
+// 案件名インライン編集用Ajaxハンドラ
+add_action('wp_ajax_ktp_update_project_name', function() {
+	global $wpdb;
+	$order_id = intval($_POST['order_id'] ?? 0);
+	$project_name = sanitize_text_field($_POST['project_name'] ?? '');
+	if ($order_id > 0) {
+		$table = $wpdb->prefix . 'ktp_order';
+		$wpdb->update($table, ['project_name' => $project_name], ['id' => $order_id]);
+		wp_send_json_success();
+	} else {
+		wp_send_json_error('Invalid order_id');
+	}
+});
+
+// 非ログイン時もAjaxを許可（必要なら）
+add_action('wp_ajax_nopriv_ktp_update_project_name', function() {
+	global $wpdb;
+	$order_id = intval($_POST['order_id'] ?? 0);
+	$project_name = sanitize_text_field($_POST['project_name'] ?? '');
+	if ($order_id > 0) {
+		$table = $wpdb->prefix . 'ktp_order';
+		$wpdb->update($table, ['project_name' => $project_name], ['id' => $order_id]);
+		wp_send_json_success();
+	} else {
+		wp_send_json_error('Invalid order_id');
+	}
+});
+
+// ajaxurlをフロントにも出力
+add_action('wp_head', function() {
+	if (!is_admin()) {
+		echo '<script>var ajaxurl = "' . admin_url('admin-ajax.php') . '";</script>';
+	}
+});
