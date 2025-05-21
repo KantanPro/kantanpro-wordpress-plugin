@@ -350,13 +350,13 @@ class Kntan_Setting_Class {
         $smtp_secure_options .= '<option value="ssl"' . ($smtp_secure=='ssl' ? ' selected' : '') . '>SSL</option>';
         $smtp_secure_options .= '<option value="tls"' . ($smtp_secure=='tls' ? ' selected' : '') . '>TLS</option>';
 
-        $my_company_info .= '<form method="post" action="">';
-        $my_company_info .= '<div style="margin-bottom:12px;">';
+        $my_company_info .= '<form method="post" action="">';        $my_company_info .= '<div style="margin-bottom:12px;">';
         $my_company_info .= '<label for="email_address"><b>自社メールアドレス</b>：</label>';
         $my_company_info .= '<input type="email" id="email_address" name="email_address" value="'.esc_attr($email_address).'" style="width:320px;max-width:100%;" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" placeholder="info@example.com">';
+        $my_company_info .= '<div style="font-size:12px;color:#555;margin-top:4px;margin-left:10px;">※ サイトから届くメールが迷惑メールと認識されないよう、サイトのドメインと同じメールアドレスをご入力ください。<br>例：サイトのドメインが「example.com」の場合、「yourname@example.com」</div>';
         $my_company_info .= '</div>';
         $my_company_info .= '<fieldset style="margin-bottom:16px;padding:10px 12px;border:1px solid #ccc;">';
-        $my_company_info .= '<legend><b>SMTP設定（WP Mail SMTP風）</b></legend>';
+        $my_company_info .= '<legend><b>SMTP設定</b></legend>';
         $my_company_info .= '<div style="margin-bottom:8px;">';
         $my_company_info .= '<label for="smtp_host">SMTPホスト：</label>';
         $my_company_info .= '<input type="text" id="smtp_host" name="smtp_host" value="'.esc_attr($smtp_host).'" style="width:220px;max-width:100%;" placeholder="smtp.example.com">';
