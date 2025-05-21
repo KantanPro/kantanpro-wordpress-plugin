@@ -1,3 +1,24 @@
+.avatar,
+.user_icon {
+  border-radius: 50% !important;
+  overflow: hidden;
+  background: #f5f5f5;
+  box-shadow: 0 1px 4px #0001;
+  vertical-align: middle;
+  margin-top: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-block;
+  object-fit: cover;
+}
+/* ログイン中ユーザーのアイコンを丸くする */
+.user_icon {
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f5f5f5;
+    box-shadow: 0 1px 4px #0001;
+    vertical-align: middle;
+}
 /* operation（得意先タブ上部の操作ボタン用） */
 .operation {
   display: flex;
@@ -155,8 +176,17 @@
 .create-order-btn:hover {
   background: #1565c0;
 }
-.user_icon{
-  margin-top: 5px;
+.user_icon {
+  border-radius: 50% !important;
+  overflow: hidden;
+  background: #f5f5f5;
+  box-shadow: 0 1px 4px #0001;
+  vertical-align: middle;
+  margin-top: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: inline-block;
+  object-fit: cover;
 }
 
 .data_contents {

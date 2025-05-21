@@ -6,72 +6,72 @@ Version: beta
 */
 
 if (!defined('ABSPATH')) {
-    exit;
+	exit;
 }
 
 // 定数を定義
 if (!defined('MY_PLUGIN_VERSION')) {
-    define('MY_PLUGIN_VERSION', 'beta'); // プラグインのバージョン
+	define('MY_PLUGIN_VERSION', 'beta'); // プラグインのバージョン
 }
 if (!defined('MY_PLUGIN_PATH')) {
-    define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
+	define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
 }
 if (!defined('MY_PLUGIN_URL')) {
-    define('MY_PLUGIN_URL', plugins_url('/', __FILE__));
+	define('MY_PLUGIN_URL', plugins_url('/', __FILE__));
 }
 
 // ファイルをインクルード
 $includes = [
-    'class-tab-list.php',
-    'class-tab-order.php',
-    'class-tab-client.php',
-    'class-tab-service.php',
-    'class-tab-supplier.php',
-    'class-tab-report.php',
-    'class-tab-setting.php',
-    'class-login-error.php',
-    'class-view-tab.php',
-    'ktp-admin-form.php',
+	'class-tab-list.php',
+	'class-tab-order.php',
+	'class-tab-client.php',
+	'class-tab-service.php',
+	'class-tab-supplier.php',
+	'class-tab-report.php',
+	'class-tab-setting.php',
+	'class-login-error.php',
+	'class-view-tab.php',
+	'ktp-admin-form.php',
 ];
 
 foreach ($includes as $file) {
-    include 'includes/' . $file;
+	include 'includes/' . $file;
 }
 
 add_action('plugins_loaded', 'KTPWP_Index');
 
 function ktpwp_scripts_and_styles() {
-    // 修正前: 'ktp-js', plugins_url('js/ktp-ajax.js', __FILE__), array(), '1.0.0', true
-    wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array(), '1.0.0', true); // 修正後
-    wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.0', 'all');
-    wp_enqueue_style('ktp-css');
-    wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
-    wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
+	// 修正前: 'ktp-js', plugins_url('js/ktp-ajax.js', __FILE__), array(), '1.0.0', true
+	wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array(), '1.0.0', true); // 修正後
+	wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.0', 'all');
+	wp_enqueue_style('ktp-css');
+	wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+	wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
 }
 add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
 function ktp_table_setup() {
-    Create_Table();
-    Update_Table();
+	Create_Table();
+	Update_Table();
 }
 register_activation_hook(__FILE__, 'ktp_table_setup');
 
 // --- ここから追加 ---
 function Create_Table() {
-    // テーブル作成処理（ダミー/本番は各クラスで実装）
+	// テーブル作成処理（ダミー/本番は各クラスで実装）
 }
 function Update_Table() {
-    // テーブル更新処理（ダミー/本番は各クラスで実装）
+	// テーブル更新処理（ダミー/本番は各クラスで実装）
 }
 // --- ここまで追加 ---
 
 function check_activation_key() {
-    $activation_key = get_site_option('ktp_activation_key');
-    return empty($activation_key) ? '' : '';
+	$activation_key = get_site_option('ktp_activation_key');
+	return empty($activation_key) ? '' : '';
 }
 
 function add_htmx_to_head() {
-    echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
+	echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
 }
 add_action('wp_head', 'add_htmx_to_head');
 
@@ -145,9 +145,6 @@ function KTPWP_Index(){
 			<div class="parent"><div class="title">{$icon_img}KTPWP</div><div class="version">v{$plugin_version}</div></div>
 			$logged_in_users_html
 			　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
-				<div id="zengo" class="zengo">
-				<a href="#" id="zengoBack" class="zengoButton"> < </a>　<a href="#" id="zengoForward" class="zengoButton"> > </a>
-				</div>
 			</div>
 			END;
 			$tab_name = isset($_GET['tab_name']) ? $_GET['tab_name'] : 'default_tab'; // URLパラメータからtab_nameを取得
@@ -243,45 +240,45 @@ add_filter('pre_set_site_transient_update_plugins', 'kpwp_github_plugin_update')
 add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 
 function kpwp_github_plugin_update($transient) {
-    // プラグイン情報
-    $plugin_slug = 'kantan-pro-wp/kantan-pro-wp.php';
-    $github_user = 'nonaka'; 
-    $github_repo = 'kantan-pro-wp';
+	// プラグイン情報
+	$plugin_slug = 'kantan-pro-wp/kantan-pro-wp.php';
+	$github_user = 'nonaka'; 
+	$github_repo = 'kantan-pro-wp';
 
-    // GitHubの最新リリース情報を取得
-    $response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
-        'headers' => ['Accept' => 'application/vnd.github.v3+json', 'User-Agent' => 'WordPress']
-    ]);
-    if (is_wp_error($response)) return $transient;
+	// GitHubの最新リリース情報を取得
+	$response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
+		'headers' => ['Accept' => 'application/vnd.github.v3+json', 'User-Agent' => 'WordPress']
+	]);
+	if (is_wp_error($response)) return $transient;
 
-    $release = json_decode(wp_remote_retrieve_body($response));
-    if (empty($release->tag_name)) return $transient;
+	$release = json_decode(wp_remote_retrieve_body($response));
+	if (empty($release->tag_name)) return $transient;
 
-    // 現在のバージョンを取得
-    $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin_slug);
-    $current_version = $plugin_data['Version'];
+	// 現在のバージョンを取得
+	$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin_slug);
+	$current_version = $plugin_data['Version'];
 
-    // 新しいバージョンがあればアップデート情報をセット
-    if (version_compare($current_version, ltrim($release->tag_name, 'v'), '<')) {
-        $transient->response[$plugin_slug] = (object)[
-            'slug' => $plugin_slug,
-            'plugin' => $plugin_slug,
-            'new_version' => ltrim($release->tag_name, 'v'),
-            'url' => $release->html_url,
-            'package' => $release->zipball_url,
-        ];
-    }
-    return $transient;
+	// 新しいバージョンがあればアップデート情報をセット
+	if (version_compare($current_version, ltrim($release->tag_name, 'v'), '<')) {
+		$transient->response[$plugin_slug] = (object)[
+			'slug' => $plugin_slug,
+			'plugin' => $plugin_slug,
+			'new_version' => ltrim($release->tag_name, 'v'),
+			'url' => $release->html_url,
+			'package' => $release->zipball_url,
+		];
+	}
+	return $transient;
 }
 
 // プラグイン情報を取得するフィルター
 add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 // プラグイン情報を取得する関数
 function kpwp_github_plugin_update_info($res, $action, $args) {
-    // ...existing code...
+	// ...existing code...
 	if ($action !== 'plugin_information' || $args->slug !== 'kantan-pro-wp') {
 		return $res;
 	}
 	// ここに必要な処理を追加する場合は記述
-    return $res;
+	return $res;
 }

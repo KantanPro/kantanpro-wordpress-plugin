@@ -340,6 +340,10 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 $content .= '<div class="order_contents">';
                 $content .= '<div class="order_info_box box">';
 $content .= '<h4 style="display:flex;align-items:center;margin-top:0;margin-bottom:4px;">■ 受注書概要';
+                // --- zengoナビ削除済み ---
+                // <div id="zengo" class="zengo">
+                // 	<a href="#" id="zengoBack" class="zengoButton"> &lt; </a>　<a href="#" id="zengoForward" class="zengoButton"> &gt; </a>
+                // </div>
                 // 受注書IDを概要タイトルの横に左寄せで追加（表記・マージン修正）
                 $content .= '<span style="font-size:0.95em;color:#555;">（ID: ' . esc_html($order_data->id) . '）</span>';
                 // 進捗プルダウンをh4の右横に配置
