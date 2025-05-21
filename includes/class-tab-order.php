@@ -337,10 +337,10 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 ];
                 $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
                 // 案件名入力欄は order_info_box 内に移動
-                $content .= '<form method="post" action="" style="display:inline;">';
+                $content .= '<form method="post" action="" class="progress-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">';
                 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
-                $content .= '<label for="order_progress_select">進捗：</label>';
-                $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()">';
+                $content .= '<label for="order_progress_select" style="white-space:nowrap;margin-right:4px;font-weight:bold;">進捗：</label>';
+                $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()" style="min-width:120px;max-width:200px;width:auto;">';
                 foreach ($progress_labels as $num => $label) {
                     $selected = ($order_data->progress == $num) ? 'selected' : '';
                     $content .= '<option value="' . $num . '" ' . $selected . '>' . $label . '</option>';

@@ -10,7 +10,23 @@
 .progress-filter {
   margin: 10px 0;
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: nowrap; /* 改行させない */
+}
+
+/* 進捗ラベル（例: <label>進捗：</label>） */
+.progress-filter label {
+  white-space: nowrap; /* ラベルの改行防止 */
+  margin-right: 4px;
+  font-weight: bold;
+}
+
+/* プルダウン（セレクトボックス）の幅を調整 */
+.progress-filter select {
+  min-width: 120px;
+  max-width: 200px;
+  width: auto;
 }
 .progress-btn {
   padding: 6px 16px;
