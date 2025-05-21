@@ -128,8 +128,8 @@ class Kntan_Order_Class{
                         $subject = "ご注文ありがとうございます：{$project_name}";
                         $body = "{$customer_name}\n{$user_name} 様\n\nこの度はご注文頂きありがとうございます。\n{$project_name}につきまして対応させていただきます。\n\n＜ご注文内容＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 3) {
-                        $subject = "現在お進めている{$project_name}につきまして質問です";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n現在お進めている{$project_name}につきまして質問させていただきます。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_email}";
+                        $subject = "{$project_name}につきまして質問です";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして質問させていただきます。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 4) {
                         $subject = "{$project_name}の請求書です";
                         $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
@@ -311,33 +311,14 @@ class Kntan_Order_Class{
                 $content .= '</button>';
                 $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;">';
                 $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
-                $content .= '<button type="submit" id="orderMailButton" title="メール">';
-                $content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
+$content .= '<button type="submit" id="orderMailButton" title="メール">';
+$content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
                 $content .= '</button>';
                 $content .= '</form>';
                 $content .= '</div>';
                 $content .= '</div>';
                 $content .= '<div id="orderPreviewWindow" style="display: none;"></div>';
-                // JSで質問内容入力プロンプト（進捗3のみ）
-                $content .= '<script>';
-                $content .= 'document.addEventListener("DOMContentLoaded", function() {';
-                $content .= '    var mailForm = document.getElementById("orderMailForm");';
-                $content .= '    if (mailForm) {';
-                $content .= '        mailForm.addEventListener("submit", function(e) {';
-                $content .= '            var progress = ' . (int)$order_data->progress . ';';
-                $content .= '            if (progress === 3) {';
-                $content .= '                var question = prompt("質問内容を入力してください。\n（メール本文に挿入されます）");';
-                $content .= '                if (question === null) { e.preventDefault(); return false; }';
-                $content .= '                var hidden = document.createElement("input");';
-                $content .= '                hidden.type = "hidden";';
-                $content .= '                hidden.name = "order_question";';
-                $content .= '                hidden.value = question;';
-                $content .= '                mailForm.appendChild(hidden);';
-                $content .= '            }';
-                $content .= '        });';
-                $content .= '    }';
-                $content .= '});';
-                $content .= '</script>';
+                // メール編集フォーム導入により、進捗3の質問内容プロンプトは不要になったため削除
 
                 // メール編集フォームがあればcontrollerの直後で$contentに追加
                 if (!empty($mail_form_html)) {

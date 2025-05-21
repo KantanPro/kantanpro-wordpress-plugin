@@ -512,8 +512,8 @@ input[name="tab_item"] {
 }
 
 .printer form {
-  display: flex;
-  margin-top: 10px;
+    display: flex;
+    margin-top: 5px;
 }
 
 .up-title {
