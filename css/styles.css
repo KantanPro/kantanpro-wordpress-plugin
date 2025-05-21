@@ -16,17 +16,13 @@
 }
 
 .order-header-projectname {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 1em;
-  min-width: 60px;
-  max-width: 220px;
-  width: auto;
-  flex: 1 1 auto;
-  margin-left: 8px;
-  box-sizing: border-box;
-  transition: width 0.2s;
+  padding: 11px;
+  border: 1px solid var(--cocoon-basic-border-color);
+  border-radius: var(--cocoon-basic-border-radius);
+  font-size: inherit;
+  width: 100%;       /* モバイル表示時は親要素の幅に合わせて100%に */
+  max-width: 800px;  /* PC表示時は最大800pxまで */
+  box-sizing: border-box; /* paddingとborderをwidthに含める */
 }
 
 @media (max-width: 600px) {
