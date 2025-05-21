@@ -335,9 +335,15 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                     5 => '請求済',
                     6 => '入金済'
                 ];
-                $content .= '<div class="order_progress_box box" style="margin:16px 0;">';
-                // 案件名入力欄は order_info_box 内に移動
-                $content .= '<form method="post" action="" class="progress-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">';
+
+                // 受注書詳細の表示（以前のレイアウト）
+                $content .= '<div class="order_contents">';
+                $content .= '<div class="order_info_box box">';
+$content .= '<h4 style="display:flex;align-items:center;margin-top:0;margin-bottom:4px;">■ 受注書概要';
+                // 受注書IDを概要タイトルの横に左寄せで追加（表記・マージン修正）
+                $content .= '<span style="font-size:0.95em;color:#555;">（ID: ' . esc_html($order_data->id) . '）</span>';
+                // 進捗プルダウンをh4の右横に配置
+                $content .= '<form method="post" action="" class="progress-filter" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-left:auto;">';
                 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
                 $content .= '<label for="order_progress_select" style="white-space:nowrap;margin-right:4px;font-weight:bold;">進捗：</label>';
                 $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()" style="min-width:120px;max-width:200px;width:auto;">';
@@ -347,12 +353,7 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 }
                 $content .= '</select>';
                 $content .= '</form>';
-                $content .= '</div>';
-
-                // 受注書詳細の表示（以前のレイアウト）
-                $content .= '<div class="order_contents">';
-                $content .= '<div class="order_info_box box">';
-                $content .= '<h4>■ 受注書概要</h4>';
+                $content .= '</h4>';
                 $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span></div>';
                 // 担当者名の横に得意先メールアドレスのmailtoリンク（あれば）
                 $client_email = '';
@@ -395,7 +396,7 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 $content .= '</div>'; // .order_info_box 終了
 
                 $content .= '<div class="order_invoice_box box">';
-                $content .= '<h4>■ 請求項目（受注書ID: ' . esc_html($order_data->id) . '）</h4>'; // 受注書IDをここに表示
+                $content .= '<h4>■ 請求項目</h4>';
                 // TODO: 請求項目の表示・編集フォームを追加
                 $content .= '<div>（後日指示）</div>';
                 $content .= '</div>'; // .order_invoice_box 終了
