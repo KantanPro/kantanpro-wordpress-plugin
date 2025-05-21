@@ -132,10 +132,12 @@ class Kntan_Order_Class{
                         $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして質問です。\n\n＜質問内容＞\n（ご質問内容をここにご記入ください）\n\n—\n{$my_company}\n{$my_email}";
                     } elseif ($progress === 4) {
                         $subject = "{$project_name}の請求書です";
-                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";
-                    } elseif ($progress === 5) {
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきまして請求させていただきます。\n\n＜請求書＞\n{$project_name}\n{$invoice_list}\n{$amount_str}\n\n—\n{$my_company}\n{$my_email}";                    } elseif ($progress === 5) {
                         $subject = "{$project_name}のご入金を確認しました";
                         $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n{$project_name}につきましてご入金いただきありがとうございます。\n今後ともよろしくお願い申し上げます。\n\n—\n{$my_company}\n{$my_email}";
+                    } elseif ($progress === 6) {
+                        $subject = "{$project_name}";
+                        $body = "{$customer_name}\n{$user_name} 様\n\nお世話になります。\n\n—\n{$my_company}\n{$my_email}";
                     }
 
                     $edit_subject = isset($_POST['edit_subject']) ? stripslashes($_POST['edit_subject']) : $subject;
