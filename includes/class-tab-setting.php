@@ -277,7 +277,6 @@ class Kntan_Setting_Class {
         $my_company_info .= '<button type="submit" name="save_setting" value="1" style="margin-top: 10px;background:#4caf50;color:#fff;padding:8px 18px;border:none;border-radius:4px;font-size:15px;vertical-align:middle;">';
         $my_company_info .= '<span class="material-symbols-outlined" style="vertical-align:middle;">save_as</span> 保存';
         $my_company_info .= '</button>';
-        $my_company_info .= '</button>';
         $my_company_info .= '</form>';
         $my_company_info .= '<script>function togglePreview() { document.cookie = "active_tab=MyCompany"; }</script>';
         $my_company_info .= '</div>';
@@ -392,17 +391,14 @@ class Kntan_Setting_Class {
         $visual_editor
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
         <input type="hidden" id="my_saved_content" name="my_saved_content" value="">
-        <button id="previewButton" onclick="togglePreview()" title="保存する" style="margin-top: 10px;">
-        <span class="material-symbols-outlined">
-        save_as
-        </span>
+        <button type="submit" title="保存する" style="margin-top: 10px;background:#4caf50;color:#fff;padding:8px 18px;border:none;border-radius:4px;font-size:15px;vertical-align:middle;" onclick="document.cookie = 'active_tab=Atena';">
+        <span class="material-symbols-outlined" style="vertical-align:middle;">save_as</span> 保存
         </button>
         </form>
         <script>
-            function setCookie() {
-                document.cookie = "active_tab=Atena";
+            function togglePreview() { 
+                document.cookie = "active_tab=Atena"; 
             }
-            document.getElementById("previewButton").addEventListener("click", setCookie);
         </script>
         END;
         $atena .= '</div>';

@@ -114,11 +114,10 @@ class Kantan_List_Class{
                     }
                 }
                 $time = esc_html($formatted_time);
-                $progress = intval($order->progress);
-                $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
+                $progress = intval($order->progress);                $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
 
                 // プルダウンフォーム
-                $content .= "<li style='display:flex;align-items:center;gap:8px;'>";
+                $content .= "<li class='work-list-item'>";
                 $content .= "<a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name})";
                 if ($project_name !== '') {
                     $content .= " - <span class='project_name'>{$project_name}</span>";
@@ -126,7 +125,7 @@ class Kantan_List_Class{
                 $content .= " - {$time}</a>";
                 $content .= "<form method='post' action='' style='margin:0;display:inline;'>";
                 $content .= "<input type='hidden' name='update_progress_id' value='{$order_id}' />";
-                $content .= "<select name='update_progress' onchange='this.form.submit()' style='margin-left:8px;'>";
+                $content .= "<select name='update_progress' class='progress-select status-{$progress}' onchange='this.form.submit()'>";
                 foreach ($progress_labels as $num => $label) {
                     if ($num == 6) continue; // 入金済はリストで管理しない
                     $selected = ($progress === $num) ? 'selected' : '';
