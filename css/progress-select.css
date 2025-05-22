@@ -68,8 +68,26 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  padding: 12px 16px; /* パディングを少し増やして視認性向上 */
+  border-bottom: 1px solid #e5e7eb; /* 線を少し薄く洗練された色に */
+  transition: background-color 0.2s ease, transform 0.1s ease; /* ホバー時の滑らかなアニメーション */
+  position: relative; /* 疑似要素のためのポジショニング */
+}
+
+/* リストの行の交互のゼブラストライプ - スタイリッシュなカラースキーム */
+.work-list-item:nth-child(odd) {
+  background-color: #f9fafb; /* 薄いグレーブルー */
+}
+
+.work-list-item:nth-child(even) {
+  background-color: #ffffff; /* 白 */
+}
+
+/* ホバー時の背景色と微妙な変化 */
+.work-list-item:hover {
+  background-color: #f0f7ff; /* 薄い青 */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03); /* 微妙な影を追加 */
+  z-index: 1; /* ホバー時に前面に */
 }
 
 .work-list-item a {
@@ -78,10 +96,23 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #2c3e50; /* 濃い青グレー - よりスタイリッシュな文字色 */
+  text-decoration: none; /* 下線を削除 */
+  font-size: 14px; /* フォントサイズを少し大きく */
+  letter-spacing: 0.2px; /* 文字間隔を少し広げて読みやすく */
+}
+
+.work-list-item a:hover {
+  color: #1a73e8; /* ホバー時の色変更 */
 }
 
 /* プロジェクト名のスタイル */
 .project_name {
-  font-weight: 500;
-  color: #0277bd;
+  font-weight: 600; /* より太く */
+  color: #0277bd; /* 青系の色 */
+  margin: 0 2px; /* 前後に少しスペースを追加 */
+  padding: 1px 4px; /* 内側にパディングを追加 */
+  border-radius: 3px; /* 角を丸く */
+  background-color: rgba(2, 119, 189, 0.06); /* 薄い背景色を追加 */
+  display: inline-block; /* インラインブロック要素に */
 }

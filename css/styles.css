@@ -246,14 +246,9 @@
 }
 
 /* 仕事リストの行スタイル */
-.work-list-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
+/* 注意: 行スタイルとゼブラストライプの詳細は progress-select.css に定義されています */
 
+/* 仕事リストの行内リンクのスタイル - progress-select.cssに完全な定義があります */
 .work-list-item a {
   flex: 1;
   min-width: 0;
@@ -262,11 +257,7 @@
   text-overflow: ellipsis;
 }
 
-/* プロジェクト名のスタイル */
-.project_name {
-  font-weight: 500;
-  color: #0277bd;
-}
+/* プロジェクト名のスタイルは progress-select.css で完全に定義されています */
 
 /* 仕事リストタブのcontroller/printerをモバイルで全幅に */
 @media screen and (max-width: 767px) {

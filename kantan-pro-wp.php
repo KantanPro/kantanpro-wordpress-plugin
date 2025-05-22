@@ -53,6 +53,8 @@ function ktpwp_scripts_and_styles() {
 	wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array(), '1.0.0', true); // 修正後
 	wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.0', 'all');
 	wp_enqueue_style('ktp-css');
+	// 進捗プルダウン用のスタイルシートを追加
+	wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__), array('ktp-css'), '1.0.0', 'all');
 	wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
 	wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
 	wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), '1.0.0', true);
