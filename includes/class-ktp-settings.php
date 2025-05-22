@@ -381,6 +381,9 @@ class KTP_Settings {
             $this->test_mail_message = 'テストメールを送信しました。メールボックスをご確認ください。';
             $this->test_mail_status = 'success';
             
+            // 成功通知を表示
+            $this->show_notification('✉️ テストメールを送信しました。メールボックスをご確認ください。', true);
+            
             add_settings_error(
                 'ktp_settings',
                 'test_mail_success',
@@ -401,6 +404,9 @@ class KTP_Settings {
             $this->test_mail_message = 'テストメールの送信に失敗しました。SMTP設定をご確認ください。';
             $this->test_mail_status = 'error';
             
+            // エラー通知を表示
+            $this->show_notification('⚠️ テストメールの送信に失敗しました。SMTP設定をご確認ください。', false);
+            
             add_settings_error(
                 'ktp_settings',
                 'test_mail_error',
@@ -408,6 +414,60 @@ class KTP_Settings {
                 'error'
             );
         }
+    }
+    
+    /**
+     * 画面上部に一時的な通知を表示する
+     *
+     * @param string $message 表示するメッセージ
+     * @param bool $success 成功メッセージかどうか（true=成功、false=エラー）
+     */
+    private function show_notification($message, $success = true) {
+        $backgroundColor = $success ? '#4CAF50' : '#F44336';
+        
+        echo '<script>
+            (function() {
+                // 既存の通知があれば削除
+                var existingNotification = document.getElementById("ktp-mail-notification");
+                if (existingNotification && existingNotification.parentNode) {
+                    existingNotification.parentNode.removeChild(existingNotification);
+                }
+                
+                // 通知要素の作成
+                var notification = document.createElement("div");
+                notification.id = "ktp-mail-notification";
+                notification.innerHTML = "<p>' . esc_js($message) . '</p>";
+                notification.style.position = "fixed";
+                notification.style.top = "32px";
+                notification.style.left = "50%";
+                notification.style.transform = "translateX(-50%)";
+                notification.style.backgroundColor = "' . $backgroundColor . '";
+                notification.style.color = "white";
+                notification.style.padding = "12px 20px";
+                notification.style.borderRadius = "4px";
+                notification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+                notification.style.zIndex = "9999";
+                notification.style.fontWeight = "bold";
+                
+                // ページに追加
+                document.body.appendChild(notification);
+                
+                // 数秒後に通知を消す
+                setTimeout(function() {
+                    notification.style.opacity = "1";
+                    notification.style.transition = "opacity 0.5s ease-out";
+                    
+                    setTimeout(function() {
+                        notification.style.opacity = "0";
+                        setTimeout(function() {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 500);
+                    }, 4000); // 4秒後にフェードアウト開始
+                }, 100);
+            })();
+        </script>';
     }
 }
 
