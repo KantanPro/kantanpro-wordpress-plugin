@@ -36,6 +36,7 @@ class KTP_Settings {
     }
 
     public function add_plugin_page() {
+        // メインメニュー
         add_menu_page(
             'KTPWP設定', // ページタイトル
             'KTPWP設定', // メニュータイトル
@@ -44,6 +45,26 @@ class KTP_Settings {
             array($this, 'create_admin_page'), // 表示を処理する関数
             'dashicons-admin-generic', // アイコン
             80 // メニューの位置
+        );
+        
+        // サブメニュー - メール・SMTP設定（メインと同じ表示）
+        add_submenu_page(
+            'ktp-settings', // 親メニューのスラッグ
+            'メール・SMTP設定', // ページタイトル
+            'メール・SMTP設定', // メニュータイトル
+            'manage_options', // 権限
+            'ktp-settings', // メニューのスラッグ（親と同じにすると選択時にハイライト）
+            array($this, 'create_admin_page') // 表示を処理する関数
+        );
+        
+        // サブメニュー - ライセンス設定
+        add_submenu_page(
+            'ktp-settings', // 親メニューのスラッグ
+            'ライセンス設定', // ページタイトル
+            'ライセンス設定', // メニュータイトル
+            'manage_options', // 権限
+            'ktp-license', // メニューのスラッグ
+            array($this, 'create_license_page') // 表示を処理する関数
         );
     }
 
@@ -67,34 +88,241 @@ class KTP_Settings {
 
         $options = get_option($this->option_name);
         ?>
-        <div class="wrap">
-            <h1>KTPWP設定</h1>
-            <?php 
-            settings_errors($this->option_name);
+        <div class="wrap ktp-admin-wrap">
+            <h1><span class="dashicons dashicons-email-alt"></span> メール・SMTP設定</h1>
             
-            if (isset($_GET['settings-updated']) && $_GET['settings-updated']) {
-                echo '<div class="updated"><p>設定を保存しました。</p></div>';
-            }
+            <?php 
+            // タブナビゲーション
+            $this->display_settings_tabs('mail');
+            
+            // 通知表示
+            settings_errors('ktp_settings');
+            
             if (isset($_POST['test_email'])) {
                 $this->send_test_email();
             }
+
+            // スタイリングされたコンテナ
+            echo '<div class="ktp-settings-container">';
+            
+            // メール設定フォーム
+            echo '<div class="ktp-settings-section">';
+            echo '<form method="post" action="options.php">';
+            settings_fields($this->options_group);
+            
+            global $wp_settings_sections, $wp_settings_fields;
+            
+            // メール設定セクションの出力
+            if (isset($wp_settings_sections['ktp-settings']['email_setting_section'])) {
+                $section = $wp_settings_sections['ktp-settings']['email_setting_section'];
+                echo '<h2>' . esc_html($section['title']) . '</h2>';
+                if ($section['callback']) call_user_func($section['callback'], $section);
+                if (isset($wp_settings_fields['ktp-settings']['email_setting_section'])) {
+                    echo '<table class="form-table">';
+                    foreach ($wp_settings_fields['ktp-settings']['email_setting_section'] as $field) {
+                        echo '<tr><th scope="row">' . esc_html($field['title']) . '</th><td>';
+                        call_user_func($field['callback'], $field['args']);
+                        echo '</td></tr>';
+                    }
+                    echo '</table>';
+                }
+            }
+            
+            // SMTP設定セクションの出力
+            if (isset($wp_settings_sections['ktp-settings']['smtp_setting_section'])) {
+                $section = $wp_settings_sections['ktp-settings']['smtp_setting_section'];
+                echo '<h2>' . esc_html($section['title']) . '</h2>';
+                if ($section['callback']) call_user_func($section['callback'], $section);
+                if (isset($wp_settings_fields['ktp-settings']['smtp_setting_section'])) {
+                    echo '<table class="form-table">';
+                    foreach ($wp_settings_fields['ktp-settings']['smtp_setting_section'] as $field) {
+                        echo '<tr><th scope="row">' . esc_html($field['title']) . '</th><td>';
+                        call_user_func($field['callback'], $field['args']);
+                        echo '</td></tr>';
+                    }
+                    echo '</table>';
+                }
+            }
+            
+            echo '<div class="ktp-submit-button">';
+            submit_button('設定を保存', 'primary', 'submit', false);
+            echo '</div>';
+            echo '</form>';
+            
+            // テストメール送信フォーム
+            echo '<div class="ktp-test-mail-form">';
+            echo '<h3>テストメール送信</h3>';
+            echo '<p>SMTPの設定が正しく機能しているか確認するためのテストメールを送信します。</p>';
+            echo '<form method="post">';
+            echo '<input type="hidden" name="test_email" value="1">';
+            submit_button('テストメール送信', 'secondary', 'submit', false);
+            echo '</form>';
+            echo '</div>';
+            
+            echo '</div>'; // .ktp-settings-section
+            echo '</div>'; // .ktp-settings-container
             ?>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields($this->options_group);
-                do_settings_sections('ktp-settings');
-                submit_button('設定を保存');
-                ?>
-            </form>
-            <form method="post" style="margin-top: 20px;">
-                <input type="hidden" name="test_email" value="1">
-                <?php submit_button('テストメール送信', 'secondary', 'submit', false); ?>
-            </form>
+            
+            <style>
+            .ktp-admin-wrap h1 {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                color: #23282d;
+            }
+            .ktp-admin-wrap h1 .dashicons {
+                margin-right: 10px;
+                font-size: 24px;
+                width: 24px;
+                height: 24px;
+            }
+            .ktp-admin-wrap .nav-tab-wrapper {
+                margin-bottom: 20px;
+            }
+            .ktp-settings-container {
+                background: #fff;
+                border: 1px solid #ccd0d4;
+                box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+                padding: 20px;
+                margin-top: 20px;
+                border-radius: 3px;
+            }
+            .ktp-settings-section {
+                margin-bottom: 30px;
+            }
+            .ktp-settings-section h2 {
+                padding-bottom: 10px;
+                border-bottom: 1px solid #eee;
+                margin-top: 0;
+            }
+            .ktp-test-mail-form {
+                background: #f9f9f9;
+                padding: 15px;
+                border-radius: 3px;
+                border: 1px solid #e5e5e5;
+                margin-top: 20px;
+            }
+            .ktp-submit-button {
+                margin-top: 20px;
+            }
+            </style>
         </div>
         <?php
     }
+    
+    /**
+     * ライセンス設定ページの表示
+     */
+    public function create_license_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('この設定ページにアクセスする権限がありません。'));
+        }
+        ?>
+        <div class="wrap ktp-admin-wrap">
+            <h1><span class="dashicons dashicons-admin-network"></span> ライセンス設定</h1>
+            
+            <?php 
+            // タブナビゲーション
+            $this->display_settings_tabs('license');
+            
+            // 通知表示
+            settings_errors('ktp_activation_key');
+            ?>
+            
+            <div class="ktp-settings-container">
+                <div class="ktp-settings-section">
+                    <?php
+                    // ライセンス設定（アクティベーションキー）フォーム
+                    echo '<form method="post" action="options.php">';
+                    settings_fields('ktp-group');
+                    
+                    // ライセンス設定セクションのみ出力
+                    global $wp_settings_sections, $wp_settings_fields;
+                    if (isset($wp_settings_sections['ktp-settings']['license_setting_section'])) {
+                        $section = $wp_settings_sections['ktp-settings']['license_setting_section'];
+                        if ($section['callback']) call_user_func($section['callback'], $section);
+                        if (isset($wp_settings_fields['ktp-settings']['license_setting_section'])) {
+                            echo '<table class="form-table">';
+                            foreach ($wp_settings_fields['ktp-settings']['license_setting_section'] as $field) {
+                                echo '<tr><th scope="row">' . esc_html($field['title']) . '</th><td>';
+                                call_user_func($field['callback'], $field['args']);
+                                echo '</td></tr>';
+                            }
+                            echo '</table>';
+                        }
+                    }
+                    
+                    echo '<div class="ktp-submit-button">';
+                    submit_button('ライセンスを認証', 'primary', 'submit', false);
+                    echo '</div>';
+                    echo '</form>';
+                    ?>
+                    
+                    <div class="ktp-license-info">
+                        <h3>ライセンスについて</h3>
+                        <p>KTPWPプラグインを利用するには有効なライセンスキーが必要です。ライセンスキーに関する問題がございましたら、サポートまでお問い合わせください。</p>
+                        <p><a href="mailto:support@example.com" class="button button-secondary">サポートに問い合わせる</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <style>
+            .ktp-license-info {
+                margin-top: 30px;
+                background: #f9f9f9;
+                padding: 15px;
+                border-radius: 3px;
+                border: 1px solid #e5e5e5;
+            }
+            </style>
+        </div>
+        <?php
+    }
+    
+    /**
+     * 設定ページのタブナビゲーションを表示
+     *
+     * @param string $current_tab 現在選択されているタブ
+     */
+    private function display_settings_tabs($current_tab) {
+        $tabs = array(
+            'mail' => array(
+                'name' => 'メール・SMTP設定',
+                'url' => admin_url('admin.php?page=ktp-settings'),
+                'icon' => 'dashicons-email-alt'
+            ),
+            'license' => array(
+                'name' => 'ライセンス設定',
+                'url' => admin_url('admin.php?page=ktp-license'),
+                'icon' => 'dashicons-admin-network'
+            )
+        );
+        
+        echo '<h2 class="nav-tab-wrapper">';
+        foreach ($tabs as $tab_id => $tab) {
+            $active = ($current_tab === $tab_id) ? 'nav-tab-active' : '';
+            echo '<a href="' . esc_url($tab['url']) . '" class="nav-tab ' . $active . '">';
+            echo '<span class="dashicons ' . esc_attr($tab['icon']) . '"></span> ';
+            echo esc_html($tab['name']);
+            echo '</a>';
+        }
+        echo '</h2>';
+    }
 
     public function page_init() {
+
+        // アクティベーションキー保存時の通知
+        if (isset($_POST['ktp_activation_key'])) {
+            $old = get_option('ktp_activation_key');
+            $new = sanitize_text_field($_POST['ktp_activation_key']);
+            if ($old !== $new) {
+                update_option('ktp_activation_key', $new);
+                if (method_exists($this, 'show_notification')) {
+                    $this->show_notification('アクティベーションキーを保存しました。', true);
+                }
+                add_settings_error('ktp_activation_key', 'activation_key_saved', 'アクティベーションキーを保存しました。', 'updated');
+            }
+        }
         if (!current_user_can('manage_options')) {
             return;
         }
@@ -249,11 +477,37 @@ class KTP_Settings {
 
     public function activation_key_callback() {
         $activation_key = get_option('ktp_activation_key');
+        $has_license = !empty($activation_key);
         ?>
         <input type="text" id="ktp_activation_key" name="ktp_activation_key" 
                value="<?php echo esc_attr($activation_key); ?>" 
-               style="width:320px;max-width:100%;">
-        <div style="font-size:12px;color:#555;margin-top:4px;">※ プラグインのライセンスキーを入力してください。</div>
+               style="width:320px;max-width:100%;"
+               placeholder="XXXX-XXXX-XXXX-XXXX">
+        <div class="ktp-license-status <?php echo $has_license ? 'active' : 'inactive'; ?>">
+            <?php if ($has_license): ?>
+                <span class="dashicons dashicons-yes-alt"></span> ライセンスキーが登録されています
+            <?php else: ?>
+                <span class="dashicons dashicons-warning"></span> ライセンスキーが未登録です
+            <?php endif; ?>
+        </div>
+        <div style="font-size:12px;color:#555;margin-top:8px;">※ プラグインのライセンスキーを入力して、機能を有効化してください。</div>
+        <style>
+            .ktp-license-status {
+                margin-top: 8px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+            }
+            .ktp-license-status.active {
+                color: #46b450;
+            }
+            .ktp-license-status.inactive {
+                color: #dc3232;
+            }
+            .ktp-license-status .dashicons {
+                margin-right: 5px;
+            }
+        </style>
         <?php
     }
 
@@ -424,6 +678,7 @@ class KTP_Settings {
      */
     private function show_notification($message, $success = true) {
         $backgroundColor = $success ? '#4CAF50' : '#F44336';
+        $icon = $success ? 'dashicons-yes-alt' : 'dashicons-warning';
         
         echo '<script>
             (function() {
@@ -436,7 +691,7 @@ class KTP_Settings {
                 // 通知要素の作成
                 var notification = document.createElement("div");
                 notification.id = "ktp-mail-notification";
-                notification.innerHTML = "<p>' . esc_js($message) . '</p>";
+                notification.innerHTML = "<span class=\"dashicons ' . esc_js($icon) . '\"></span><p>' . esc_js($message) . '</p>";
                 notification.style.position = "fixed";
                 notification.style.top = "32px";
                 notification.style.left = "50%";
@@ -445,9 +700,35 @@ class KTP_Settings {
                 notification.style.color = "white";
                 notification.style.padding = "12px 20px";
                 notification.style.borderRadius = "4px";
-                notification.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+                notification.style.boxShadow = "0 3px 10px rgba(0,0,0,0.23)";
                 notification.style.zIndex = "9999";
-                notification.style.fontWeight = "bold";
+                notification.style.fontWeight = "500";
+                notification.style.display = "flex";
+                notification.style.alignItems = "center";
+                
+                // アイコンのスタイル
+                var iconElement = notification.querySelector(".dashicons");
+                iconElement.style.marginRight = "10px";
+                iconElement.style.fontSize = "20px";
+                
+                // 閉じるボタンを追加
+                var closeBtn = document.createElement("span");
+                closeBtn.innerHTML = "×";
+                closeBtn.style.marginLeft = "15px";
+                closeBtn.style.cursor = "pointer";
+                closeBtn.style.fontSize = "20px";
+                closeBtn.style.opacity = "0.7";
+                closeBtn.onmouseover = function() { this.style.opacity = "1"; };
+                closeBtn.onmouseout = function() { this.style.opacity = "0.7"; };
+                closeBtn.onclick = function() {
+                    notification.style.opacity = "0";
+                    setTimeout(function() {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                };
+                notification.appendChild(closeBtn);
                 
                 // ページに追加
                 document.body.appendChild(notification);
@@ -464,7 +745,7 @@ class KTP_Settings {
                                 notification.parentNode.removeChild(notification);
                             }
                         }, 500);
-                    }, 4000); // 4秒後にフェードアウト開始
+                    }, 5000); // 5秒後にフェードアウト開始
                 }, 100);
             })();
         </script>';

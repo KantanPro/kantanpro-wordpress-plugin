@@ -39,42 +39,31 @@ function active_ktp_validation( $input ) {
 }
 
 function display_plugin_admin_page() {
-    $activation_key = get_site_option( 'ktp_activation_key' );
-    $checked = get_site_option( 'active_ktp' );
-    if( empty( $checked ) ){
-        $checked = '';
-    } else {
-        $checked = 'checked="checked"';
-    }
-?>
-
-<div class="wrap">
-
-<h2>KTPWP設定</h2>
-
-<form method="post" action="options.php">
-
-<?php
-settings_fields( 'ktp-group' );
 do_settings_sections( 'default' );
-?>
+echo '<div class="wrap">';
+echo '<form method="post" action="">';
 
-<table class="form-table">
-<tbody>
-<tr>
-<th scope="row"><label for="ktp_activation_key">有効化キー</label></th>
-<td>
-<input type="text" id="ktp_activation_key" name="ktp_activation_key" value="<?php echo esc_attr( $activation_key ); ?>" />
-</td>
-</tr>
-</tbody>
-</table>
+    $activation_key = get_site_option( 'ktp_activation_key' );
 
-<?php submit_button(); // 設定を保存 ?>
+    echo '<div class="wrap">';
+    echo '<h2>KTPWP設定</h2>';
+    // WordPress標準の通知表示
+    settings_errors();
 
-</form>
-
-</div><!-- .wrap -->
-
-<?php
+    echo '<form method="post" action="options.php">';
+    settings_fields( 'ktp-group' );
+    do_settings_sections( 'default' );
+    echo '<table class="form-table">';
+    echo '<tbody>';
+    echo '<tr>';
+    echo '<th scope="row"><label for="ktp_activation_key">有効化キー</label></th>';
+    echo '<td>';
+    echo '<input type="text" id="ktp_activation_key" name="ktp_activation_key" value="' . esc_attr( $activation_key ) . '" />';
+    echo '</td>';
+    echo '</tr>';
+    echo '</tbody>';
+    echo '</table>';
+    submit_button('設定を保存');
+    echo '</form>';
+    echo '</div><!-- .wrap -->';
 }
