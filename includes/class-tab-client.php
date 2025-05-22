@@ -1,5 +1,6 @@
 <?php
 
+if (!class_exists('Kntan_Client_Class')) {
 class Kntan_Client_Class {
 
     public function __construct() {
@@ -1228,3 +1229,4 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
     }
 
 }
+} // class_exists

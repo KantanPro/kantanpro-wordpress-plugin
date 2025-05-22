@@ -1,6 +1,7 @@
 <?php
 require_once 'class-image_processor.php';
 
+if (!class_exists('Kntan_Service_Class')) {
 class Kntan_Service_Class {
 
     public function __construct($tab_name = '') {
@@ -1076,3 +1077,4 @@ class Kntan_Service_Class {
     }
 
 }
+} // class_exists

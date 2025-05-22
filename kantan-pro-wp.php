@@ -1,5 +1,3 @@
-
-
 <?php
 /*
 Plugin Name: KTPWP
@@ -10,6 +8,9 @@ Version: beta
 if (!defined('ABSPATH')) {
 	exit;
 }
+
+// プラグインファイルの定義
+define('KTPWP_PLUGIN_FILE', __FILE__);
 
 // 定数を定義
 if (!defined('MY_PLUGIN_VERSION')) {
@@ -22,6 +23,9 @@ if (!defined('MY_PLUGIN_URL')) {
 	define('MY_PLUGIN_URL', plugins_url('/', __FILE__));
 }
 
+// プラグインのアクティベーション時の処理を登録
+register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate'));
+
 // ファイルをインクルード
 $includes = [
 	'class-tab-list.php',
@@ -33,11 +37,13 @@ $includes = [
 	'class-tab-setting.php',
 	'class-login-error.php',
 	'class-view-tab.php',
+	'class-ktp-settings.php',
+	'class-ktp-upgrade.php',
 	'ktp-admin-form.php',
 ];
 
 foreach ($includes as $file) {
-	include 'includes/' . $file;
+	include_once 'includes/' . $file;
 }
 
 add_action('plugins_loaded', 'KTPWP_Index');

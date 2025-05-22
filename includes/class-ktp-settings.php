@@ -1,0 +1,415 @@
+<?php
+
+class KTP_Settings {
+    private static $instance = null;
+    private $options_group = 'ktp_settings';
+    private $option_name = 'ktp_smtp_settings';
+    private $test_mail_message = '';
+    private $test_mail_status = '';
+
+    public static function get_instance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    private function __construct() {
+        add_action('admin_menu', array($this, 'add_plugin_page'));
+        add_action('admin_init', array($this, 'page_init'));
+        add_action('phpmailer_init', array($this, 'setup_smtp_settings'));
+    }
+
+    public static function activate() {
+        $option_name = 'ktp_smtp_settings';
+        if (false === get_option($option_name)) {
+            add_option($option_name, array(
+                'email_address' => '',
+                'smtp_host' => '',
+                'smtp_port' => '',
+                'smtp_user' => '',
+                'smtp_pass' => '',
+                'smtp_secure' => '',
+                'smtp_from_name' => ''
+            ));
+        }
+    }
+
+    public function add_plugin_page() {
+        add_menu_page(
+            'KTPWP設定', // ページタイトル
+            'KTPWP設定', // メニュータイトル
+            'manage_options', // 権限
+            'ktp-settings', // メニューのスラッグ
+            array($this, 'create_admin_page'), // 表示を処理する関数
+            'dashicons-admin-generic', // アイコン
+            80 // メニューの位置
+        );
+    }
+
+    public function create_admin_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('この設定ページにアクセスする権限がありません。'));
+        }
+
+        // 初期設定値がない場合は作成
+        if (false === get_option($this->option_name)) {
+            add_option($this->option_name, array(
+                'email_address' => '',
+                'smtp_host' => '',
+                'smtp_port' => '',
+                'smtp_user' => '',
+                'smtp_pass' => '',
+                'smtp_secure' => '',
+                'smtp_from_name' => ''
+            ));
+        }
+
+        $options = get_option($this->option_name);
+        ?>
+        <div class="wrap">
+            <h1>KTPWP設定</h1>
+            <?php 
+            settings_errors($this->option_name);
+            
+            if (isset($_GET['settings-updated']) && $_GET['settings-updated']) {
+                echo '<div class="updated"><p>設定を保存しました。</p></div>';
+            }
+            if (isset($_POST['test_email'])) {
+                $this->send_test_email();
+            }
+            ?>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields($this->options_group);
+                do_settings_sections('ktp-settings');
+                submit_button('設定を保存');
+                ?>
+            </form>
+            <form method="post" style="margin-top: 20px;">
+                <input type="hidden" name="test_email" value="1">
+                <?php submit_button('テストメール送信', 'secondary', 'submit', false); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    public function page_init() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        register_setting(
+            $this->options_group,
+            $this->option_name,
+            array($this, 'sanitize')
+        );
+        
+        // 以前の設定ページから移行したアクティベーションキー設定
+        register_setting(
+            'ktp-group',
+            'ktp_activation_key'
+        );
+
+        // メール設定セクション
+        add_settings_section(
+            'email_setting_section',
+            'メール設定',
+            array($this, 'print_section_info'),
+            'ktp-settings'
+        );
+
+        // 自社メールアドレス
+        add_settings_field(
+            'email_address',
+            '自社メールアドレス',
+            array($this, 'email_address_callback'),
+            'ktp-settings',
+            'email_setting_section'
+        );
+
+        // SMTP設定セクション
+        add_settings_section(
+            'smtp_setting_section',
+            'SMTP設定',
+            array($this, 'print_smtp_section_info'),
+            'ktp-settings'
+        );
+
+        // ライセンス設定セクション
+        add_settings_section(
+            'license_setting_section',
+            'ライセンス設定',
+            array($this, 'print_license_section_info'),
+            'ktp-settings'
+        );
+
+        // アクティベーションキー
+        add_settings_field(
+            'activation_key',
+            'アクティベーションキー',
+            array($this, 'activation_key_callback'),
+            'ktp-settings',
+            'license_setting_section'
+        );
+
+        // SMTPホスト
+        add_settings_field(
+            'smtp_host',
+            'SMTPホスト',
+            array($this, 'smtp_host_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+
+        // SMTPポート
+        add_settings_field(
+            'smtp_port',
+            'SMTPポート',
+            array($this, 'smtp_port_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+
+        // SMTPユーザー
+        add_settings_field(
+            'smtp_user',
+            'SMTPユーザー',
+            array($this, 'smtp_user_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+
+        // SMTPパスワード
+        add_settings_field(
+            'smtp_pass',
+            'SMTPパスワード',
+            array($this, 'smtp_pass_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+
+        // 暗号化方式
+        add_settings_field(
+            'smtp_secure',
+            '暗号化方式',
+            array($this, 'smtp_secure_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+
+        // 送信者名
+        add_settings_field(
+            'smtp_from_name',
+            '送信者名',
+            array($this, 'smtp_from_name_callback'),
+            'ktp-settings',
+            'smtp_setting_section'
+        );
+    }
+
+    public function sanitize($input) {
+        $new_input = array();
+        
+        if (isset($input['email_address']))
+            $new_input['email_address'] = sanitize_email($input['email_address']);
+            
+        if (isset($input['smtp_host']))
+            $new_input['smtp_host'] = sanitize_text_field($input['smtp_host']);
+            
+        if (isset($input['smtp_port']))
+            $new_input['smtp_port'] = sanitize_text_field($input['smtp_port']);
+            
+        if (isset($input['smtp_user']))
+            $new_input['smtp_user'] = sanitize_text_field($input['smtp_user']);
+            
+        if (isset($input['smtp_pass']))
+            $new_input['smtp_pass'] = $input['smtp_pass'];
+            
+        if (isset($input['smtp_secure']))
+            $new_input['smtp_secure'] = sanitize_text_field($input['smtp_secure']);
+            
+        if (isset($input['smtp_from_name']))
+            $new_input['smtp_from_name'] = sanitize_text_field($input['smtp_from_name']);
+
+        return $new_input;
+    }
+
+    public function print_section_info() {
+        print 'メール送信に関する基本設定を行います。';
+    }
+
+    public function print_smtp_section_info() {
+        print 'SMTPサーバーを使用したメール送信の設定を行います。SMTPを利用しない場合は空欄のままにしてください。';
+    }
+    
+    public function print_license_section_info() {
+        print 'プラグインのライセンス情報を設定します。';
+    }
+
+    public function activation_key_callback() {
+        $activation_key = get_option('ktp_activation_key');
+        ?>
+        <input type="text" id="ktp_activation_key" name="ktp_activation_key" 
+               value="<?php echo esc_attr($activation_key); ?>" 
+               style="width:320px;max-width:100%;">
+        <div style="font-size:12px;color:#555;margin-top:4px;">※ プラグインのライセンスキーを入力してください。</div>
+        <?php
+    }
+
+    public function email_address_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="email" id="email_address" name="<?php echo esc_attr($this->option_name); ?>[email_address]" 
+               value="<?php echo isset($options['email_address']) ? esc_attr($options['email_address']) : ''; ?>" 
+               style="width:320px;max-width:100%;" required 
+               pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" 
+               placeholder="info@example.com">
+        <div style="font-size:12px;color:#555;margin-top:4px;">※ サイトから届くメールが迷惑メールと認識されないよう、サイトのドメインと同じメールアドレスをご入力ください。</div>
+        <?php
+    }
+
+    public function smtp_host_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="text" id="smtp_host" name="<?php echo esc_attr($this->option_name); ?>[smtp_host]" 
+               value="<?php echo isset($options['smtp_host']) ? esc_attr($options['smtp_host']) : ''; ?>" 
+               style="width:220px;max-width:100%;" 
+               placeholder="smtp.example.com">
+        <?php
+    }
+
+    public function smtp_port_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="text" id="smtp_port" name="<?php echo esc_attr($this->option_name); ?>[smtp_port]" 
+               value="<?php echo isset($options['smtp_port']) ? esc_attr($options['smtp_port']) : ''; ?>" 
+               style="width:80px;max-width:100%;" 
+               placeholder="587">
+        <?php
+    }
+
+    public function smtp_user_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="text" id="smtp_user" name="<?php echo esc_attr($this->option_name); ?>[smtp_user]" 
+               value="<?php echo isset($options['smtp_user']) ? esc_attr($options['smtp_user']) : ''; ?>" 
+               style="width:220px;max-width:100%;" 
+               placeholder="user@example.com">
+        <?php
+    }
+
+    public function smtp_pass_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="password" id="smtp_pass" name="<?php echo esc_attr($this->option_name); ?>[smtp_pass]" 
+               value="<?php echo isset($options['smtp_pass']) ? esc_attr($options['smtp_pass']) : ''; ?>" 
+               style="width:220px;max-width:100%;" 
+               autocomplete="off">
+        <?php
+    }
+
+    public function smtp_secure_callback() {
+        $options = get_option($this->option_name);
+        $selected = isset($options['smtp_secure']) ? $options['smtp_secure'] : '';
+        ?>
+        <select id="smtp_secure" name="<?php echo $this->option_name; ?>[smtp_secure]">
+            <option value="" <?php selected($selected, ''); ?>>なし</option>
+            <option value="ssl" <?php selected($selected, 'ssl'); ?>>SSL</option>
+            <option value="tls" <?php selected($selected, 'tls'); ?>>TLS</option>
+        </select>
+        <?php
+    }
+
+    public function smtp_from_name_callback() {
+        $options = get_option($this->option_name);
+        ?>
+        <input type="text" id="smtp_from_name" name="<?php echo esc_attr($this->option_name); ?>[smtp_from_name]" 
+               value="<?php echo isset($options['smtp_from_name']) ? esc_attr($options['smtp_from_name']) : ''; ?>" 
+               style="width:220px;max-width:100%;" 
+               placeholder="会社名や担当者名">
+        <?php
+    }
+
+    public function setup_smtp_settings($phpmailer) {
+        try {
+            $options = get_option($this->option_name);
+            
+            if (!empty($options['smtp_host']) && !empty($options['smtp_port']) && !empty($options['smtp_user']) && !empty($options['smtp_pass'])) {
+                $phpmailer->isSMTP();
+                $phpmailer->Host = $options['smtp_host'];
+                $phpmailer->Port = $options['smtp_port'];
+                $phpmailer->SMTPAuth = true;
+                $phpmailer->Username = $options['smtp_user'];
+                $phpmailer->Password = $options['smtp_pass'];
+                
+                if (!empty($options['smtp_secure'])) {
+                    $phpmailer->SMTPSecure = $options['smtp_secure'];
+                }
+                
+                $phpmailer->CharSet = 'UTF-8';
+                
+                if (!empty($options['email_address'])) {
+                    $phpmailer->setFrom(
+                        $options['email_address'],
+                        !empty($options['smtp_from_name']) ? $options['smtp_from_name'] : $options['email_address'],
+                        false
+                    );
+                }
+            }
+        } catch (Throwable $e) {
+            error_log($e->getMessage());
+        }
+    }
+
+    private function send_test_email() {
+        $options = get_option($this->option_name);
+        $to = $options['email_address'];
+        $subject = '【KTPWP】SMTPテストメール';
+        $body = "このメールはKTPWPプラグインのSMTPテスト送信です。\n\n送信元: {$options['email_address']}";
+        $headers = array();
+        
+        if (!empty($options['smtp_from_name'])) {
+            $headers[] = 'From: ' . $options['smtp_from_name'] . ' <' . $options['email_address'] . '>';
+        } else {
+            $headers[] = 'From: ' . $options['email_address'];
+        }
+
+        $sent = wp_mail($to, $subject, $body, $headers);
+        
+        if ($sent) {
+            $this->test_mail_message = 'テストメールを送信しました。メールボックスをご確認ください。';
+            $this->test_mail_status = 'success';
+            
+            add_settings_error(
+                'ktp_settings',
+                'test_mail_success',
+                'テストメールを送信しました。メールボックスをご確認ください。',
+                'updated'
+            );
+        } else {
+            global $phpmailer;
+            $error_message = '';
+            if (isset($phpmailer) && is_object($phpmailer)) {
+                $error_message = $phpmailer->ErrorInfo;
+                error_log('KTPWP SMTPテストメール送信失敗: ' . $error_message);
+            } else {
+                $error_message = 'PHPMailerインスタンスが取得できませんでした';
+                error_log('KTPWP SMTPテストメール送信失敗: ' . $error_message);
+            }
+            
+            $this->test_mail_message = 'テストメールの送信に失敗しました。SMTP設定をご確認ください。';
+            $this->test_mail_status = 'error';
+            
+            add_settings_error(
+                'ktp_settings',
+                'test_mail_error',
+                'テストメールの送信に失敗しました。SMTP設定をご確認ください。',
+                'error'
+            );
+        }
+    }
+}
+
+// インスタンスを初期化
+KTP_Settings::get_instance();

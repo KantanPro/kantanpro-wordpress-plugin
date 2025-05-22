@@ -1,8 +1,9 @@
 <?php
 
+if (!class_exists('Kntan_Order_Class')) {
 class Kntan_Order_Class{
 
-    // public $name;
+
 
     public function __construct() {
         // $this->name = 'order';
@@ -470,3 +471,4 @@ $content .= '</div>';
     }
 
 }
+} // class_exists

@@ -1,8 +1,9 @@
 <?php
 
+if (!class_exists('Kntan_Report_Class')) {
 class Kntan_Report_Class {
 
-    // public $name;
+
 
     public function __construct() {
         // $this->name = 'report';
@@ -77,3 +78,4 @@ class Kntan_Report_Class {
         }
     }
 }
+} // class_exists

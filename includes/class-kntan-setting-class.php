@@ -1,5 +1,6 @@
 <?php
 
+if (!class_exists('Kntan_Setting_Class')) {
 class Kntan_Setting_Class {
 
     // ...existing code...
@@ -178,4 +179,4 @@ class Kntan_Setting_Class {
 
     // ...existing code...
 
-}
+}} // class_exists

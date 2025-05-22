@@ -1,0 +1,159 @@
+<?php
+/**
+ * Tab Setting Class
+ */
+class Tab_Setting {
+    public function __construct() {
+        add_action('admin_init', array($this, 'init_settings'));
+    }
+
+    public function init_settings() {
+        // メール設定情報を取得（KTP_Settingsクラスから）
+        $smtp_options = get_option('ktp_smtp_settings', array());
+        $email_address = isset($smtp_options['email_address']) ? $smtp_options['email_address'] : '';
+        $smtp_host = isset($smtp_options['smtp_host']) ? $smtp_options['smtp_host'] : '';
+        $smtp_port = isset($smtp_options['smtp_port']) ? $smtp_options['smtp_port'] : '';
+        $smtp_user = isset($smtp_options['smtp_user']) ? $smtp_options['smtp_user'] : '';
+        $smtp_pass = isset($smtp_options['smtp_pass']) ? $smtp_options['smtp_pass'] : '';
+        $smtp_secure = isset($smtp_options['smtp_secure']) ? $smtp_options['smtp_secure'] : '';
+        $smtp_from_name = isset($smtp_options['smtp_from_name']) ? $smtp_options['smtp_from_name'] : '';
+
+        // 設定情報を初期化
+        $this->settings = array(
+            'email_address' => $email_address,
+            'smtp_host' => $smtp_host,
+            'smtp_port' => $smtp_port,
+            'smtp_user' => $smtp_user,
+            'smtp_pass' => $smtp_pass,
+            'smtp_secure' => $smtp_secure,
+            'smtp_from_name' => $smtp_from_name
+        );
+    }
+
+    /**
+     * メール設定タブを表示
+     */
+    public function render_email_tab() {
+        $smtp_options = get_option('ktp_smtp_settings', array());
+        $email_address = isset($smtp_options['email_address']) ? $smtp_options['email_address'] : '';
+        $smtp_host = isset($smtp_options['smtp_host']) ? $smtp_options['smtp_host'] : '';
+        $smtp_port = isset($smtp_options['smtp_port']) ? $smtp_options['smtp_port'] : '';
+        $smtp_user = isset($smtp_options['smtp_user']) ? $smtp_options['smtp_user'] : '';
+        $smtp_pass = isset($smtp_options['smtp_pass']) ? $smtp_options['smtp_pass'] : '';
+        $smtp_secure = isset($smtp_options['smtp_secure']) ? $smtp_options['smtp_secure'] : '';
+        $smtp_from_name = isset($smtp_options['smtp_from_name']) ? $smtp_options['smtp_from_name'] : '';
+        ?>
+        <div class="ktpwp-setting-section">
+            <h2>メール設定</h2>
+            <p>KTPWPプラグインからのメール送信設定を行います。</p>
+            
+            <form method="post" action="options.php">
+                <?php settings_fields('ktp_settings'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="email_address">送信元メールアドレス</label>
+                        </th>
+                        <td>
+                            <input type="email" id="email_address" name="ktp_smtp_settings[email_address]" 
+                                value="<?php echo esc_attr($email_address); ?>" 
+                                class="regular-text" required>
+                            <p class="description">
+                                サイトから送信されるメールの送信元アドレスです。
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_from_name">送信者名</label>
+                        </th>
+                        <td>
+                            <input type="text" id="smtp_from_name" name="ktp_smtp_settings[smtp_from_name]" 
+                                value="<?php echo esc_attr($smtp_from_name); ?>" 
+                                class="regular-text">
+                            <p class="description">
+                                メール送信者の名前（会社名など）を設定します。
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <h3>SMTP設定</h3>
+                <p>SMTPサーバーを使用してメールを送信する場合に設定します。設定しない場合はWordPressのデフォルト送信方法が使用されます。</p>
+                
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_host">SMTPサーバー</label>
+                        </th>
+                        <td>
+                            <input type="text" id="smtp_host" name="ktp_smtp_settings[smtp_host]" 
+                                value="<?php echo esc_attr($smtp_host); ?>" 
+                                class="regular-text">
+                            <p class="description">
+                                例: smtp.gmail.com
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_port">SMTPポート</label>
+                        </th>
+                        <td>
+                            <input type="number" id="smtp_port" name="ktp_smtp_settings[smtp_port]" 
+                                value="<?php echo esc_attr($smtp_port); ?>" 
+                                class="small-text">
+                            <p class="description">
+                                一般的なポート: 25, 465(SSL), 587(TLS)
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_secure">暗号化</label>
+                        </th>
+                        <td>
+                            <select id="smtp_secure" name="ktp_smtp_settings[smtp_secure]">
+                                <option value="" <?php selected($smtp_secure, ''); ?>>なし</option>
+                                <option value="ssl" <?php selected($smtp_secure, 'ssl'); ?>>SSL</option>
+                                <option value="tls" <?php selected($smtp_secure, 'tls'); ?>>TLS</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_user">SMTPユーザー名</label>
+                        </th>
+                        <td>
+                            <input type="text" id="smtp_user" name="ktp_smtp_settings[smtp_user]" 
+                                value="<?php echo esc_attr($smtp_user); ?>" 
+                                class="regular-text">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="smtp_pass">SMTPパスワード</label>
+                        </th>
+                        <td>
+                            <input type="password" id="smtp_pass" name="ktp_smtp_settings[smtp_pass]" 
+                                value="<?php echo esc_attr($smtp_pass); ?>" 
+                                class="regular-text" autocomplete="new-password">
+                        </td>
+                    </tr>
+                </table>
+                
+                <?php submit_button('設定を保存'); ?>
+            </form>
+            
+            <hr>
+            
+            <h3>テストメール送信</h3>
+            <p>現在の設定でテストメールを送信します。</p>
+            <form method="post">
+                <input type="hidden" name="ktpwp_test_mail" value="1">
+                <?php submit_button('テストメール送信', 'secondary', 'submit', false); ?>
+            </form>
+        </div>
+        <?php
+    }
+}

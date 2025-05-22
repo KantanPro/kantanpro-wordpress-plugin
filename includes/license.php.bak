@@ -1,0 +1,78 @@
+<?php
+// ...existing code...
+
+// ライセンスキー保存・取得（WordPressオプションAPI利用）
+function ktpwp_get_license_key() {
+    $key = get_option('ktpwp_license_key', '');
+    // ログ出力時はマスク
+    return $key;
+}
+
+function ktpwp_set_license_key($key) {
+    // 不要なログ出力を避ける
+    update_option('ktpwp_license_key', sanitize_text_field($key));
+}
+
+// ライセンス認証APIリクエスト（HTTPS必須）
+function ktpwp_check_license($license_key) {
+    $api_url = 'https://ktpwp.com/blog'; // EDD設置先
+    $item_name = urlencode('Kantan Pro WP');
+    $params = array(
+        'edd_action' => 'check_license',
+        'license'    => $license_key,
+        'item_name'  => $item_name,
+        'url'        => home_url(),
+    );
+    $response = wp_remote_post($api_url, array(
+        'body'      => $params,
+        'sslverify' => true, // HTTPS検証
+        'timeout'   => 15,
+    ));
+
+    if (is_wp_error($response)) {
+        return array('status' => 'error', 'message' => '通信エラー');
+    }
+
+    $data = json_decode(wp_remote_retrieve_body($response), true);
+    if (!is_array($data)) {
+        return array('status' => 'error', 'message' => 'APIレスポンス不正');
+    }
+
+    // レスポンス例: ['license' => 'valid'|'invalid'|'expired', ...]
+    if ($data['license'] === 'valid') {
+        return array('status' => 'valid');
+    } else {
+        return array('status' => 'invalid', 'message' => $data['error'] ?? 'ライセンス無効');
+    }
+}
+
+// 管理画面にライセンス入力欄追加例
+add_action('admin_menu', function() {
+    add_options_page('KTPWPライセンス', 'KTPWPライセンス', 'manage_options', 'ktpwp-license', 'ktpwp_license_page');
+});
+
+function ktpwp_license_page() {
+    if (isset($_POST['ktpwp_license_key'])) {
+        check_admin_referer('ktpwp_license_save');
+        ktpwp_set_license_key($_POST['ktpwp_license_key']);
+        $result = ktpwp_check_license($_POST['ktpwp_license_key']);
+        if ($result['status'] === 'valid') {
+            echo '<div class="updated"><p>ライセンス認証成功</p></div>';
+        } else {
+            echo '<div class="error"><p>認証失敗: ' . esc_html($result['message']) . '</p></div>';
+        }
+    }
+    $key = esc_attr(ktpwp_get_license_key());
+    ?>
+    <div class="wrap">
+        <h1>KTPWPライセンス設定</h1>
+        <form method="post">
+            <?php wp_nonce_field('ktpwp_license_save'); ?>
+            <input type="text" name="ktpwp_license_key" value="<?php echo $key; ?>" style="width:300px;" />
+            <input type="submit" class="button button-primary" value="保存・認証" />
+        </form>
+    </div>
+    <?php
+}
+
+// ...existing code...

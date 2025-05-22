@@ -1,8 +1,9 @@
 <?php
 
+if (!class_exists('Kantan_List_Class')) {
 class Kantan_List_Class{
 
-    // public $name;
+
 
     public function __construct() {
         // $this->name = 'list';
@@ -193,3 +194,4 @@ class Kantan_List_Class{
     }
 
 }
+} // class_exists

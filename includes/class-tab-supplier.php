@@ -1,5 +1,6 @@
 <?php
 
+if (!class_exists('Kantan_Supplier_Class')) {
 class Kantan_Supplier_Class{
 
     public function __construct() {
@@ -1285,3 +1286,4 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 if (!isset($search_results_list)) {
     $search_results_list = '';
 }
+} // class_exists
