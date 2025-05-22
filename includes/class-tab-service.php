@@ -831,16 +831,16 @@ class Kntan_Service_Class {
             
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
 
-            $data_forms .= '<div class=image_upload_form>';
-
-            // 商品画像アップロードフォームを追加
+            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
             $data_forms .= <<<END
             <form action="" method="post" enctype="multipart/form-data" onsubmit="return !!this.image.value;">
-            <div style="display: flex; align-items: center;">
-            <input type="file" name="image" style="width: 80%;">
+            <div class="file-upload-container">
+            <input type="file" name="image" class="file-input">
             <input type="hidden" name="data_id" value="$data_id">
             <input type="hidden" name="query_post" value="upload_image">
-            <input type="submit" value="アップロード" style="width: 50%; background-color: #0096ff; color: white;">
+            <button type="submit" class="upload-btn" title="画像をアップロード">
+              <span class="material-symbols-outlined">upload</span>
+            </button>
             </div>
             </form>
             END;
