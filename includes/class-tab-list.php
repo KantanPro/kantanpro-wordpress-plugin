@@ -31,7 +31,8 @@ class Kantan_List_Class{
             2 => '見積中',
             3 => '作成中',
             4 => '完成未請求',
-            5 => '請求済'
+            5 => '請求済',
+            6 => '入金済'
         ];
         $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
 
@@ -79,14 +80,14 @@ class Kantan_List_Class{
         $content .= '<div class="work_list_box">';
         if ($order_list) {
             // 進捗ラベル
-            $progress_labels = [
-                1 => '受付中',
-                2 => '見積中',
-                3 => '作成中',
-                4 => '完成未請求',
-                5 => '請求済',
-                6 => '入金済'
-            ];
+        $progress_labels = [
+            1 => '受付中',
+            2 => '見積中',
+            3 => '作成中',
+            4 => '完成未請求',
+            5 => '請求済',
+            6 => '入金済'
+        ];
             $content .= '<ul>';
             foreach ($order_list as $order) {
                 $order_id = esc_html($order->id);
@@ -127,7 +128,6 @@ class Kantan_List_Class{
                 $content .= "<input type='hidden' name='update_progress_id' value='{$order_id}' />";
                 $content .= "<select name='update_progress' class='progress-select status-{$progress}' onchange='this.form.submit()'>";
                 foreach ($progress_labels as $num => $label) {
-                    if ($num == 6) continue; // 入金済はリストで管理しない
                     $selected = ($progress === $num) ? 'selected' : '';
                     $content .= "<option value='{$num}' {$selected}>{$label}</option>";
                 }
