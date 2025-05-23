@@ -1,0 +1,89 @@
+/* KTPWPプラグイン管理画面専用CSS */
+
+/* H1タイトルのスタイル統一 */
+.ktp-admin-wrap h1 {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+    color: #23282d !important;
+    font-size: 23px !important;
+    font-weight: 400 !important;
+    padding: 9px 0 4px !important;
+    line-height: 1.3 !important;
+}
+
+.ktp-admin-wrap h1 .dashicons {
+    margin-right: 10px !important;
+    font-size: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+/* タブナビゲーション */
+.ktp-admin-wrap .nav-tab-wrapper {
+    margin-bottom: 20px !important;
+}
+
+/* メインコンテナのスタイル統一 - 最高優先度 */
+.wp-admin .ktp-admin-wrap .ktp-settings-container {
+    background: #fff !important;
+    border: 1px solid #ccd0d4 !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04) !important;
+    padding: 20px !important;
+    margin-top: 20px !important;
+    border-radius: 3px !important;
+}
+
+/* セクションスタイル */
+.ktp-admin-wrap .ktp-settings-section {
+    margin-bottom: 30px !important;
+}
+
+.ktp-admin-wrap .ktp-settings-section h2 {
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid #eee !important;
+    margin-top: 0 !important;
+}
+
+/* テストメールフォーム */
+.ktp-admin-wrap .ktp-test-mail-form {
+    background: #f9f9f9 !important;
+    padding: 15px !important;
+    border-radius: 3px !important;
+    border: 1px solid #e5e5e5 !important;
+    margin-top: 20px !important;
+}
+
+/* ライセンス情報ボックス */
+.ktp-admin-wrap .ktp-license-info {
+    margin-top: 30px !important;
+    background: #f9f9f9 !important;
+    padding: 15px !important;
+    border-radius: 3px !important;
+    border: 1px solid #e5e5e5 !important;
+}
+
+/* ボタンエリア */
+.ktp-admin-wrap .ktp-submit-button {
+    margin-top: 20px !important;
+}
+
+/* ライセンスステータス */
+.ktp-admin-wrap .ktp-license-status {
+    margin-top: 8px !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.ktp-admin-wrap .ktp-license-status.active {
+    color: #46b450 !important;
+}
+
+.ktp-admin-wrap .ktp-license-status.inactive {
+    color: #dc3232 !important;
+}
+
+.ktp-admin-wrap .ktp-license-status .dashicons {
+    margin-right: 5px !important;
+}

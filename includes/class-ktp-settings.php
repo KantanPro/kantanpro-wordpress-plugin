@@ -18,6 +18,22 @@ class KTP_Settings {
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('phpmailer_init', array($this, 'setup_smtp_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_styles'));
+    }
+
+    /**
+     * 管理画面のスタイルシートを読み込み
+     */
+    public function enqueue_admin_styles($hook) {
+        // KTPWPの設定ページでのみCSSを読み込み
+        if (strpos($hook, 'ktp-') !== false) {
+            wp_enqueue_style(
+                'ktp-admin-settings',
+                plugin_dir_url(dirname(__FILE__)) . 'css/ktp-admin-settings.css',
+                array(),
+                '1.0.1'
+            );
+        }
     }
 
     public static function activate() {
@@ -162,50 +178,6 @@ class KTP_Settings {
             echo '</div>'; // .ktp-settings-section
             echo '</div>'; // .ktp-settings-container
             ?>
-            
-            <style>
-            .ktp-admin-wrap h1 {
-                display: flex;
-                align-items: center;
-                margin-bottom: 20px;
-                color: #23282d;
-            }
-            .ktp-admin-wrap h1 .dashicons {
-                margin-right: 10px;
-                font-size: 24px;
-                width: 24px;
-                height: 24px;
-            }
-            .ktp-admin-wrap .nav-tab-wrapper {
-                margin-bottom: 20px;
-            }
-            .ktp-settings-container {
-                background: #fff;
-                border: 1px solid #ccd0d4;
-                box-shadow: 0 1px 1px rgba(0,0,0,0.04);
-                padding: 20px;
-                margin-top: 20px;
-                border-radius: 3px;
-            }
-            .ktp-settings-section {
-                margin-bottom: 30px;
-            }
-            .ktp-settings-section h2 {
-                padding-bottom: 10px;
-                border-bottom: 1px solid #eee;
-                margin-top: 0;
-            }
-            .ktp-test-mail-form {
-                background: #f9f9f9;
-                padding: 15px;
-                border-radius: 3px;
-                border: 1px solid #e5e5e5;
-                margin-top: 20px;
-            }
-            .ktp-submit-button {
-                margin-top: 20px;
-            }
-            </style>
         </div>
         <?php
     }
@@ -265,16 +237,6 @@ class KTP_Settings {
                     </div>
                 </div>
             </div>
-            
-            <style>
-            .ktp-license-info {
-                margin-top: 30px;
-                background: #f9f9f9;
-                padding: 15px;
-                border-radius: 3px;
-                border: 1px solid #e5e5e5;
-            }
-            </style>
         </div>
         <?php
     }
@@ -491,23 +453,6 @@ class KTP_Settings {
             <?php endif; ?>
         </div>
         <div style="font-size:12px;color:#555;margin-top:8px;">※ プラグインのライセンスキーを入力して、機能を有効化してください。</div>
-        <style>
-            .ktp-license-status {
-                margin-top: 8px;
-                font-weight: bold;
-                display: flex;
-                align-items: center;
-            }
-            .ktp-license-status.active {
-                color: #46b450;
-            }
-            .ktp-license-status.inactive {
-                color: #dc3232;
-            }
-            .ktp-license-status .dashicons {
-                margin-right: 5px;
-            }
-        </style>
         <?php
     }
 
