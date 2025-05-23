@@ -580,6 +580,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // テーブル名
         $table_name = $wpdb->prefix . 'ktp_' . $name;
         
+        // 表示モードの取得（デフォルトは顧客一覧）
+        $view_mode = isset($_GET['view_mode']) ? $_GET['view_mode'] : 'customer_list';
         
         // -----------------------------
         // ページネーションリンク
@@ -588,11 +590,14 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 表示範囲
         $query_limit = 5;
         
+        // 表示タイトルの設定
+        $list_title = ($view_mode === 'order_history') ? '■ 注文履歴（レンジ： ' . $query_limit . ' ）' : '■ 顧客リスト（レンジ： ' . $query_limit . ' ）';
+        
         // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <h3>■ 顧客リスト（レンジ： $query_limit ）</h3>
+            <h3>$list_title</h3>
         END;
         
        // スタート位置を決める
@@ -794,10 +799,23 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
         // 受注書作成ボタンはworkflowブロックに分離
         $workflow_html = '<div class="workflow">';
-        $workflow_html .= '<div class="order-btn-box" style="margin:16px 0;">';
+        
+        // 表示モードボタンの追加
+        $workflow_html .= '<div class="view-mode-buttons" style="display:flex;gap:8px;margin:16px 0;align-items:center;">';
+        
+        // 注文履歴ボタン
+        $order_history_active = ($view_mode === 'order_history') ? 'active' : '';
+        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=order_history\'">注文履歴</button>';
+        
+        // 顧客一覧ボタン
+        $customer_list_active = ($view_mode === 'customer_list') ? 'active' : '';
+        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list\'">顧客一覧</button>';
+        
+        $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
         $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
         $workflow_html .= '</form>';
+        $workflow_html .= '</div>';
         $workflow_html .= '</div>';
         $workflow_html .= '</div>';
 
