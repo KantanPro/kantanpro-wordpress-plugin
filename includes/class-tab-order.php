@@ -14,13 +14,14 @@ class Kntan_Order_Class{
     // -----------------------------
     function Create_Order_Table() {
         global $wpdb;
-        $my_table_version = '1.0'; // 受注書テーブルのバージョン
+        $my_table_version = '1.1'; // 受注書テーブルのバージョンを1.1に変更（カラム追加のため）
         $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
         $charset_collate = $wpdb->get_charset_collate();
 
         $columns_def = [
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
             "time BIGINT(11) DEFAULT '0' NOT NULL", // 作成日時
+            "client_id MEDIUMINT(9) DEFAULT NULL", // 顧客ID：顧客テーブルとの紐付け用
             "customer_name VARCHAR(100) NOT NULL", // 顧客名
             "user_name TINYTEXT", // 担当者名
             "project_name VARCHAR(255)", // 案件名
@@ -82,7 +83,16 @@ class Kntan_Order_Class{
             $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $order_id));
             if ($order) {
                 // 顧客情報取得
-                $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE company_name = %s AND name = %s", $order->customer_name, $order->user_name));
+                $client = null;
+                // まずはclient_idで検索
+                if (!empty($order->client_id)) {
+                    $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE id = %d", $order->client_id));
+                }
+                // 見つからない場合は会社名と担当者名で検索（後方互換性）
+                if (!$client) {
+                    $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE company_name = %s AND name = %s", 
+                        $order->customer_name, $order->user_name));
+                }
                 $to = $client && !empty($client->email) ? $client->email : '';
                 if (empty($to)) {
                     echo '<script>alert("得意先のメールアドレスが未入力です。顧客管理画面でメールアドレスを登録してください。");</script>';
@@ -228,9 +238,25 @@ class Kntan_Order_Class{
 
         // 得意先タブから遷移してきた場合（新規受注書作成）
         if ($from_client === 1 && $customer_name !== '') {
+            // 顧客IDを取得
+            $client_id = isset($_GET['client_id']) ? intval($_GET['client_id']) : 0;
+            
+            // 顧客IDが提供されなかった場合は、会社名と担当者名から顧客IDを検索
+            if ($client_id <= 0 && $customer_name !== '') {
+                $client = $wpdb->get_row($wpdb->prepare(
+                    "SELECT id FROM {$client_table} WHERE company_name = %s AND name = %s",
+                    $customer_name, 
+                    $user_name
+                ));
+                if ($client) {
+                    $client_id = $client->id;
+                }
+            }
+            
             // 受注書データをデータベースに挿入
             $insert_data = array(
                 'time' => current_time( 'mysql' ),
+                'client_id' => $client_id, // 顧客IDを保存
                 'customer_name' => $customer_name,
                 'user_name' => $user_name,
                 'invoice_items' => '', // 初期値は空
@@ -268,7 +294,8 @@ class Kntan_Order_Class{
 
             if ($order_data) {
                 // プレビュー用HTML（詳細表示用）
-                $preview_html = "<div><strong>伝票プレビュー</strong><br>受注書ID: " . esc_html($order_data->id) . "<br>会社名：" . esc_html($order_data->customer_name) . "<br>担当者名：" . esc_html($order_data->user_name) . "</div>";
+                $client_id_text = !empty($order_data->client_id) ? "（顧客ID: " . esc_html($order_data->client_id) . "）" : "（顧客ID未設定）";
+                $preview_html = "<div><strong>伝票プレビュー</strong><br>受注書ID: " . esc_html($order_data->id) . "<br>会社名：" . esc_html($order_data->customer_name) . " " . $client_id_text . "<br>担当者名：" . esc_html($order_data->user_name) . "</div>";
                 $preview_html_json = json_encode($preview_html);
 
                 // プレビュー・印刷ボタンのJavaScriptとHTMLを先に生成
@@ -363,10 +390,23 @@ foreach ($progress_labels as $num => $label) {
 $content .= '</select>';
 $content .= '</form>';
 $content .= '</div>';
-                $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span></div>';
+                $client_id_display = !empty($order_data->client_id) ? '（顧客ID: ' . esc_html($order_data->client_id) . '）' : '（顧客ID未設定）';
+                $content .= '<div>会社名：<span id="order_customer_name">' . esc_html($order_data->customer_name) . '</span> <span class="client-id" style="color:#666;font-size:0.9em;">' . $client_id_display . '</span></div>';
                 // 担当者名の横に得意先メールアドレスのmailtoリンク（あれば）
                 $client_email = '';
-                $client = $wpdb->get_row($wpdb->prepare("SELECT email FROM {$client_table} WHERE company_name = %s AND name = %s", $order_data->customer_name, $order_data->user_name));
+                $client = null;
+                
+                // まず顧客IDがある場合はIDで検索
+                if (!empty($order_data->client_id)) {
+                    $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE id = %d", $order_data->client_id));
+                }
+                
+                // IDで見つからない場合は会社名と担当者名で検索（後方互換性）
+                if (!$client) {
+                    $client = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$client_table} WHERE company_name = %s AND name = %s", 
+                        $order_data->customer_name, $order_data->user_name));
+                }
+                
                 if ($client && !empty($client->email)) {
                     $client_email = esc_attr($client->email);
                     $content .= '<div>担当者名：<span id="order_user_name">' . esc_html($order_data->user_name) . '</span>';

@@ -812,7 +812,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list\'">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
-        $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
+        $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '&client_id=' . urlencode($data_id) . '\';">';
         $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
         $workflow_html .= '</form>';
         $workflow_html .= '</div>';
