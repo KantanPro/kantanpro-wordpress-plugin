@@ -6,6 +6,7 @@
   flex-wrap: wrap;
 }
 
+/* 受注書タイトルとIDのレイアウト */
 .order-header-title-id {
   display: flex;
   align-items: center;
@@ -15,6 +16,7 @@
   gap: 8px;
 }
 
+/* プロジェクト名の入力欄スタイル */
 .order-header-projectname {
   padding: 11px;
   border: 1px solid var(--cocoon-basic-border-color);
@@ -25,6 +27,7 @@
   box-sizing: border-box; /* paddingとborderをwidthに含める */
 }
 
+/* モバイル表示時の受注書ヘッダー調整 */
 @media (max-width: 600px) {
   .order-header-flex {
     flex-direction: column;
@@ -42,6 +45,8 @@
     margin-left: 4px;
   }
 }
+
+/* ユーザーアイコン・アバターの丸型スタイル */
 .avatar,
 .user_icon {
   border-radius: 50% !important;
@@ -55,6 +60,7 @@
   display: inline-block;
   object-fit: cover;
 }
+
 /* ログイン中ユーザーのアイコンを丸くする */
 .user_icon {
     border-radius: 50%;
@@ -63,6 +69,7 @@
     box-shadow: 0 1px 4px #0001;
     vertical-align: middle;
 }
+
 /* operation（得意先タブ上部の操作ボタン用） */
 .operation {
   display: flex;
@@ -71,6 +78,7 @@
   margin: 0 0 8px 0;
   padding: 0 10px;
 }
+
 /* 進捗フィルタボタン */
 .progress-filter {
   margin: 10px 0;
@@ -102,18 +110,20 @@
   min-width: 110px;
 }
 
+/* 進捗プルダウンのホバー時 */
 .progress-select:hover {
   border-color: #bbb;
   background-color: #f0f0f0;
 }
 
+/* 進捗プルダウンのフォーカス時 */
 .progress-select:focus {
   outline: none;
   border-color: #1976d2;
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
 }
 
-/* 進捗状態別の色分け */
+/* 進捗状態別の色分け（文字色） */
 .progress-select option[value="1"] { color: #f44336; } /* 受付中 */
 .progress-select option[value="2"] { color: #ff9800; } /* 見積中 */
 .progress-select option[value="3"] { color: #2196f3; } /* 作成中 */
@@ -133,6 +143,8 @@
   max-width: 200px;
   width: auto;
 }
+
+/* 進捗ボタンのスタイル */
 .progress-btn {
   padding: 6px 16px;
   border-radius: 4px;
@@ -142,10 +154,13 @@
   border: 1px solid #ccc;
   transition: background 0.2s, color 0.2s;
 }
+
+/* 進捗ボタンのホバー時 */
 .progress-btn:hover {
   background: #1976d2;
   color: #fff;
 }
+
 /* 仕事リストタブ専用 全幅レイアウト */
 .work_list_box {
   width: 100%;
@@ -154,6 +169,8 @@
   box-sizing: border-box;
   text-align: left;
 }
+
+/* モバイル時の仕事リストタブ調整 */
 @media screen and (max-width: 767px) {
   .work_list_box {
     width: 100% !important;
@@ -177,12 +194,13 @@
     color: #1976d2;
     text-decoration: none;
     word-break: break-all;
-  }  .work_list_box a:hover {
+  }
+  .work_list_box a:hover {
     text-decoration: underline;
   }
 }
 
-/* 仕事リストの進捗プルダウン用スタイル */
+/* 仕事リストの進捗プルダウン用スタイル（重複あり） */
 .progress-select {
   font-size: 13px;
   padding: 4px 24px 4px 8px;
@@ -206,7 +224,7 @@
   line-height: 1;
 }
 
-/* 進捗状態に応じた色分け */
+/* 進捗状態に応じた色分け（背景色） */
 .progress-select option[value="1"] {
   background-color: #e3f2fd; /* 受付中: 薄い青 */
 }
@@ -272,6 +290,7 @@
     padding-right: 0 !important;
   }
 }
+
 /* 仕事リストタブ専用 レスポンシブ調整 */
 @media screen and (max-width: 767px) {
   .data_list_box {
@@ -301,6 +320,7 @@
     text-decoration: underline;
   }
 }
+
 /* 伝票処理・レポートタブの内容を全幅に */
 .order_contents,
 #report_content,
@@ -309,6 +329,8 @@
   max-width: 100%;
   margin: 24px 0;
 }
+
+/* 伝票処理・レポートタブのボックススタイル */
 .order_contents .box {
   background: #f8f8f8;
   border: 1px solid #ccc;
@@ -316,14 +338,20 @@
   margin-bottom: 18px;
   padding: 16px;
 }
+
+/* 伝票処理・レポートタブの見出し */
 .order_contents h4 {
   margin-top: 0;
   font-size: 1.1em;
   color: #333;
 }
+
+/* 伝票処理・レポートタブのボタンエリア */
 .order-btn-box {
   text-align: right;
 }
+
+/* 受注書作成ボタン */
 .create-order-btn {
   background: #1976d2;
   color: #fff;
@@ -334,9 +362,13 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
+/* 受注書作成ボタンのホバー時 */
 .create-order-btn:hover {
   background: #1565c0;
 }
+
+/* ユーザーアイコンの丸型スタイル（重複あり） */
 .user_icon {
   border-radius: 50% !important;
   overflow: hidden;
@@ -350,6 +382,7 @@
   object-fit: cover;
 }
 
+/* データ内容エリアのレイアウト */
 .data_contents {
   display: flex;
   flex-wrap: wrap;
@@ -361,6 +394,7 @@
   width: 100%;
 }
 
+/* 宛名内容エリアのレイアウト */
 .atena_contents {
   display: flex;
   flex-wrap: wrap;
@@ -372,6 +406,7 @@
   width: 100%;
 }
 
+/* 自社情報エリアのレイアウト */
 .my_company_contents {
   display: flex;
   flex-wrap: wrap;
@@ -383,6 +418,7 @@
   width: 100%;
 }
 
+/* ヘッダーのタイトル */
 .header_title {
   margin: 0 10px;
   font-size: 25px;
@@ -654,7 +690,7 @@ input[name="tab_item"] {
   }
 }
 
-/* フォーム */
+/* フォームグループのレイアウト */
 .form-group {
   display: flex;
   align-items: center;
@@ -730,7 +766,7 @@ input[name="tab_item"] {
   display: none;
 }
 
-/* ボタン */
+/* ボタンエリアのレイアウト */
 .button {
   display: flex;
   flex-direction: row;
@@ -755,12 +791,13 @@ input[name="tab_item"] {
   transition: background-color 0.2s;
 }
 
+/* ボタンのホバー時 */
 .button button:hover,
 .submit_button:hover {
   background-color: #45a049;
 }
 
-/* Googleフォント */
+/* Googleフォント用アイコン */
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,
@@ -769,17 +806,20 @@ input[name="tab_item"] {
     'opsz' 24
 }
 
+/* タイトルとバージョンのレイアウト */
 .parent {
   display: flex;
   align-items: flex-end;
   /* バージョンを下端に揃える */
 }
 
+/* タイトルのスタイル */
 .title {
   font-size: 30px;
   font-weight: bold;
 }
 
+/* バージョンのスタイル */
 .version {
   font-size: 20px;
   vertical-align: bottom;
@@ -833,9 +873,7 @@ input[name="tab_item"] {
   margin-right: 10px;
 }
 
-
 /* プリンターエリア */
-
 .printer {
   display: flex;
   flex-wrap: nowrap;
@@ -884,18 +922,19 @@ input[name="tab_item"] {
     margin-top: 5px;
 }
 
+/* アップロードタイトルの余白 */
 .up-title {
   margin-right: 10px;
 }
 
+/* モバイル時はアップロードタイトル非表示 */
 @media (max-width: 767px) {
   .up-title {
     display: none;
   }
 }
 
-/* Add your additional styles for the upload button here */
-
+/* プレビューウィンドウのスタイル */
 #previewWindow {
   display: block;
   clear: both;
@@ -910,12 +949,14 @@ input[name="tab_item"] {
   /* Added padding */
 }
 
+/* プレビュー画像のスタイル */
 #previewWindow img {
   max-width: 100%;
   height: auto;
   margin: 0 auto;
 }
 
+/* テンプレート内容エリアのレイアウト */
 .template_contents {
   display: flex;
   flex-wrap: wrap;
@@ -927,6 +968,7 @@ input[name="tab_item"] {
   width: 100%;
 }
 
+/* テンプレートフォームのスタイル */
 .template_form {
   flex: 1;
   /* これにより、利用可能なスペースを均等に分けます */
@@ -935,6 +977,7 @@ input[name="tab_item"] {
   text-align: left;
 }
 
+/* テンプレート例のスタイル */
 .template_example {
   flex: 1;
   /* これにより、利用可能なスペースを均等に分けます */
@@ -943,16 +986,17 @@ input[name="tab_item"] {
   text-align: left;
 }
 
+/* モバイル時のテンプレート内容エリア調整 */
 @media (max-width: 767px) {
   .template_contents {
     flex-direction: column;
   }
 }
 
+/* テンプレートタイトルの余白調整 */
 #template_title {
   margin-bottom: 0;
 }
-
 
 /* 設定タブ内のタブのスタイル */
 .in_tab {
@@ -973,26 +1017,7 @@ input[name="tab_item"] {
   font-size: 17px;
 }
 
-/* タブのボタンをホバーした時のスタイル */
-/* .in_tab button:hover {
-  background-color: #ddd;
-} */
-
-/* アクティブなタブのボタンスタイル */
-/* .in_tab button.active {
-  background-color: #ccc !important;
-  color: #3b3b3b !important;
-} */
-
-/* タブコンテンツのスタイル */
-/* .tabcontent {
-  display: none;
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-top: none;
-} */
-
-
+/* タブリンクのスタイル */
 .in_tab .tablinks {
   text-decoration: none; /* 下線を消す */
   padding: 0px 10px; /* パディングを追加、左右10px */
@@ -1000,6 +1025,7 @@ input[name="tab_item"] {
   color: #000000; /* アクティブなリンクの色を変更 */
 }
 
+/* 設定タブのレイアウト */
 .in_tab {
   display: flex;
   flex-wrap: nowrap;
@@ -1048,6 +1074,7 @@ input[name="tab_item"] {
   margin-top: 10px;
 }
 
+/* 画像アップロードフォームのスタイル */
 .image_upload_form {
   display: flex;
   flex-direction: row;
@@ -1062,6 +1089,7 @@ input[name="tab_item"] {
   width: 100%;
 }
 
+/* 商品画像のスタイル */
 .product-image {
   width: 100%; /* コンテナの幅に合わせて画像を拡大/縮小 */
   height: auto; /* 画像の高さを画像に合わせる */
@@ -1070,6 +1098,7 @@ input[name="tab_item"] {
   object-position: left; /* 画像を左寄せにする */
 }
 
+/* 検索リストボックスのスタイル */
 .search_list_box {
   width: 100%;
   padding: 20px;
@@ -1077,6 +1106,7 @@ input[name="tab_item"] {
   text-align: left;
 }
 
+/* ステージの余白 */
 .stage {
   margin-top: 5px;
 }
@@ -1175,6 +1205,8 @@ input[name="tab_item"] {
   justify-content: center;
   margin-left: 10px;
 }
+
+/* アップロードボタンのホバー時 */
 .upload-btn:hover {
   background: #1565c0;
 }
@@ -1186,6 +1218,7 @@ input[name="tab_item"] {
   flex-wrap: nowrap;
 }
 
+/* ファイル入力の幅調整 */
 .file-input {
   flex: 1;
   min-width: 120px;

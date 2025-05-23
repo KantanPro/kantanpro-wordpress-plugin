@@ -12,6 +12,7 @@
     line-height: 1.3 !important;
 }
 
+/* H1タイトルのアイコン */
 .ktp-admin-wrap h1 .dashicons {
     margin-right: 10px !important;
     font-size: 24px !important;
@@ -76,14 +77,17 @@
     align-items: center !important;
 }
 
+/* ライセンスステータスのアイコン */
 .ktp-admin-wrap .ktp-license-status.active {
     color: #46b450 !important;
 }
 
+/* ライセンスステータスのアイコン */
 .ktp-admin-wrap .ktp-license-status.inactive {
     color: #dc3232 !important;
 }
 
+/* ライセンスステータスのアイコン */
 .ktp-admin-wrap .ktp-license-status .dashicons {
     margin-right: 5px !important;
 }
