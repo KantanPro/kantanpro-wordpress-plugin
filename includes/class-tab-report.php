@@ -20,13 +20,50 @@ class Kntan_Report_Class {
         $content .= '</button>';
         $content .= '<button title="PDF出力">';
         $content .= '<span class="material-symbols-outlined" aria-label="PDF">description</span>';
-        $content .= '</button>';
-        $content .= '</div>'; // .printer 終了
+        $content .= '</button>';        $content .= '</div>'; // .printer 終了
         $content .= '</div>'; // .controller 終了
-
+        
         if ( empty( $activation_key ) ) {
+            // ダミーグラフとアクティベート促進ボタンを表示
+            $content .= '<div style="position:relative;max-width:800px;margin:30px auto;">';
+            
+            // ダミーグラフ画像
+            $content .= '<img src="' . plugins_url('../images/default/dummy_graph.png', __FILE__) . '" alt="レポートグラフ" style="width:100%;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1);filter:blur(3px);opacity:0.7;">';
+            
+            // グラフ上に重ねるオーバーレイ
+            $content .= '<div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.3);border-radius:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;">';
+            
+            $content .= '<h3 style="margin:0 0 15px;color:#333;font-size:20px;text-shadow:0 1px 2px rgba(255,255,255,0.8);">高度なグラフレポート機能</h3>';
+            
+            // 「今すぐ利用する」ボタン
+            $content .= '<a href="' . admin_url('admin.php?page=ktp-license') . '" '
+                . 'style="'
+                . 'display:inline-block;'
+                . 'background:linear-gradient(135deg, #e74c3c, #c0392b);'
+                . 'color:#fff;'
+                . 'font-size:16px;'
+                . 'font-weight:bold;'
+                . 'padding:15px 32px;'
+                . 'margin-top:10px;'
+                . 'border-radius:50px;'
+                . 'text-decoration:none;'
+                . 'box-shadow:0 4px 15px rgba(231,76,60,0.3);'
+                . 'transition:transform 0.3s, box-shadow 0.3s;'
+                . 'border:none;'
+                . 'text-transform:uppercase;'
+                . 'letter-spacing:1px;'
+                . '"'
+                . 'onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'0 8px 20px rgba(231,76,60,0.4)\';" '
+                . 'onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 4px 15px rgba(231,76,60,0.3)\';"'
+                . '>今すぐ利用する</a>';
+            
+            $content .= '<p style="margin-top:15px;color:#555;font-size:14px;">アクティベーションを完了すると、すべての機能が利用できるようになります</p>';
+            
+            $content .= '</div>'; // オーバーレイ終了
+            $content .= '</div>'; // コンテナ終了
+            
             // キー未入力時のメッセージを表示
-            $content .= '<div class="ktp-license-message">';
+            $content .= '<div class="ktp-license-message" style="margin-top:15px;">';
             $content .= '<span class="dashicons dashicons-warning"></span>';
             $content .= 'アクティベーションキーを入力してください。';
             $content .= '<p>レポート機能を利用するには、<a href="' . admin_url('admin.php?page=ktp-license') . '">ライセンス設定</a>からアクティベーションキーを設定してください。</p>';
