@@ -16,4 +16,3 @@ class Kantan_Order_Class_Extended extends Kantan_Order_Class {
 }
 
 // ...existing code...
-?>

@@ -9,4 +9,3 @@ class Kantan_List_Class_Extended extends Kantan_List_Class {
 
     // ...existing code...
 }
-?>
