@@ -10,7 +10,7 @@ class Kntan_Report_Class {
     function Report_Tab_View( $tab_name ) {
         // アクティベーションキー取得
         $activation_key = get_option( 'ktp_activation_key' );
-        
+
         // コントローラー/プリンターセクションの共通部分
         $content = '<div class="controller">';
         $content .= '<div class="printer">';
@@ -23,124 +23,110 @@ class Kntan_Report_Class {
         $content .= '</button>';
         $content .= '</div>'; // .printer 終了
         $content .= '</div>'; // .controller 終了
-        
+
         if ( empty( $activation_key ) ) {
             // キー未入力時のメッセージを表示
             $content .= '<div class="ktp-license-message">';
             $content .= '<span class="dashicons dashicons-warning"></span>';
             $content .= 'アクティベーションキーを入力してください。';
             $content .= '<p>レポート機能を利用するには、<a href="' . admin_url('admin.php?page=ktp-license') . '">ライセンス設定</a>からアクティベーションキーを設定してください。</p>';
-            $content .= '</div>';        } else {
-            // ライセンスキー確認メッセージ表示エリア
-            $content .= '<div class="ktp-license-display ktp-license-success">';
-            $content .= '<div class="ktp-license-key">';
-            $content .= '<span class="dashicons dashicons-yes-alt"></span>';
-            $content .= '<span class="ktp-license-thank-you">ライセンスキーを確認しました。ありがとうございます！</span>';
-            $content .= '<span class="ktp-license-activated">アクティベーション済み</span>';
+            $content .= '</div>';
+        } else {
+            // グラフ表示（ダミーデータ）
+            $content .= '<div id="report_content" style="background:#fff;padding:32px 12px 32px 12px;max-width:900px;margin:32px auto 0 auto;border-radius:10px;box-shadow:0 2px 8px #eee;">';
+            $content .= '<h3 style="margin-bottom:24px;">レポートグラフ（ダミーデータ）</h3>';
+            $content .= '<div style="display:flex;flex-wrap:wrap;gap:32px;justify-content:center;">';
+            $content .= '<div><canvas id="barChart" width="320" height="240"></canvas><div style="text-align:center;">棒グラフ</div></div>';
+            $content .= '<div><canvas id="pieChart" width="320" height="240"></canvas><div style="text-align:center;">円グラフ</div></div>';
+            $content .= '<div><canvas id="lineChart" width="320" height="240"></canvas><div style="text-align:center;">折れ線グラフ</div></div>';
+            $content .= '<div><canvas id="stackedBarChart" width="320" height="240"></canvas><div style="text-align:center;">帯グラフ</div></div>';
             $content .= '</div>';
             $content .= '</div>';
+            $content .= '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
+            $content .= '<script>
+// 色設定
+const colors = ["#e74c3c", "#3498db", "#f1c40f", "#bdc3c7"];
+// 棒グラフ
+new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+        labels: ["A", "B", "C", "D"],
+        datasets: [{
+            label: "売上",
+            data: [120, 190, 300, 250],
+            backgroundColor: colors,
+            borderColor: "#fff",
+            borderWidth: 1
+        }]
+    },
+    options: {
+        plugins: { legend: { labels: { color: "#333" } } },
+        scales: {
+            x: { grid: { color: "#eee" }, ticks: { color: "#333" } },
+            y: { grid: { color: "#eee" }, ticks: { color: "#333" } }
         }
-          // スタイル
-        $content .= '<style>
-            .ktp-license-display {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin-top: 100px;
-                padding: 20px;
-            }
-            .ktp-license-key {
-                text-align: center;
-                padding: 20px 30px;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            }
-            .ktp-license-label {
-                display: block;
-                margin-bottom: 10px;
-                font-size: 14px;
-                font-weight: bold;
-                color: #555;
-            }
-            .ktp-license-value {
-                display: block;
-                font-size: 18px;
-                font-family: monospace;
-                letter-spacing: 1px;
-                color: #0073aa;
-                background: #f5f5f5;
-                padding: 10px 15px;
-                border-radius: 3px;
-                border: 1px dashed #ccc;
-            }
-            .ktp-license-success {
-                margin-top: 50px;
-            }
-            .ktp-license-success .ktp-license-key {
-                padding: 30px 40px;
-                border: 1px solid #c3e6cb;
-                background-color: #d4edda;
-            }
-            .ktp-license-success .dashicons {
-                font-size: 48px;
-                width: 48px;
-                height: 48px;
-                margin-bottom: 15px;
-                color: #28a745;
-            }
-            .ktp-license-thank-you {
-                display: block;
-                font-size: 18px;
-                font-weight: bold;
-                color: #28a745;
-                margin-bottom: 10px;
-            }
-            .ktp-license-activated {
-                display: inline-block;
-                background: #28a745;
-                color: white;
-                padding: 5px 15px;
-                border-radius: 20px;
-                font-size: 12px;
-                letter-spacing: 1px;
-                margin-top: 10px;
-            }
-            .ktp-license-message {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                padding: 50px 20px;
-                margin-top: 30px;
-                font-size: 16px;
-                color: #dc3232;
-                background: #fef7f7;
-                border: 1px solid #f9c9c9;
-                border-radius: 5px;
-            }
-            .ktp-license-message .dashicons {
-                font-size: 48px;
-                width: 48px;
-                height: 48px;
-                margin-bottom: 15px;
-            }
-            .ktp-license-message p {
-                margin-top: 15px;
-                color: #666;
-                font-size: 14px;
-            }
-            .ktp-license-message a {
-                color: #0073aa;
-                text-decoration: none;
-                font-weight: bold;
-            }
-            .ktp-license-message a:hover {
-                text-decoration: underline;
-            }
-        </style>';
-        
+    }
+});
+// 円グラフ
+new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+        labels: ["赤", "青", "黄", "グレー"],
+        datasets: [{
+            data: [30, 40, 20, 10],
+            backgroundColor: colors,
+            borderColor: "#fff",
+            borderWidth: 2
+        }]
+    },
+    options: {
+        plugins: { legend: { labels: { color: "#333" } } }
+    }
+});
+// 折れ線グラフ
+new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: {
+        labels: ["1月", "2月", "3月", "4月"],
+        datasets: [{
+            label: "推移",
+            data: [10, 25, 18, 32],
+            borderColor: colors[0],
+            backgroundColor: "rgba(231,76,60,0.1)",
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        plugins: { legend: { labels: { color: "#333" } } },
+        scales: {
+            x: { grid: { color: "#eee" }, ticks: { color: "#333" } },
+            y: { grid: { color: "#eee" }, ticks: { color: "#333" } }
+        }
+    }
+});
+// 帯グラフ（積み上げ棒グラフ）
+new Chart(document.getElementById("stackedBarChart"), {
+    type: "bar",
+    data: {
+        labels: ["Q1", "Q2", "Q3", "Q4"],
+        datasets: [
+            { label: "赤", data: [10, 20, 30, 40], backgroundColor: colors[0] },
+            { label: "青", data: [20, 10, 15, 25], backgroundColor: colors[1] },
+            { label: "黄", data: [5, 15, 10, 20], backgroundColor: colors[2] },
+            { label: "グレー", data: [8, 12, 6, 10], backgroundColor: colors[3] }
+        ]
+    },
+    options: {
+        plugins: { legend: { labels: { color: "#333" } } },
+        scales: {
+            x: { stacked: true, grid: { color: "#eee" }, ticks: { color: "#333" } },
+            y: { stacked: true, grid: { color: "#eee" }, ticks: { color: "#333" } }
+        }
+    }
+});
+            </script>';
+        }
         return $content;
     }
 }
