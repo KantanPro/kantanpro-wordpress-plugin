@@ -1065,7 +1065,8 @@ class Kntan_Service_Class {
                 <button onclick="printContent()" title="印刷する">
                     <span class="material-symbols-outlined" aria-label="印刷">print</span>
                 </button>
-            </div>
+            </div>        </div>
+        <div class="workflow">
         </div>
         <div id="previewWindow" style="display: none;"></div>
         END;

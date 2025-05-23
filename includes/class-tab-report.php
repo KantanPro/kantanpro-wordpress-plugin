@@ -23,6 +23,10 @@ class Kntan_Report_Class {
         $content .= '</button>';        $content .= '</div>'; // .printer 終了
         $content .= '</div>'; // .controller 終了
         
+        // workflowセクション追加（デザイン統一）
+        $content .= '<div class="workflow">';
+        $content .= '</div>'; // .workflow 終了
+        
         if ( empty( $activation_key ) ) {
             // ダミーグラフとアクティベート促進ボタンを表示
             $content .= '<div style="position:relative;max-width:800px;margin:30px auto;">';

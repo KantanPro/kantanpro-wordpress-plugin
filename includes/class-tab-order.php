@@ -321,9 +321,14 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 $content .= '</div>';
                 $content .= '</div>';
                 $content .= '<div id="orderPreviewWindow" style="display: none;"></div>';
+
+                // workflowセクション追加（デザイン統一）
+                $content .= '<div class="workflow">';
+                $content .= '</div>';
+
                 // メール編集フォーム導入により、進捗3の質問内容プロンプトは不要になったため削除
 
-                // メール編集フォームがあればcontrollerの直後で$contentに追加
+                // メール編集フォームがあればworkflowの直後で$contentに追加
                 if (!empty($mail_form_html)) {
                     $content .= $mail_form_html;
                 }

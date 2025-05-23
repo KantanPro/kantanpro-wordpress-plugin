@@ -79,6 +79,16 @@
   padding: 0 10px;
 }
 
+/* workflow（各タブの操作・フィルタエリア用） */
+.workflow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 20px 0;
+  padding: 0 10px;
+  width: 100%;
+}
+
 /* 進捗フィルタボタン */
 .progress-filter {
   margin: 10px 0;

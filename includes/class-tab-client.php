@@ -792,14 +792,14 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             . '</div>'
             . '</div>';
 
-        // 受注書作成ボタンはoperationブロックに分離
-        $operation_html = '<div class="operation">';
-        $operation_html .= '<div class="order-btn-box" style="margin:16px 0;">';
-        $operation_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
-        $operation_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
-        $operation_html .= '</form>';
-        $operation_html .= '</div>';
-        $operation_html .= '</div>';
+        // 受注書作成ボタンはworkflowブロックに分離
+        $workflow_html = '<div class="workflow">';
+        $workflow_html .= '<div class="order-btn-box" style="margin:16px 0;">';
+        $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '\';">';
+        $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
+        $workflow_html .= '</form>';
+        $workflow_html .= '</div>';
+        $workflow_html .= '</div>';
 
         // データー量を取得
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
@@ -1221,9 +1221,9 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         END;
 
         // コンテンツを返す
-        // controller, operation（受注書作成ボタン）を$print直後に追加
-        // controller_html, operation_htmlが重複しないようにcontroller_htmlは1回のみ出力
-        $content = $print . $controller_html . $operation_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        // controller, workflow（受注書作成ボタン）を$print直後に追加
+        // controller_html, workflow_htmlが重複しないようにcontroller_htmlは1回のみ出力
+        $content = $print . $controller_html . $workflow_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
     }

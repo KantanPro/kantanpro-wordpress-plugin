@@ -141,9 +141,12 @@ class Kntan_Setting_Class {
                 <span class="material-symbols-outlined" title="印刷テンプレート">
                 print_add
                 </span>
-                </a>
-            </div>
+                </a>            </div>
         </div>
+        
+        <div class="workflow">
+        </div>
+        
         BUTTONS;
         // echo $active_tab . '-1';
 
