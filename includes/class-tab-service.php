@@ -506,12 +506,11 @@ class Kntan_Service_Class {
                 $category = esc_html($row->category);
                 $image_url = esc_html($row->image_url);
                 $frequency = esc_html($row->frequency);
-                
-                // リスト項目
+                  // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
                 $results[] = <<<END
                 <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                    <div class="data_list_item">$id : $service_name : $category : 頻度($frequency)</div>
+                    <div class="data_list_item">ID: $id $service_name : $category : 頻度($frequency)</div>
                 </a>
                 END;
             }

@@ -659,11 +659,10 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);
-               
-                // リスト項目                $cookie_name = 'ktp_' . $name . '_id';
+                 // リスト項目                $cookie_name = 'ktp_' . $name . '_id';
                 $results[] = <<<END
                 <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                    <div class="data_list_item">$id : $company_name : $user_name : $category : 頻度($frequency)</div>
+                    <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
                 </a>
                 END;
 
