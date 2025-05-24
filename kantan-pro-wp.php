@@ -5,6 +5,11 @@ Description: 仕事のワークフローを管理するためのプラグイン�
 Version: beta
 */
 
+// プラグイン基本情報を定数として定義（コード内で参照するため）
+define('KTPWP_PLUGIN_NAME', 'KTPWP');
+define('KTPWP_PLUGIN_DESCRIPTION', '仕事のワークフローを管理するためのプラグインです。');
+define('KTPWP_PLUGIN_VERSION', 'beta');
+
 if (!defined('ABSPATH')) {
 	exit;
 }
@@ -14,7 +19,7 @@ define('KTPWP_PLUGIN_FILE', __FILE__);
 
 // 定数を定義
 if (!defined('MY_PLUGIN_VERSION')) {
-	define('MY_PLUGIN_VERSION', 'beta'); // プラグインのバージョン
+	define('MY_PLUGIN_VERSION', KTPWP_PLUGIN_VERSION); // プラグインのバージョン
 }
 if (!defined('MY_PLUGIN_PATH')) {
 	define('MY_PLUGIN_PATH', plugin_dir_path(__FILE__));
@@ -155,9 +160,13 @@ function KTPWP_Index(){
 			// バージョン番号を定数から取得
 			$plugin_version = defined('MY_PLUGIN_VERSION') ? MY_PLUGIN_VERSION : '';
 
+			// プラグイン名とバージョンを定数から取得
+			$plugin_name = KTPWP_PLUGIN_NAME;
+			$plugin_version = KTPWP_PLUGIN_VERSION;
+			
 			$front_message = <<<END
 			<div class="ktp_header">
-			<div class="parent"><div class="title">{$icon_img}KTPWP</div><div class="version">v{$plugin_version}</div></div>
+			<div class="parent"><div class="title">{$icon_img}{$plugin_name}</div><div class="version">v{$plugin_version}</div></div>
 			$logged_in_users_html
 			　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
 			</div>
