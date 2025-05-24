@@ -242,6 +242,8 @@ function KTPWP_Index(){
 		}
 	}
 	add_shortcode('kantanAllTab','kantanAllTab');
+	// ktpwp_all_tab ショートコードを追加（同じ機能を別名で提供）
+	add_shortcode('ktpwp_all_tab', 'kantanAllTab');
 }
 
 // add_submenu_page の第7引数修正
