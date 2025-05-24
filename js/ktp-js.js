@@ -53,7 +53,7 @@ popupElement.style.textAlign = 'center';
 popupElement.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
 document.addEventListener('DOMContentLoaded', function() {
-    var activeTab = document.querySelector('.in_tab button.active');
+    var activeTab = document.querySelector('.printer button.active');
     if (activeTab) {
         activeTab.style.backgroundColor = '#ccc';
         activeTab.style.color = '#3b3b3b';

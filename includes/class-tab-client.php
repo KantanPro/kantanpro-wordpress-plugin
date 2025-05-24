@@ -787,7 +787,6 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // controllerブロックを必ず先頭に追加
         $controller_html = '<div class="controller">'
             . '<div class="printer">'
-            . '<div class="up-title">宛名印刷：</div>'
             . '<button id="previewButton" onclick="togglePreview()" title="プレビュー">'
             . '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>'
             . '</button>'
@@ -801,7 +800,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $workflow_html = '<div class="workflow">';
         
         // 表示モードボタンの追加
-        $workflow_html .= '<div class="view-mode-buttons" style="display:flex;gap:8px;margin:16px 0;align-items:center;">';
+        $workflow_html .= '<div class="view-mode-buttons" style="display:flex;gap:8px;margin:0px 0;align-items:center;">';
         
         // 注文履歴ボタン
         $order_history_active = ($view_mode === 'order_history') ? 'active' : '';

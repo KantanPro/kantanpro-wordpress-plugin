@@ -339,7 +339,7 @@ class Kntan_Order_Class{
                 $content .= '<button onclick="printOrderContent()" title="印刷する">';
                 $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
                 $content .= '</button>';
-                $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;">';
+                $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;margin-top:0px;">';
                 $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
 $content .= '<button type="submit" id="orderMailButton" title="メール">';
 $content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
@@ -353,7 +353,7 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 $content .= '<div class="workflow">';
                 // 削除ボタンをworkflow内に移動
                 $delete_url = add_query_arg(['order_id' => $order_id, 'delete_order' => 1]);
-                $content .= '<a href="#" id="orderDeleteButton" style="color:#fff;background:#d9534f;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;display:inline-block;text-decoration:none;margin-left:10px;" onclick="event.preventDefault(); confirmDeleteOrder();">受注書を削除</a>';
+                $content .= '<a href="#" id="orderDeleteButton" style="color:#fff;background:#d9534f;padding:0px 8px;font-size:16px;border:none;border-radius:4px;cursor:pointer;display:inline-block;text-decoration:none;margin-left:10px;" onclick="event.preventDefault(); confirmDeleteOrder();">受注書を削除</a>';
                 $content .= "<script>\nfunction confirmDeleteOrder() {\n  if (window.confirm('本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。')) {\n    window.location.href = '{$delete_url}';\n  }\n}\n</script>";
                 $content .= '</div>';
 
@@ -482,7 +482,6 @@ $content .= '</div>';
             $content .= '
 <div class="controller">
     <div class="printer">
-        <div class="up-title">伝票処理：</div>
         <button id="orderPreviewButton" disabled title="プレビュー">
             <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
         </button>

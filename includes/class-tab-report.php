@@ -9,12 +9,9 @@ class Kntan_Report_Class {
     
     function Report_Tab_View( $tab_name ) {
         // アクティベーションキー取得
-        $activation_key = get_option( 'ktp_activation_key' );
-
-        // コントローラー/プリンターセクションの共通部分
+        $activation_key = get_option( 'ktp_activation_key' );        // コントローラー/プリンターセクションの共通部分
         $content = '<div class="controller">';
         $content .= '<div class="printer">';
-        $content .= '<div class="up-title">レポート：</div>';
         $content .= '<button title="印刷する">';
         $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
         $content .= '</button>';

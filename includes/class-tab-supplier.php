@@ -1259,10 +1259,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             //     window.close();
             // }
 
-        </script>
-        <div class="controller">
+        </script>        <div class="controller">
             <div class="printer">
-                <div class="up-title">宛名印刷：</div>
                 <button id="previewButton" onclick="togglePreview()" title="プレビュー">
                     <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
                 </button>

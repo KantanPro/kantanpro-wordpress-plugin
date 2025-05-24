@@ -33,6 +33,13 @@ class KTP_Settings {
                 array(),
                 '1.0.1'
             );
+            // 設定タブ用のCSSも読み込み
+            wp_enqueue_style(
+                'ktp-setting-tab',
+                plugin_dir_url(dirname(__FILE__)) . 'css/ktp-setting-tab.css',
+                array(),
+                '1.0.1'
+            );
         }
     }
 
@@ -175,6 +182,15 @@ class KTP_Settings {
             echo '</form>';
             echo '</div>';
             
+            // 印刷ボタンセクション
+            echo '<div class="printer">';
+            echo '<h3>印刷</h3>';
+            echo '<p>現在の設定内容を印刷します。</p>';
+            echo '<button type="button" class="button button-secondary" onclick="window.print();">';
+            echo '<span class="dashicons dashicons-printer" style="margin-top: 3px;"></span> 印刷する';
+            echo '</button>';
+            echo '</div>';
+            
             echo '</div>'; // .ktp-settings-section
             echo '</div>'; // .ktp-settings-container
             ?>
@@ -234,6 +250,15 @@ class KTP_Settings {
                         <h3>ライセンスについて</h3>
                         <p>KTPWPプラグインを利用するには有効なライセンスキーが必要です。ライセンスキーに関する問題がございましたら、サポートまでお問い合わせください。</p>
                         <p><a href="mailto:support@example.com" class="button button-secondary">サポートに問い合わせる</a></p>
+                    </div>
+                    
+                    <!-- 印刷ボタンセクション -->
+                    <div class="printer">
+                        <h3>印刷</h3>
+                        <p>現在のライセンス設定内容を印刷します。</p>
+                        <button type="button" class="button button-secondary" onclick="window.print();">
+                            <span class="dashicons dashicons-printer" style="margin-top: 3px;"></span> 印刷する
+                        </button>
                     </div>
                 </div>
             </div>

@@ -84,20 +84,28 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px 0 20px 0;
+  margin: 0px 0 0px 0;
   padding: 0 10px;
   width: 100%;
 }
 
+/* workflowクラス内のすべてのボタン要素に適用 */
+.workflow button,
+.workflow .btn,
+.workflow a[class*="btn"] {
+  font-size: 16px;
+  padding: 0px 8px;
+}
+
 /* 表示モード切り替えボタン */
 .view-mode-btn {
-  padding: 8px 18px;
+  padding: 0px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: #f5f5f5;
   color: #666;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 16px;
   transition: all 0.3s ease;
 }
 
@@ -184,13 +192,14 @@
 
 /* 進捗ボタンのスタイル */
 .progress-btn {
-  padding: 6px 16px;
+  padding: 0px 8px;
   border-radius: 4px;
   background: #f0f0f0;
   color: #333;
   text-decoration: none;
   border: 1px solid #ccc;
   transition: background 0.2s, color 0.2s;
+  font-size: 16px;
 }
 
 /* 進捗ボタンのホバー時 */
@@ -841,7 +850,9 @@ input[name="tab_item"] {
     'FILL' 0,
     'wght' 400,
     'GRAD' 0,
-    'opsz' 24
+    'opsz' 24;
+  font-size: 22px; /* アイコンサイズを統一 */
+  vertical-align: middle; /* 垂直方向の位置を中央に */
 }
 
 /* タイトルとバージョンのレイアウト */
@@ -918,27 +929,43 @@ input[name="tab_item"] {
   justify-content: flex-end;
   align-items: center;
   /* 上下センターぞろえ */
-  margin-top: 2px;
+  margin-top: 0px;
   margin-right: 0px;
   border: 1px solid lightgray;
   background-color: rgb(212, 230, 241);
-  padding: 3px;
-  padding-left: 10px;
-  opacity: 0.6;
-  font-size: 14px;
-  /* 少し小さくする */
+  padding: 8px 0px;
+  opacity: 0.9; /* 透明度を下げて、より鮮明に表示 */
+  font-size: 15px; /* フォントサイズを少し大きくする */
   color: #000000;
   /* 文字の色を少し濃くする */
   width: 100%;
   /* 幅を最大にする */
+  border-radius: 4px; /* 角を丸くする */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 軽い影を追加 */
 }
 
 .printer button {
   background-color: transparent;
   border: none;
-  font-size: 14px;
+  font-size: 16px; /* ボタンサイズを大きくする */
   color: black;
   cursor: pointer;
+  padding: 5px 8px;
+  margin: 2px; /* ボタン間のマージン */
+  border-radius: 4px; /* 角を丸く */
+  transition: background-color 0.2s; /* ホバー時の遷移を滑らかに */
+  min-height: 36px; /* 最低の高さを設定 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.printer button:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* ホバー時の背景色 */
+}
+
+.printer button:focus {
+  outline: 1px solid #2196f3; /* フォーカス時のアウトライン */
 }
 
 .printer button.upload {
@@ -957,7 +984,25 @@ input[name="tab_item"] {
 
 .printer form {
     display: flex;
-    margin-top: 5px;
+    margin: 0; /* マージンをリセット */
+    align-items: center; /* 中央揃え */
+}
+
+/* プリンター内のフォームボタンも他のボタンと同じスタイルにする */
+.printer form button {
+    background-color: transparent;
+    border: none;
+    font-size: 16px;
+    color: black;
+    cursor: pointer;
+    padding: 8px 12px;
+    margin: 2px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* アップロードタイトルの余白 */
@@ -965,10 +1010,24 @@ input[name="tab_item"] {
   margin-right: 10px;
 }
 
-/* モバイル時はアップロードタイトル非表示 */
+/* モバイル時のスタイル調整 */
 @media (max-width: 767px) {
   .up-title {
-    display: none;
+    display: none; /* タイトルを非表示 */
+  }
+  
+  .printer {
+    padding: 6px; /* パディングを小さく */
+    justify-content: center; /* ボタンを中央に配置 */
+  }
+  
+  .printer button {
+    padding: 6px 10px; /* パディングを調整 */
+    min-height: 32px; /* 高さを少し小さく */
+  }
+  
+  .material-symbols-outlined {
+    font-size: 20px; /* アイコンサイズを少し小さく */
   }
 }
 
@@ -1037,14 +1096,14 @@ input[name="tab_item"] {
 }
 
 /* 設定タブ内のタブのスタイル */
-.in_tab {
+.printer {
   overflow: hidden;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
 }
 
 /* タブのボタンスタイル */
-.in_tab button {
+.printer button {
   background-color: inherit;
   float: left;
   border: none;
@@ -1056,7 +1115,7 @@ input[name="tab_item"] {
 }
 
 /* タブリンクのスタイル */
-.in_tab .tablinks {
+.printer .tablinks {
   text-decoration: none; /* 下線を消す */
   padding: 0px 10px; /* パディングを追加、左右10px */
   font-family: 'Roboto', sans-serif; /* Google Fontsを使用 */
@@ -1064,7 +1123,7 @@ input[name="tab_item"] {
 }
 
 /* 設定タブのレイアウト */
-.in_tab {
+.printer {
   display: flex;
   flex-wrap: nowrap;
   justify-content: flex-end;
@@ -1085,7 +1144,7 @@ input[name="tab_item"] {
   /* 幅を最大にする */
 }
 
-.in_tab button {
+.printer button {
   background-color: transparent;
   border: none;
   font-size: 14px;
@@ -1093,7 +1152,7 @@ input[name="tab_item"] {
   cursor: pointer;
 }
 
-.in_tab button.upload {
+.printer button.upload {
   background-color: transparent;
   border: none;
   font-size: 32px;
@@ -1103,11 +1162,11 @@ input[name="tab_item"] {
   margin-top: -10px;
 }
 
-.in_tab input {
+.printer input {
   margin-top: -4px;
 }
 
-.in_tab form {
+.printer form {
   display: flex;
   margin-top: 10px;
 }

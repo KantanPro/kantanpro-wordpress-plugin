@@ -18,7 +18,6 @@ class Kantan_List_Class{
         // controllerコンテナを上部に表示
         $content .= '<div class="controller">';
         $content .= '<div class="printer">';
-        $content .= '<div class="up-title">仕事リスト：</div>';
         // 印刷ボタン（ダミー）
         $content .= '<button title="印刷する" onclick="alert(\'印刷ダミー\')">';
         $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
@@ -45,7 +44,7 @@ class Kantan_List_Class{
         $content .= '</div>'; // .controller 終了
 
         // 進捗ボタンを全幅で表示するworkflowエリア
-        $content .= '<div class="workflow" style="width:100%;margin:10px 0 20px 0;">';
+        $content .= '<div class="workflow" style="width:100%;margin:0px 0 0px 0;">';
         $content .= '<div class="progress-filter" style="display:flex;gap:8px;width:100%;justify-content:center;">';
         foreach ($progress_labels as $num => $label) {
             $active = ($selected_progress === $num) ? 'style=\"font-weight:bold;background:#1976d2;color:#fff;\"' : '';
@@ -124,7 +123,7 @@ class Kantan_List_Class{
                     $content .= " - <span class='project_name'>{$project_name}</span>";
                 }
                 $content .= " - {$time}</a>";
-                $content .= "<form method='post' action='' style='margin:0;display:inline;'>";
+                $content .= "<form method='post' action='' style='margin: 0px 0 0px 0;display:inline;'>";
                 $content .= "<input type='hidden' name='update_progress_id' value='{$order_id}' />";
                 $content .= "<select name='update_progress' class='progress-select status-{$progress}' onchange='this.form.submit()'>";
                 foreach ($progress_labels as $num => $label) {

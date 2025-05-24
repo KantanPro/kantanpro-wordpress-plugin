@@ -1055,10 +1055,8 @@ class Kntan_Service_Class {
             //     window.close();
             // }
 
-        </script>
-        <div class="controller">
+        </script>        <div class="controller">
             <div class="printer">
-                <div class="up-title">商品印刷：</div>
                 <button id="previewButton" onclick="togglePreview()" title="プレビュー">
                     <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
                 </button>
