@@ -611,72 +611,199 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
        $query_order_by = 'frequency';
 
-// 全データ数を取得
-        $total_query = "SELECT COUNT(*) FROM {$table_name}";
-        $total_rows = $wpdb->get_var($total_query);
-        $total_pages = ceil($total_rows / $query_limit);
-
-        // 現在のページ番号を計算
-        $current_page = floor($page_start / $query_limit) + 1;
-
-        // データを取得
-       $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
-       $post_row = $wpdb->get_results($query);
-       if( $post_row ){
-           foreach ($post_row as $row){
-               $id = esc_html($row->id);
-               $time = esc_html($row->time);
-               $company_name = esc_html($row->company_name);
-               $user_name = esc_html($row->name);
-               $email = esc_html($row->email);
-               $url = esc_html($row->url);
-               $representative_name = esc_html($row->representative_name);
-               $phone = esc_html($row->phone);
-               $postal_code = esc_html($row->postal_code);
-               $prefecture = esc_html($row->prefecture);
-               $city = esc_html($row->city);
-               $address = esc_html($row->address);
-               $building = esc_html($row->building);
-               $closing_day = esc_html($row->closing_day);
-               $payment_month = esc_html($row->payment_month);
-               $payment_day = esc_html($row->payment_day);
-               $payment_method = esc_html($row->payment_method);
-               $tax_category = esc_html($row->tax_category);
-               $memo = esc_html($row->memo);
-               $category = esc_html($row->category);
-               $frequency = esc_html($row->frequency);
-               
-               // リスト項目
-               $cookie_name = 'ktp_' . $name . '_id';
-               $results[] = <<<END
-               <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-               <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
-               </a>
-               END;
-
+       // 注文履歴モードの場合
+       if ($view_mode === 'order_history') {
+           // 現在表示中の顧客ID
+           $cookie_name = 'ktp_' . $name . '_id';
+           if (isset($_GET['data_id'])) {
+               $client_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+           } elseif (isset($_COOKIE[$cookie_name])) {
+               $client_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+           } else {
+               // 最後のIDを取得して表示
+               $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+               $last_id_row = $wpdb->get_row($query);
+               $client_id = $last_id_row ? $last_id_row->id : 1;
            }
-           $query_max_num = $wpdb->num_rows;
+           
+           // 受注書テーブル
+           $order_table = $wpdb->prefix . 'ktp_order';
+           
+           // 全データ数を取得（この顧客IDに関連する受注書）
+           $total_query = $wpdb->prepare("SELECT COUNT(*) FROM {$order_table} WHERE client_id = %d", $client_id);
+           $total_rows = $wpdb->get_var($total_query);
+           $total_pages = ceil($total_rows / $query_limit);
+           
+           // 現在のページ番号を計算
+           $current_page = floor($page_start / $query_limit) + 1;
+           
+           // この顧客の受注書を取得
+           $query = $wpdb->prepare(
+               "SELECT * FROM {$order_table} WHERE client_id = %d ORDER BY time DESC LIMIT %d, %d", 
+               $client_id, $page_start, $query_limit
+           );
+           
+           $order_rows = $wpdb->get_results($query);
+           
+           // 顧客情報を取得して表示
+           $client_query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $client_id);
+           $client_data = $wpdb->get_row($client_query);
+           
+           if ($client_data) {
+               $client_name = esc_html($client_data->company_name);
+               $client_user_name = esc_html($client_data->name);
+               
+               // 注文履歴のリストヘッダーを更新
+               $results_h = <<<END
+               <div class="data_contents">
+                   <div class="data_list_box">
+                   <h3>■ {$client_name} の注文履歴（担当者：{$client_user_name}）</h3>
+               END;
+               
+               $results = array(); // 結果を格納する配列を初期化
+               
+               if ($order_rows) {
+                   // 進捗ラベル
+                   $progress_labels = [
+                       1 => '受付中',
+                       2 => '見積中',
+                       3 => '作成中',
+                       4 => '完成未請求',
+                       5 => '請求済',
+                       6 => '入金済'
+                   ];
+                   
+                   foreach ($order_rows as $order) {
+                       $order_id = esc_html($order->id);
+                       $project_name = isset($order->project_name) ? esc_html($order->project_name) : '（案件名なし）';
+                       $progress = intval($order->progress);
+                       $progress_label = isset($progress_labels[$progress]) ? $progress_labels[$progress] : '不明';
+                       
+                       // 日時フォーマット変換
+                       $raw_time = $order->time;
+                       $formatted_time = '';
+                       if (!empty($raw_time)) {
+                           if (is_numeric($raw_time) && strlen($raw_time) >= 10) {
+                               $timestamp = (int)$raw_time;
+                               $dt = new DateTime('@' . $timestamp);
+                               $dt->setTimezone(new DateTimeZone('Asia/Tokyo'));
+                           } else {
+                               $dt = date_create($raw_time, new DateTimeZone('Asia/Tokyo'));
+                           }
+                           if ($dt) {
+                               $week = ['日','月','火','水','木','金','土'];
+                               $w = $dt->format('w');
+                               $formatted_time = $dt->format('Y/n/j') . '（' . $week[$w] . '）' . $dt->format(' H:i');
+                           }
+                       }
+                       
+                       // 受注書の詳細へのリンク
+                       $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
+                       
+                       // リスト項目を生成
+                       $results[] = <<<END
+                       <a href="{$detail_url}" style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;">
+                           <div style="flex:1;">ID: {$order_id} - {$project_name}</div>
+                           <div style="width:180px;">{$formatted_time}</div>
+                           <div style="width:100px;text-align:center;" class="status-{$progress}">{$progress_label}</div>
+                       </a>
+                       END;
+                   }
+               } else {
+                   $results[] = <<<END
+                   <div class="data_list_item">この顧客の受注データはありません。</div>
+                   END;
+               }
+           } else {
+               $results[] = <<<END
+               <div class="data_list_item">顧客データが見つかりません。</div>
+               END;
+           }
        } else {
-           $results[] = <<<END
-           <div class="data_list_item">データーがありません。</div>
-           END;            
+           // 通常の顧客一覧表示（既存のコード）
+           // 全データ数を取得
+           $total_query = "SELECT COUNT(*) FROM {$table_name}";
+           $total_rows = $wpdb->get_var($total_query);
+           $total_pages = ceil($total_rows / $query_limit);
+
+           // 現在のページ番号を計算
+           $current_page = floor($page_start / $query_limit) + 1;
+
+           // データを取得
+           $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+           $post_row = $wpdb->get_results($query);
+           
+           $results = array(); // 結果を格納する配列を初期化
+           
+           if ($post_row) {
+               foreach ($post_row as $row) {
+                   $id = esc_html($row->id);
+                   $time = esc_html($row->time);
+                   $company_name = esc_html($row->company_name);
+                   $user_name = esc_html($row->name);
+                   $email = esc_html($row->email);
+                   $url = esc_html($row->url);
+                   $representative_name = esc_html($row->representative_name);
+                   $phone = esc_html($row->phone);
+                   $postal_code = esc_html($row->postal_code);
+                   $prefecture = esc_html($row->prefecture);
+                   $city = esc_html($row->city);
+                   $address = esc_html($row->address);
+                   $building = esc_html($row->building);
+                   $closing_day = esc_html($row->closing_day);
+                   $payment_month = esc_html($row->payment_month);
+                   $payment_day = esc_html($row->payment_day);
+                   $payment_method = esc_html($row->payment_method);
+                   $tax_category = esc_html($row->tax_category);
+                   $memo = esc_html($row->memo);
+                   $category = esc_html($row->category);
+                   $frequency = esc_html($row->frequency);
+                   
+                   // リスト項目
+                   $cookie_name = 'ktp_' . $name . '_id';
+                   $results[] = <<<END
+                   <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                   <div class="data_list_item">$id : $company_name : $user_name : $category : $email : 頻度($frequency)</div>
+                   </a>
+                   END;
+               }
+           } else {
+               $results[] = <<<END
+               <div class="data_list_item">データーがありません。</div>
+               END;
+           }
        }
 
        $results_f = "<div class=\"pagination\">";
 
+        // ページネーションリンク用の基本パラメータ
+        $base_params = [
+            'tab_name' => $name,
+            'page_stage' => 2,
+            'flg' => $flg,
+            'view_mode' => $view_mode
+        ];
+        
+        // 注文履歴表示の場合は顧客IDも追加
+        if ($view_mode === 'order_history' && isset($client_id)) {
+            $base_params['data_id'] = $client_id;
+        }
+        
         // 最初へリンク
         if ($current_page > 1) {
-            $first_start = 0; // 最初のページ
+            $base_params['page_start'] = 0;
+            $first_link = '?' . http_build_query($base_params);
             $results_f .= <<<END
-            <a href="?tab_name=$name&page_start=$first_start&page_stage=2&flg=$flg">|<</a> 
+            <a href="$first_link">|<</a> 
             END;
         }
 
         // 前へリンク
         if ($current_page > 1) {
-            $prev_start = ($current_page - 2) * $query_limit;
+            $base_params['page_start'] = ($current_page - 2) * $query_limit;
+            $prev_link = '?' . http_build_query($base_params);
             $results_f .= <<<END
-            <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg"><</a>
+            <a href="$prev_link"><</a>
             END;
         }
 
@@ -687,17 +814,19 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
-            $next_start = $current_page * $query_limit;
+            $base_params['page_start'] = $current_page * $query_limit;
+            $next_link = '?' . http_build_query($base_params);
             $results_f .= <<<END
-             <a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">></a>
+             <a href="$next_link">></a>
             END;
         }
 
         // 最後へリンク
         if ($current_page < $total_pages) {
-            $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
+            $base_params['page_start'] = ($total_pages - 1) * $query_limit;
+            $last_link = '?' . http_build_query($base_params);
             $results_f .= <<<END
-             <a href="?tab_name=$name&page_start=$last_start&page_stage=2&flg=$flg">>|</a>
+             <a href="$last_link">>|</a>
             END;
         }
                         
@@ -802,13 +931,27 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 表示モードボタンの追加
         $workflow_html .= '<div class="view-mode-buttons" style="display:flex;gap:8px;margin:0px 0;align-items:center;">';
         
-        // 注文履歴ボタン
-        $order_history_active = ($view_mode === 'order_history') ? 'active' : '';
-        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=order_history\'">注文履歴</button>';
+        // 現在の顧客IDを取得（後で使用するため）
+        $current_client_id = 0;
+        $cookie_name = 'ktp_' . $name . '_id';
+        if (isset($_GET['data_id'])) {
+            $current_client_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $current_client_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            // 最後のIDを取得
+            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
+            $last_id_row = $wpdb->get_row($query);
+            $current_client_id = $last_id_row ? $last_id_row->id : 0;
+        }
         
-        // 顧客一覧ボタン
+        // 注文履歴ボタン - 現在の顧客IDを保持して遷移
+        $order_history_active = ($view_mode === 'order_history') ? 'active' : '';
+        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=order_history&data_id=' . $current_client_id . '\'">注文履歴</button>';
+        
+        // 顧客一覧ボタン - 現在の顧客IDを保持して遷移
         $customer_list_active = ($view_mode === 'customer_list') ? 'active' : '';
-        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list\'">顧客一覧</button>';
+        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list&data_id=' . $current_client_id . '\'">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '&client_id=' . urlencode($data_id) . '\';">';
@@ -1162,12 +1305,12 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $data_src = [
             'company_name' => $company_name,
             'name' => $user_name,
-            'representative_name' => $representative_name,
-            'postal_code' => $postal_code,
-            'prefecture' => $prefecture,
-            'city' => $city,
-            'address' => $address,
-            'building' => $building,
+            'representative_name' => $data_src['representative_name'],
+            'postal_code' => $data_src['postal_code'],
+            'prefecture' => $data_src['prefecture'],
+            'city' => $data_src['city'],
+            'address' => $data_src['address'],
+            'building' => $data_src['building'],
         ];
 
         // データを取得
