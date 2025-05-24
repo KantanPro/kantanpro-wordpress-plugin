@@ -470,12 +470,10 @@ class Kntan_Service_Class {
         <div class="data_contents">
             <div class="data_list_box">
             <h3>■ 商品リスト（レンジ： $query_limit ）</h3>
-        END;
-
-        // スタート位置を決める
-        $page_stage = isset($_POST['page_stage']) ? intval($_POST['page_stage']) : 0;
-        $page_start = isset($_POST['page_start']) ? intval($_POST['page_start']) : 0;
-        $flg = isset($_POST['flg']) ? $_POST['flg'] : '';
+        END;        // スタート位置を決める
+        $page_stage = $_GET['page_stage'] ?? '';
+        $page_start = $_GET['page_start'] ?? 0;
+        $flg = $_GET['flg'] ?? '';
         if ($page_stage == '') {
             $page_start = 0;
         }
