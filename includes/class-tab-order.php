@@ -254,8 +254,11 @@ class Kntan_Order_Class{
             }
             
             // 受注書データをデータベースに挿入
+            // WordPressのタイムゾーン設定を使用して現在時刻のタイムスタンプを取得
+            $timestamp = time(); // UNIXタイムスタンプを取得
+            
             $insert_data = array(
-                'time' => current_time( 'mysql' ),
+                'time' => $timestamp, // WordPressのタイムゾーン設定に基づくUNIXタイムスタンプで保存
                 'client_id' => $client_id, // 顧客IDを保存
                 'customer_name' => $customer_name,
                 'user_name' => $user_name,
@@ -427,15 +430,24 @@ $content .= '</div>';
                 if (!empty($raw_time)) {
                     if (is_numeric($raw_time) && strlen($raw_time) >= 10) {
                         $timestamp = (int)$raw_time;
+                        // WordPressのタイムゾーン設定を使用
                         $dt = new DateTime('@' . $timestamp);
-                        $dt->setTimezone(new DateTimeZone('Asia/Tokyo'));
+                        $dt->setTimezone(new DateTimeZone(wp_timezone_string()));
                     } else {
-                        $dt = date_create($raw_time, new DateTimeZone('Asia/Tokyo'));
+                        $dt = date_create($raw_time, new DateTimeZone(wp_timezone_string()));
                     }
                     if ($dt) {
-                        $week = ['日','月','火','水','木','金','土'];
-                        $w = $dt->format('w');
-                        $formatted_time = $dt->format('Y/n/j') . '（' . $week[$w] . '）' . $dt->format(' H:i');
+                        // ロケールに応じた曜日の取得
+                        $locale = get_locale();
+                        if (substr($locale, 0, 2) === 'ja') {
+                            // 日本語の場合
+                            $week = ['日','月','火','水','木','金','土'];
+                            $w = $dt->format('w');
+                            $formatted_time = $dt->format('Y/n/j') . '（' . $week[$w] . '）' . $dt->format(' H:i');
+                        } else {
+                            // その他の言語の場合は国際的な形式を使用
+                            $formatted_time = $dt->format('Y-m-d l H:i');
+                        }
                     }
                 }
                 $content .= '<div>作成日時：<span id="order_created_time">' . esc_html($formatted_time) . '</span></div>';
