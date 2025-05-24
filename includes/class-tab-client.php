@@ -702,10 +702,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                        
                        // リスト項目を生成
                        $results[] = <<<END
-                       <a href="{$detail_url}" style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;">
-                           <div style="flex:1;">ID: {$order_id} - {$project_name}</div>
-                           <div style="width:180px;">{$formatted_time}</div>
-                           <div style="width:100px;text-align:center;" class="status-{$progress}">{$progress_label}</div>
+                       <a href="{$detail_url}">
+                           <div class="data_list_item">ID: {$order_id} - {$project_name} <span style="float:right;" class="status-{$progress}">{$progress_label}</span></div>
                        </a>
                        END;
                    }
