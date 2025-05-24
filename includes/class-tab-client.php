@@ -1207,6 +1207,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 printWindow.document.open();
                 printWindow.document.write('<html><head><title>印刷</title></head><body>');
                 printWindow.document.write(printContent);
+                printWindow.document.write('<script>window.onafterprint = function(){ window.close(); }<\/script>');
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
                 printWindow.print();  // Add this line
@@ -1228,10 +1229,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 }
             }
 
-            // about:blankを閉じる
-            // window.onafterprint = function() {
-            //     window.close();
-            // }
+            // about:blankは自動的に閉じられます
 
         </script>
         <div id="previewWindow" style="display: none;"></div>
