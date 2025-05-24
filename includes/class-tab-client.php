@@ -1216,12 +1216,37 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             function togglePreview() {
                 var previewWindow = document.getElementById('previewWindow');
                 var previewButton = document.getElementById('previewButton');
+                
                 if (isPreviewOpen) {
+                    // プレビューを閉じる
                     previewWindow.style.display = 'none';
                     previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
                     isPreviewOpen = false;
                 } else {
+                    // プレビューを表示
                     var printContent = $print_html;
+                    
+                    // プレビューウィンドウが存在しない場合は作成
+                    if (!previewWindow) {
+                        previewWindow = document.createElement('div');
+                        previewWindow.id = 'previewWindow';
+                        previewWindow.style.display = 'none';
+                        previewWindow.style.position = 'relative';
+                        previewWindow.style.zIndex = '100';
+                        previewWindow.style.background = '#fff';
+                        previewWindow.style.padding = '20px';
+                        previewWindow.style.border = '1px solid #ccc';
+                        previewWindow.style.margin = '10px 0';
+                        
+                        // controllerの直後に挿入
+                        var controllerDiv = document.querySelector('.controller');
+                        if (controllerDiv) {
+                            controllerDiv.parentNode.insertBefore(previewWindow, controllerDiv.nextSibling);
+                        } else {
+                            document.querySelector('.box').appendChild(previewWindow);
+                        }
+                    }
+                    
                     previewWindow.innerHTML = printContent;
                     previewWindow.style.display = 'block';
                     previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="閉じる">close</span>';
@@ -1231,13 +1256,21 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
             // about:blankは自動的に閉じられます
 
+            // DOMContentLoaded時にプレビューボタンの状態を設定
+            document.addEventListener('DOMContentLoaded', function() {
+                isPreviewOpen = false;
+                var previewButton = document.getElementById('previewButton');
+                if (previewButton) {
+                    previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
+                }
+            });
         </script>
-        <div id="previewWindow" style="display: none;"></div>
         END;
 
         // コンテンツを返す
         // controller, workflow（受注書作成ボタン）を$print直後に追加
         // controller_html, workflow_htmlが重複しないようにcontroller_htmlは1回のみ出力
+        // プレビューウィンドウはJavaScriptで動的に作成されるため、HTMLに直接書く必要はなくなった
         $content = $print . $controller_html . $workflow_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
