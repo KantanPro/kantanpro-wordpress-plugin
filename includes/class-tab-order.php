@@ -254,11 +254,11 @@ class Kntan_Order_Class{
             }
             
             // 受注書データをデータベースに挿入
-            // WordPressのタイムゾーン設定を使用して現在時刻のタイムスタンプを取得
-            $timestamp = time(); // UNIXタイムスタンプを取得
+            // 標準的なUNIXタイムスタンプを使用（UTCベース）
+            $timestamp = time(); // 標準のUTC UNIXタイムスタンプを取得
             
             $insert_data = array(
-                'time' => $timestamp, // WordPressのタイムゾーン設定に基づくUNIXタイムスタンプで保存
+                'time' => $timestamp, // 標準のUTC UNIXタイムスタンプで保存
                 'client_id' => $client_id, // 顧客IDを保存
                 'customer_name' => $customer_name,
                 'user_name' => $user_name,
@@ -429,10 +429,13 @@ $content .= '</div>';
                 $formatted_time = '';
                 if (!empty($raw_time)) {
                     if (is_numeric($raw_time) && strlen($raw_time) >= 10) {
-                        $timestamp = (int)$raw_time;
-                        // WordPressのタイムゾーン設定を使用
-                        $dt = new DateTime('@' . $timestamp);
-                        $dt->setTimezone(new DateTimeZone(wp_timezone_string()));
+                        // time()で取得したUNIXタイムスタンプはUTCベース
+                        // UTCとして解釈して、適切にタイムゾーン変換する
+                        $unix_timestamp = (int)$raw_time;
+                        
+                        // UTCタイムスタンプからDateTimeオブジェクトを作成し、WPタイムゾーンに変換
+                        $dt = new DateTime('@' . $unix_timestamp); // '@'プレフィックスでUTCとして解釈
+                        $dt->setTimezone(new DateTimeZone(wp_timezone_string())); // WordPressのタイムゾーンを適用
                     } else {
                         $dt = date_create($raw_time, new DateTimeZone(wp_timezone_string()));
                     }
