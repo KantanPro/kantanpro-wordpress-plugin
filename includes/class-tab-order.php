@@ -259,6 +259,7 @@ class Kntan_Order_Class{
                 'client_id' => $client_id, // 顧客IDを保存
                 'customer_name' => $customer_name,
                 'user_name' => $user_name,
+                'project_name' => '※ 入力してください', // 案件名の初期値を設定
                 'invoice_items' => '', // 初期値は空
                 'cost_items' => '', // 初期値は空
                 'memo' => '', // 初期値は空
