@@ -458,15 +458,13 @@ class Kntan_Service_Class {
         
         // テーブル名
         $table_name = $wpdb->prefix . 'ktp_' . $name;
-        
-        
-        // -----------------------------
+            // -----------------------------
         // ページネーションリンク
         // -----------------------------
         
         // 表示範囲
-        $query_limit = 5;
-
+        $query_limit = 20;
+        
         // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">

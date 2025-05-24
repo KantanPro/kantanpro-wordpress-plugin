@@ -58,7 +58,7 @@ class Kantan_List_Class{
         // $content .= '<h3>■ 受注書リスト</h3>';
 
         // ページネーション設定
-        $query_limit = 5;
+        $query_limit = 20;
         $page_stage = isset($_GET['page_stage']) ? $_GET['page_stage'] : '';
         $page_start = isset($_GET['page_start']) ? intval($_GET['page_start']) : 0;
         $flg = isset($_GET['flg']) ? $_GET['flg'] : '';

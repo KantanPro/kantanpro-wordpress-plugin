@@ -588,7 +588,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // -----------------------------
         
         // 表示範囲
-        $query_limit = 5;
+        $query_limit = 20;
         
         // 表示タイトルの設定
         $list_title = ($view_mode === 'order_history') ? '■ 注文履歴（レンジ： ' . $query_limit . ' ）' : '■ 顧客リスト（レンジ： ' . $query_limit . ' ）';

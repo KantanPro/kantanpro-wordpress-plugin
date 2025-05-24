@@ -510,7 +510,7 @@ $content .= '</div>';
         }
 
         // ページネーションロジック（表示はしないが計算は残す）
-        $query_limit = 10; // 1ページあたりの表示件数
+        $query_limit = 20; // 1ページあたりの表示件数
         $page_start = isset($_GET['page_start']) ? intval($_GET['page_start']) : 0; // 表示開始位置
 
         // 全データ数を取得
