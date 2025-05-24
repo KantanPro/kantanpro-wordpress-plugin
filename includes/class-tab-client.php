@@ -1211,6 +1211,11 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
                 printWindow.print();  // Add this line
+                
+                // 印刷後、プレビューが開いていれば閉じる
+                if (isPreviewOpen) {
+                    togglePreview();
+                }
             }
 
             function togglePreview() {
