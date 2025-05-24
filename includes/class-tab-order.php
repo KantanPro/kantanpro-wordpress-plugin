@@ -351,6 +351,10 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
 
                 // workflowセクション追加（デザイン統一）
                 $content .= '<div class="workflow">';
+                // 削除ボタンをworkflow内に移動
+                $delete_url = add_query_arg(['order_id' => $order_id, 'delete_order' => 1]);
+                $content .= '<a href="#" id="orderDeleteButton" style="color:#fff;background:#d9534f;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;display:inline-block;text-decoration:none;margin-left:10px;" onclick="event.preventDefault(); confirmDeleteOrder();">受注書を削除</a>';
+                $content .= "<script>\nfunction confirmDeleteOrder() {\n  if (window.confirm('本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。')) {\n    window.location.href = '{$delete_url}';\n  }\n}\n</script>";
                 $content .= '</div>';
 
                 // メール編集フォーム導入により、進捗3の質問内容プロンプトは不要になったため削除
@@ -467,12 +471,7 @@ $content .= '</div>';
 
                 $content .= '</div>'; // .order_contents 終了
 
-                // 削除ボタンとJS
-                $delete_url = add_query_arg(['order_id' => $order_id, 'delete_order' => 1]);
-                $content .= '<div class="order_delete_box box" style="margin-top:20px;">';
-                $content .= '<a href="#" id="orderDeleteButton" style="color:#fff;background:#d9534f;padding:8px 16px;border:none;border-radius:4px;cursor:pointer;display:inline-block;text-decoration:none;" onclick="event.preventDefault(); confirmDeleteOrder();">受注書を削除</a>';
-                $content .= '</div>';
-                $content .= "<script>\nfunction confirmDeleteOrder() {\n  if (window.confirm('本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。')) {\n    window.location.href = '{$delete_url}';\n  }\n}\n</script>";
+                // 削除ボタンはworkflow内に移動済み
 
             } else {
                 $content .= '<div class="error">指定された受注書は見つかりませんでした。</div>';
