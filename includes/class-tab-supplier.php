@@ -213,14 +213,14 @@ class Kantan_Supplier_Class{
             // tab_name, data_id, query_postパラメータを除去
             $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
             // 新しいパラメータを追加
-            $url = add_query_arg([
+            $redirect_url = esc_url(add_query_arg([
                 'tab_name' => $tab_name,
                 'data_id' => $next_data_id,
                 'query_post' => $action
-            ], $base_url);
+            ], $base_url));
 $cookie_name = 'ktp_' . $tab_name . '_id';
             setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$url}");
+            header("Location: {$redirect_url}");
             exit;
         }    
         
@@ -325,12 +325,12 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 // tab_name, data_id, query_postパラメータを除去
                 $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
                 // 新しいパラメータを追加
-                $url = add_query_arg([
+                $redirect_url = esc_url(add_query_arg([
                     'tab_name' => $tab_name,
                     'data_id' => $data_id,
                     'query_post' => $action
-                ], $base_url);
-                header("Location: {$url}");
+                ], $base_url));
+                header("Location: {$redirect_url}");
 
             }
 
@@ -347,7 +347,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')) . "' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')));
+                    $search_results_html .= "<li style='text-align:left;'><a href='{$item_link_url}' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
 
                 // HTMLを閉じる
@@ -357,6 +358,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 $search_results_html_js = json_encode($search_results_html);
 
                 // JavaScriptでポップアップを表示
+                $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')));
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -390,7 +392,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
                         // location.href = '?tab_name={$tab_name}&query_post=search';
-                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')) . "';
+                        location.href = '{$close_redirect_url}';
                     };
                     popup.appendChild(closeButton);
                 });
@@ -456,12 +458,12 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             // tab_name, data_id, query_postパラメータを除去
             $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
             // 新しいパラメータを追加
-            $url = add_query_arg([
+            $redirect_url = esc_url(add_query_arg([
                 'tab_name' => $tab_name,
                 'data_id' => $data_id,
                 'query_post' => $action
-            ], $base_url);
-            header("Location: {$url}");
+            ], $base_url));
+            header("Location: {$redirect_url}");
             exit;
             }
 
@@ -527,14 +529,14 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 // tab_name, data_id, query_postパラメータを除去
                 $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
                 // 新しいパラメータを追加
-                $url = add_query_arg([
+                $redirect_url = esc_url(add_query_arg([
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action
-                ], $base_url);
+                ], $base_url));
                 $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
                 setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header("Location: {$url}");
+                header("Location: {$redirect_url}");
                 exit;
             }
         }
@@ -627,8 +629,9 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);                // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
+                $item_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')));
                 $results[] = <<<END
-                <a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')) . '" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                <a href="{$item_link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                     <div class="data_list_item">ID: $id $company_name : $category : 頻度($frequency)</div>
                 </a>
                 END;
@@ -646,16 +649,18 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 最初へリンク
         if ($current_page > 1) {
             $first_start = 0; // 最初のページ
+            $first_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
             $results_f .= <<<END
-            <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">|<</a> 
+            <a href="{$first_page_link_url}">|<</a> 
             END;
         }
 
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
+            $prev_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
             $results_f .= <<<END
-            <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '"><</a>
+            <a href="{$prev_page_link_url}"><</a>
             END;
         }
 
@@ -667,16 +672,18 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
+            $next_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
             $results_f .= <<<END
-             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">></a>
+             <a href="{$next_page_link_url}">>></a>
             END;
         }
 
         // 最後へリンク
         if ($current_page < $total_pages) {
             $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
+            $last_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
             $results_f .= <<<END
-             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">>|</a>
+             <a href="{$last_page_link_url}">>>|</a>
             END;
         }
         

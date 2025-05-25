@@ -333,7 +333,8 @@ class Kntan_Client_Class {
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')) . "' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')));
+                    $search_results_html .= "<li style='text-align:left;'><a href='{$link_url}' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
                 
                 // HTMLを閉じる
@@ -375,7 +376,8 @@ class Kntan_Client_Class {
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')) . "';
+                        var redirect_url = '" . esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/'))) . "';
+                        location.href = redirect_url;
                     };
                     popup.appendChild(closeButton);
                 });
@@ -730,8 +732,9 @@ class Kntan_Client_Class {
                    
                    // リスト項目
                    $cookie_name = 'ktp_' . $name . '_id';
+                   $link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')));
                    $results[] = <<<END
-                   <a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')) . '" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                   <a href="{$link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                    <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
                    </a>
                    END;
@@ -762,7 +765,7 @@ class Kntan_Client_Class {
         if ($current_page > 1) {
             $base_params['page_start'] = 0;
             // $first_link = '?' . http_build_query($base_params);
-            $first_link = add_query_arg($base_params, home_url('/'));
+            $first_link = esc_url(add_query_arg($base_params, home_url('/')));
             $results_f .= <<<END
             <a href="$first_link">|<</a> 
             END;
@@ -772,7 +775,7 @@ class Kntan_Client_Class {
         if ($current_page > 1) {
             $base_params['page_start'] = ($current_page - 2) * $query_limit;
             // $prev_link = '?' . http_build_query($base_params);
-            $prev_link = add_query_arg($base_params, home_url('/'));
+            $prev_link = esc_url(add_query_arg($base_params, home_url('/')));
             $results_f .= <<<END
             <a href="$prev_link"><</a>
             END;
@@ -787,7 +790,7 @@ class Kntan_Client_Class {
         if ($current_page < $total_pages) {
             $base_params['page_start'] = $current_page * $query_limit;
             // $next_link = '?' . http_build_query($base_params);
-            $next_link = add_query_arg($base_params, home_url('/'));
+            $next_link = esc_url(add_query_arg($base_params, home_url('/')));
             $results_f .= <<<END
              <a href="$next_link">></a>
             END;
@@ -797,7 +800,7 @@ class Kntan_Client_Class {
         if ($current_page < $total_pages) {
             $base_params['page_start'] = ($total_pages - 1) * $query_limit;
             // $last_link = '?' . http_build_query($base_params);
-            $last_link = add_query_arg($base_params, home_url('/'));
+            $last_link = esc_url(add_query_arg($base_params, home_url('/')));
             $results_f .= <<<END
              <a href="$last_link">>|</a>
             END;
