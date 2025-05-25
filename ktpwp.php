@@ -267,9 +267,9 @@ add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 
 function kpwp_github_plugin_update($transient) {
 	// プラグイン情報
-	$plugin_slug = 'kantan-pro-wp/kantan-pro-wp.php';
+	$plugin_slug = 'KTPWP/ktpwp.php';
 	$github_user = 'nonaka'; 
-	$github_repo = 'kantan-pro-wp';
+	$github_repo = 'KTPWP';
 
 	// GitHubの最新リリース情報を取得
 	$response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
@@ -302,7 +302,7 @@ add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 // プラグイン情報を取得する関数
 function kpwp_github_plugin_update_info($res, $action, $args) {
 	// ...existing code...
-	if ($action !== 'plugin_information' || $args->slug !== 'kantan-pro-wp') {
+	if ($action !== 'plugin_information' || $args->slug !== 'KTPWP') {
 		return $res;
 	}
 	// ここに必要な処理を追加する場合は記述

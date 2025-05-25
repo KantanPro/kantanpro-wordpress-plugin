@@ -367,19 +367,25 @@ class Kntan_Service_Class {
         
         // 
         // 商品画像処理
-        // 
-
-        // 画像をアップロード
+        //        // 画像をアップロード
         elseif ($query_post == 'upload_image') {
-
-
+            // 先にImage_Processorクラスが存在するか確認
+            if (!class_exists('Image_Processor')) {
+                require_once(dirname(__FILE__) . '/class-image_processor.php');
+            }
+            
             // 画像URLを取得
             $image_processor = new Image_Processor();
-            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $default_image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
+            
+            // デフォルト画像のパスが正しいか確認
+            $default_image_path = dirname(__FILE__) . '/../images/default/no-image-icon.jpg';
+            if (!file_exists($default_image_path)) {
+                // デフォルト画像が存在しない場合、エラーログに記録
+                error_log('Default image not found: ' . $default_image_path);
+            }
+            
             $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-
-            // echo '$tab_name：'.$tab_name.'<br>$data_id：'.$data_id.'<br>$default_image_url：'.$default_image_url.'<br>$image_url：'.$image_url;
-            // exit;
 
             $wpdb->update(
                 $table_name,
@@ -404,13 +410,20 @@ class Kntan_Service_Class {
             $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
             header("Location: {$url}");
             exit;
-        }
-
-        // 画像削除：デフォルト画像に戻す
+        }        // 画像削除：デフォルト画像に戻す
         elseif ($query_post == 'delete_image') {
 
             // デフォルト画像のURLを設定
-            $default_image_url = plugin_dir_url(''). 'kantan-pro-wp/images/default/no-image-icon.jpg';
+            $default_image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
+            
+            // 既存の画像ファイルを削除する処理を追加
+            $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
+            $file_path = $upload_dir . $data_id . '.jpeg';
+            
+            // ファイルが存在する場合は削除する
+            if (file_exists($file_path)) {
+                unlink($file_path);
+            }
 
             $wpdb->update(
                 $table_name,
@@ -818,13 +831,25 @@ class Kntan_Service_Class {
             
             // データを取得
             $query = "SELECT * FROM {$table_name} WHERE id = %d";
-            $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));
-        
+            $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));            $image_url = '';
             foreach ($post_row as $row) {
                 $image_url = esc_html($row->image_url);
             }
             
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\"></div>";
+            // 画像URLが空または無効な場合、デフォルト画像を使用
+            if (empty($image_url)) {
+                $image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
+            }
+            
+            // アップロード画像が存在するか確認
+            $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
+            $upload_file = $upload_dir . $data_id . '.jpeg';
+            if (file_exists($upload_file)) {
+                $plugin_url = plugin_dir_url(dirname(__FILE__));
+                $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
+            }
+            
+            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";
 
             $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
             $data_forms .= <<<END
@@ -977,7 +1002,7 @@ class Kntan_Service_Class {
             $data_forms .= '</div>';
         }
                             
-        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
+        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
         
         // 詳細表示部分の終了
         $div_end = <<<END
