@@ -36,7 +36,7 @@ class Kntan_Report_Class {
             $content .= '<h3 style="margin:50px 0 15px;color:#333;font-size:24px;text-shadow:0 1px 2px rgba(255,255,255,0.8);">高度なグラフレポート機能</h3>';
             
             // 「今すぐ利用する」ボタン
-            $content .= '<a href="' . admin_url('admin.php?page=ktp-license') . '" '
+            $content .= '<a href="' . admin_url('?page=ktp-license') . '" '
                 . 'style="'
                 . 'display:inline-block;'
                 . 'background:linear-gradient(135deg, #e74c3c, #c0392b);'

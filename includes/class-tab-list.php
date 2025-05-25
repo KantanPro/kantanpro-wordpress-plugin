@@ -114,7 +114,10 @@ class Kantan_List_Class{
                     }
                 }
                 $time = esc_html($formatted_time);
-                $progress = intval($order->progress);                $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
+                $progress = intval($order->progress);
+                
+                // シンプルなURL生成（パーマリンク設定に依存しない）
+                $detail_url = '?tab_name=order&order_id=' . $order_id;
 
                 // プルダウンフォーム
                 $content .= "<li class='work-list-item'>";

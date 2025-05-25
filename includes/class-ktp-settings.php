@@ -275,12 +275,12 @@ class KTP_Settings {
         $tabs = array(
             'mail' => array(
                 'name' => 'メール・SMTP設定',
-                'url' => admin_url('admin.php?page=ktp-settings'),
+                'url' => admin_url('?page=ktp-settings'),
                 'icon' => 'dashicons-email-alt'
             ),
             'license' => array(
                 'name' => 'ライセンス設定',
-                'url' => admin_url('admin.php?page=ktp-license'),
+                'url' => admin_url('?page=ktp-license'),
                 'icon' => 'dashicons-admin-network'
             )
         );

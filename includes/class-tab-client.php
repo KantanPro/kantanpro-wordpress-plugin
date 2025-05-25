@@ -668,8 +668,8 @@ class Kntan_Client_Class {
                            }
                        }
                        
-                       // 受注書の詳細へのリンク
-                       $detail_url = add_query_arg('order_id', $order_id, '?tab_name=order');
+                       // 受注書の詳細へのリンク（シンプルなURL生成）
+                       $detail_url = '?tab_name=order&order_id=' . $order_id;
                        
                        // リスト項目を生成
                        $results[] = <<<END
