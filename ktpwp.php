@@ -2,13 +2,13 @@
 /*
 Plugin Name: KTPWP
 Description: 仕事のワークフローを管理するためのプラグインです。
-Version: 0.0.1beta
+Version: 0.0.0beta
 */
 
 // プラグイン基本情報を定数として定義（コード内で参照するため）
 define('KTPWP_PLUGIN_NAME', 'KTPWP');
 define('KTPWP_PLUGIN_DESCRIPTION', '仕事のワークフローを管理するためのプラグインです。');
-define('KTPWP_PLUGIN_VERSION', 'beta');
+define('KTPWP_PLUGIN_VERSION', '0.0.0beta');
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -266,47 +266,117 @@ add_filter('pre_set_site_transient_update_plugins', 'kpwp_github_plugin_update')
 add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 
 function kpwp_github_plugin_update($transient) {
-	// プラグイン情報
-	$plugin_slug = 'KTPWP/ktpwp.php';
-	$github_user = 'nonaka'; 
-	$github_repo = 'KTPWP';
+    if (empty($transient->checked)) {
+        return $transient;
+    }
+    
+    // プラグイン情報
+    $plugin_slug = 'KTPWP/ktpwp.php';
+    $github_user = 'aiojiipg'; // 正しいGitHubユーザー名
+    $github_repo = 'ktpwp'; // 正しいリポジトリ名（大文字小文字に注意）
 
-	// GitHubの最新リリース情報を取得
-	$response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
-		'headers' => ['Accept' => 'application/vnd.github.v3+json', 'User-Agent' => 'WordPress']
-	]);
-	if (is_wp_error($response)) return $transient;
+    // GitHubの最新リリース情報を取得
+    $response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
+        'headers' => [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'WordPress/' . get_bloginfo('version')
+        ]
+    ]);
+    
+    if (is_wp_error($response)) {
+        error_log('KTPWP: GitHub API Error - ' . $response->get_error_message());
+        return $transient;
+    }
 
-	$release = json_decode(wp_remote_retrieve_body($response));
-	if (empty($release->tag_name)) return $transient;
+    $release = json_decode(wp_remote_retrieve_body($response));
+    if (empty($release) || empty($release->tag_name)) {
+        error_log('KTPWP: GitHub API Response Invalid - ' . wp_remote_retrieve_body($response));
+        return $transient;
+    }
 
-	// 現在のバージョンを取得
-	$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin_slug);
-	$current_version = $plugin_data['Version'];
+    // 現在のバージョンを取得
+    $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin_slug);
+    $current_version = $plugin_data['Version'];
+    $latest_version = ltrim($release->tag_name, 'v');
+    
+    error_log("KTPWP: Current version: $current_version, Latest version: $latest_version");
 
-	// 新しいバージョンがあればアップデート情報をセット
-	if (version_compare($current_version, ltrim($release->tag_name, 'v'), '<')) {
-		$transient->response[$plugin_slug] = (object)[
-			'slug' => $plugin_slug,
-			'plugin' => $plugin_slug,
-			'new_version' => ltrim($release->tag_name, 'v'),
-			'url' => $release->html_url,
-			'package' => $release->zipball_url,
-		];
-	}
-	return $transient;
+    // 新しいバージョンがあればアップデート情報をセット
+    if (version_compare($current_version, $latest_version, '<')) {
+        // ZIPファイルのURLを見つける
+        $package_url = '';
+        if (isset($release->assets) && is_array($release->assets)) {
+            foreach ($release->assets as $asset) {
+                if (isset($asset->browser_download_url) && 
+                    strpos($asset->browser_download_url, '.zip') !== false) {
+                    $package_url = $asset->browser_download_url;
+                    break;
+                }
+            }
+        }
+        
+        // アセットがなければzipballを使用
+        if (empty($package_url) && isset($release->zipball_url)) {
+            $package_url = $release->zipball_url;
+        }
+        
+        if (!empty($package_url)) {
+            $transient->response[$plugin_slug] = (object)[
+                'slug' => dirname($plugin_slug),
+                'plugin' => $plugin_slug,
+                'new_version' => $latest_version,
+                'url' => $release->html_url,
+                'package' => $package_url,
+            ];
+        }
+    }
+    return $transient;
 }
 
-// プラグイン情報を取得するフィルター
-add_filter('plugins_api', 'kpwp_github_plugin_update_info', 10, 3);
 // プラグイン情報を取得する関数
 function kpwp_github_plugin_update_info($res, $action, $args) {
-	// ...existing code...
-	if ($action !== 'plugin_information' || $args->slug !== 'KTPWP') {
-		return $res;
-	}
-	// ここに必要な処理を追加する場合は記述
-	return $res;
+    if ($action !== 'plugin_information' || !isset($args->slug) || $args->slug !== 'KTPWP') {
+        return $res;
+    }
+    
+    $github_user = 'aiojiipg';
+    $github_repo = 'ktpwp';
+    
+    $response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
+        'headers' => [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'WordPress/' . get_bloginfo('version')
+        ]
+    ]);
+    
+    if (is_wp_error($response)) {
+        return $res;
+    }
+    
+    $release = json_decode(wp_remote_retrieve_body($response));
+    if (empty($release)) {
+        return $res;
+    }
+    
+    $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/KTPWP/ktpwp.php');
+    
+    $res = new stdClass();
+    $res->name = $plugin_data['Name'];
+    $res->slug = 'KTPWP';
+    $res->version = ltrim($release->tag_name, 'v');
+    $res->tested = get_bloginfo('version');
+    $res->requires = '5.0'; // 必要なWordPressのバージョン
+    $res->author = $plugin_data['Author'];
+    $res->author_profile = ''; // 作者プロフィールURL
+    $res->download_link = isset($release->zipball_url) ? $release->zipball_url : '';
+    $res->trunk = isset($release->zipball_url) ? $release->zipball_url : '';
+    $res->last_updated = isset($release->published_at) ? $release->published_at : '';
+    $res->sections = [
+        'description' => $plugin_data['Description'],
+        'changelog' => isset($release->body) ? $release->body : 'No changelog provided.',
+    ];
+    
+    return $res;
 }
 
 
