@@ -2,7 +2,7 @@
 /*
 Plugin Name: KTPWP
 Description: 仕事のワークフローを管理するためのプラグインです。
-Version: beta
+Version: 0.0.1beta
 */
 
 // プラグイン基本情報を定数として定義（コード内で参照するため）
