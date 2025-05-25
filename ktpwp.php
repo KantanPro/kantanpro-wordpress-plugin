@@ -392,12 +392,15 @@ function KTPWP_Index(){
 			// プラグイン名とバージョンを定数から取得
 			$plugin_name = KTPWP_PLUGIN_NAME;
 			$plugin_version = KTPWP_PLUGIN_VERSION;
+
+			// 更新用URLを生成
+			$update_url = esc_url(home_url(add_query_arg(null, null)));
 			
 			$front_message = <<<END
 			<div class="ktp_header">
 			<div class="parent"><div class="title">{$icon_img}{$plugin_name}</div><div class="version">v{$plugin_version}</div></div>
 			$logged_in_users_html
-			　<a href="$logout_link">ログアウト</a>　<a href="/">更新</a>　$act_key
+			　<a href="$logout_link">ログアウト</a>　<a href="{$update_url}">更新</a>　$act_key
 			</div>
 			END;
 			$tab_name = isset($_GET['tab_name']) ? $_GET['tab_name'] : 'default_tab'; // URLパラメータからtab_nameを取得
