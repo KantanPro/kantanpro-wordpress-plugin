@@ -208,7 +208,16 @@ class Kantan_Supplier_Class{
             }
             $cookie_name = 'ktp_' . $name . '_id';
             $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_id, query_postパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+            // 新しいパラメータを追加
+            $url = add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $next_data_id,
+                'query_post' => $action
+            ], $base_url);
 $cookie_name = 'ktp_' . $tab_name . '_id';
             setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
@@ -311,7 +320,16 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 // 検索後に更新モードにする
                 $action = 'update';
                 $data_id = $id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                // 現在のURLを取得
+                $current_url = add_query_arg(NULL, NULL);
+                // tab_name, data_id, query_postパラメータを除去
+                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                // 新しいパラメータを追加
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $data_id,
+                    'query_post' => $action
+                ], $base_url);
                 header("Location: {$url}");
 
             }
@@ -431,7 +449,16 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             // リダイレクト
             $action = 'update';
             $data_id = $wpdb->insert_id;
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_id, query_postパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+            // 新しいパラメータを追加
+            $url = add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $data_id,
+                'query_post' => $action
+            ], $base_url);
             header("Location: {$url}");
             exit;
             }
@@ -493,7 +520,16 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 // 追加後に更新モードにする
                 // リダイレクト
                 $action = 'update';
-                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                // 現在のURLを取得
+                $current_url = add_query_arg(NULL, NULL);
+                // tab_name, data_id, query_postパラメータを除去
+                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                // 新しいパラメータを追加
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $new_data_id,
+                    'query_post' => $action
+                ], $base_url);
                 $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
                 setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
                 header("Location: {$url}");

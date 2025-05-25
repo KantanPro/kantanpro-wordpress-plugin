@@ -132,9 +132,17 @@ class Kntan_Service_Class {
             } else {
                 $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
                 $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }
-            $action = 'update';
-            $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }            $action = 'update';
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_id, query_postパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+            // 新しいパラメータを追加
+            $url = add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $next_data_id,
+                'query_post' => $action
+            ], $base_url);
             $cookie_name = 'ktp_' . $tab_name . '_id';
             setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
             header("Location: {$url}");
@@ -202,12 +210,19 @@ class Kntan_Service_Class {
                         "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
                         $id
                     )
-                );
-
-                 // 検索後に更新モードにする
+                );                 // 検索後に更新モードにする
                  $action = 'update';
                  $data_id = $id;
-                 $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                 // 現在のURLを取得
+                 $current_url = add_query_arg(NULL, NULL);
+                 // tab_name, data_id, query_postパラメータを除去
+                 $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                 // 新しいパラメータを追加
+                 $url = add_query_arg([
+                     'tab_name' => $tab_name,
+                     'data_id' => $data_id,
+                     'query_post' => $action
+                 ], $base_url);
                  header("Location: {$url}");
 
             }
@@ -305,10 +320,18 @@ class Kntan_Service_Class {
                 $wpdb->query("UNLOCK TABLES;");
 
                 // 追加後に更新モードにする
-                // リダイレクト
-                $action = 'update';
+                // リダイレクト                $action = 'update';
                 $data_id = $wpdb->insert_id;
-                $url = '?tab_name='. $tab_name . '&data_id=' . $data_id . '&query_post=' . $action;
+                // 現在のURLを取得
+                $current_url = add_query_arg(NULL, NULL);
+                // tab_name, data_id, query_postパラメータを除去
+                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                // 新しいパラメータを追加
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $data_id,
+                    'query_post' => $action
+                ], $base_url);
                 header("Location: {$url}");
                 exit;
             }
@@ -353,9 +376,17 @@ class Kntan_Service_Class {
                 $wpdb->query("UNLOCK TABLES;");
                 
                 // 追加後に更新モードにする
-                // リダイレクト
-                $action = 'update';
-                $url = '?tab_name='. $tab_name . '&data_id=' . $new_data_id . '&query_post=' . $action;
+                // リダイレクト                $action = 'update';
+                // 現在のURLを取得
+                $current_url = add_query_arg(NULL, NULL);
+                // tab_name, data_id, query_postパラメータを除去
+                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                // 新しいパラメータを追加
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $new_data_id,
+                    'query_post' => $action
+                ], $base_url);
                 $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
                 setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
                 header("Location: {$url}");
@@ -399,13 +430,19 @@ class Kntan_Service_Class {
                 array(
                     '%d'
                 )
-            );
-
-            // echo $image_url;
+            );            // echo $image_url;
             // exit;
 
             // リダイレクト
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_idパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
+            // 新しいパラメータを追加
+            $url = add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $data_id
+            ], $base_url);
             header("Location: {$url}");
             exit;
         }        // 画像削除：デフォルト画像に戻す
@@ -437,10 +474,16 @@ class Kntan_Service_Class {
                 array(
                     '%d'
                 )
-            );
-
-            // リダイレクト
-            $url = '?tab_name='. $tab_name . '&data_id=' . $data_id;
+            );            // リダイレクト
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_idパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
+            // 新しいパラメータを追加
+            $url = add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $data_id
+            ], $base_url);
             header("Location: {$url}");
             exit;
         }
