@@ -1235,12 +1235,12 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $data_src = [
             'company_name' => $company_name,
             'name' => $user_name,
-            'representative_name' => $data_src['representative_name'],
-            'postal_code' => $data_src['postal_code'],
-            'prefecture' => $data_src['prefecture'],
-            'city' => $data_src['city'],
-            'address' => $data_src['address'],
-            'building' => $data_src['building'],
+            'representative_name' => $representative_name,
+            'postal_code' => $postal_code,
+            'prefecture' => $prefecture,
+            'city' => $city,
+            'address' => $address,
+            'building' => $building,
         ];
 
         // データを取得

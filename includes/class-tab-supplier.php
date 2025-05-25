@@ -587,8 +587,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                $tax_category = esc_html($row->tax_category);
                $memo = esc_html($row->memo);
                $category = esc_html($row->category);
-               $frequency = esc_html($row->frequency);
-                 // リスト項目                $cookie_name = 'ktp_' . $name . '_id';
+               $frequency = esc_html($row->frequency);                // リスト項目
+                $cookie_name = 'ktp_' . $name . '_id';
                 $results[] = <<<END
                 <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                     <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>

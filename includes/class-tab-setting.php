@@ -124,10 +124,9 @@ class Kntan_Setting_Class {
         // }
         
         // クッキーからactive_tabを読み出す
-        $active_tab = isset($_COOKIE['active_tab']) ? $_COOKIE['active_tab'] : 'MyCompany';
-
-        // タブのボタン        $myCompanyClass = $active_tab == 'MyCompany' ? 'active' : '';
-        $atenaClass = $active_tab == 'Atena' ? 'active' : '';        $tab_buttons = <<<BUTTONS
+        $active_tab = isset($_COOKIE['active_tab']) ? $_COOKIE['active_tab'] : 'MyCompany';        // タブのボタン
+        $myCompanyClass = $active_tab == 'MyCompany' ? 'active' : '';
+        $atenaClass = $active_tab == 'Atena' ? 'active' : '';$tab_buttons = <<<BUTTONS
         <div class="controller" data-active-tab="$active_tab">
             <div class="printer" data-active-tab="$active_tab">
                 <button class="tablinks {$myCompanyClass}" onclick="switchTab(event, 'MyCompany');" title="自社情報">

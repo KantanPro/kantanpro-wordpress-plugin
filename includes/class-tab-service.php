@@ -602,12 +602,11 @@ class Kntan_Service_Class {
             $category = esc_html($row->category);
             $image_url = esc_html($row->image_url);
         }
-        
-        // 表示するフォーム要素を定義
+          // 表示するフォーム要素を定義
         $fields = [
             // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
             '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
-            '画像URL' => ['type' => 'text', 'name' => 'image_url'],
+            // '画像URL' => ['type' => 'text', 'name' => 'image_url'], // 商品画像のURLフィールドはコメントアウト
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             'カテゴリー' => [
                 'type' => 'text',
