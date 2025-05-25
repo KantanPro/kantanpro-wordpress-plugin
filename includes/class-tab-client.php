@@ -333,7 +333,7 @@ class Kntan_Client_Class {
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')) . "' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
                 
                 // HTMLを閉じる
@@ -375,7 +375,7 @@ class Kntan_Client_Class {
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '?tab_name={$tab_name}&query_post=search';
+                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')) . "';
                     };
                     popup.appendChild(closeButton);
                 });
@@ -646,7 +646,7 @@ class Kntan_Client_Class {
                    
                    foreach ($order_rows as $order) {
                        $order_id = esc_html($order->id);
-                       $project_name = isset($order->project_name) ? esc_html($order->project_name) : '（案件名なし）';
+                       $project_name = isset($order->project_name) ? esc_html($order->project_name) : '';
                        $progress = intval($order->progress);
                        $progress_label = isset($progress_labels[$progress]) ? $progress_labels[$progress] : '不明';
                        
@@ -669,7 +669,7 @@ class Kntan_Client_Class {
                        }
                        
                        // 受注書の詳細へのリンク（シンプルなURL生成）
-                       $detail_url = '?tab_name=order&order_id=' . $order_id;
+                       $detail_url = add_query_arg(array('tab_name' => 'order', 'order_id' => $order_id), home_url('/'));
                        
                        // リスト項目を生成
                        $results[] = <<<END
@@ -731,7 +731,7 @@ class Kntan_Client_Class {
                    // リスト項目
                    $cookie_name = 'ktp_' . $name . '_id';
                    $results[] = <<<END
-                   <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                   <a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')) . '" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                    <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
                    </a>
                    END;
@@ -761,7 +761,8 @@ class Kntan_Client_Class {
         // 最初へリンク
         if ($current_page > 1) {
             $base_params['page_start'] = 0;
-            $first_link = '?' . http_build_query($base_params);
+            // $first_link = '?' . http_build_query($base_params);
+            $first_link = add_query_arg($base_params, home_url('/'));
             $results_f .= <<<END
             <a href="$first_link">|<</a> 
             END;
@@ -770,7 +771,8 @@ class Kntan_Client_Class {
         // 前へリンク
         if ($current_page > 1) {
             $base_params['page_start'] = ($current_page - 2) * $query_limit;
-            $prev_link = '?' . http_build_query($base_params);
+            // $prev_link = '?' . http_build_query($base_params);
+            $prev_link = add_query_arg($base_params, home_url('/'));
             $results_f .= <<<END
             <a href="$prev_link"><</a>
             END;
@@ -784,7 +786,8 @@ class Kntan_Client_Class {
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $base_params['page_start'] = $current_page * $query_limit;
-            $next_link = '?' . http_build_query($base_params);
+            // $next_link = '?' . http_build_query($base_params);
+            $next_link = add_query_arg($base_params, home_url('/'));
             $results_f .= <<<END
              <a href="$next_link">></a>
             END;
@@ -793,7 +796,8 @@ class Kntan_Client_Class {
         // 最後へリンク
         if ($current_page < $total_pages) {
             $base_params['page_start'] = ($total_pages - 1) * $query_limit;
-            $last_link = '?' . http_build_query($base_params);
+            // $last_link = '?' . http_build_query($base_params);
+            $last_link = add_query_arg($base_params, home_url('/'));
             $results_f .= <<<END
              <a href="$last_link">>|</a>
             END;
@@ -1260,7 +1264,7 @@ class Kntan_Client_Class {
             $data_forms .= '</div>';
         }
                             
-        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
+        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
         
         // 詳細表示部分の終了
         $div_end = <<<END

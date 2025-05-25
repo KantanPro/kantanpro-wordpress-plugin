@@ -49,7 +49,8 @@ class Kantan_List_Class{
         foreach ($progress_labels as $num => $label) {
             $active = ($selected_progress === $num) ? 'style=\"font-weight:bold;background:#1976d2;color:#fff;\"' : '';
             $btn_label = $label . ' (' . $progress_counts[$num] . ')';
-            $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
+            // $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
+            $content .= '<a href="' . add_query_arg(array('tab_name' => $tab_name, 'progress' => $num), home_url('/')) . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
         }
         $content .= '</div>';
         $content .= '</div>';
@@ -117,7 +118,8 @@ class Kantan_List_Class{
                 $progress = intval($order->progress);
                 
                 // シンプルなURL生成（パーマリンク設定に依存しない）
-                $detail_url = '?tab_name=order&order_id=' . $order_id;
+                // $detail_url = '?tab_name=order&order_id=' . $order_id;
+                $detail_url = add_query_arg(array('tab_name' => 'order', 'order_id' => $order_id), home_url('/'));
 
                 // プルダウンフォーム
                 $content .= "<li class='work-list-item'>";
@@ -157,7 +159,7 @@ class Kantan_List_Class{
         if ($total_pages > 1) {
             // 現在のGETパラメータを維持
             $base_params = $_GET;
-            $base_params['tab_name'] = $tab_name;
+            // $base_params['tab_name'] = $tab_name; // home_url()で生成するため不要
             $base_params['page_stage'] = 2;
             $base_params['flg'] = $flg;
             $base_params['progress'] = $selected_progress;
@@ -165,12 +167,14 @@ class Kantan_List_Class{
             // 最初へ
             if ($current_page > 1) {
                 $base_params['page_start'] = 0;
-                $content .= '<a href="?' . http_build_query($base_params) . '">|&lt;</a>';
+                // $content .= '<a href="?' . http_build_query($base_params) . '">|&lt;</a>';
+                $content .= '<a href="' . add_query_arg($base_params, home_url('/')) . '">|&lt;</a>';
             }
             // 前へ
             if ($current_page > 1) {
                 $base_params['page_start'] = ($current_page - 2) * $query_limit;
-                $content .= '<a href="?' . http_build_query($base_params) . '">&lt;</a>';
+                // $content .= '<a href="?' . http_build_query($base_params) . '">&lt;</a>';
+                $content .= '<a href="' . add_query_arg($base_params, home_url('/')) . '">&lt;</a>';
             }
             // 現在のページ範囲表示と総数
             $page_end = min($total_rows, $current_page * $query_limit);
@@ -179,12 +183,14 @@ class Kantan_List_Class{
             // 次へ
             if ($current_page < $total_pages) {
                 $base_params['page_start'] = $current_page * $query_limit;
-                $content .= '<a href="?' . http_build_query($base_params) . '">&gt;</a>';
+                // $content .= '<a href="?' . http_build_query($base_params) . '">&gt;</a>';
+                $content .= '<a href="' . add_query_arg($base_params, home_url('/')) . '">&gt;</a>';
             }
             // 最後へ
             if ($current_page < $total_pages) {
                 $base_params['page_start'] = ($total_pages - 1) * $query_limit;
-                $content .= '<a href="?' . http_build_query($base_params) . '">&gt;|</a>';
+                // $content .= '<a href="?' . http_build_query($base_params) . '">&gt;|</a>';
+                $content .= '<a href="' . add_query_arg($base_params, home_url('/')) . '">&gt;|</a>';
             }
             $content .= '</div>';
         }

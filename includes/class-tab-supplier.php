@@ -347,7 +347,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left;'><a href='?tab_name={$tab_name}&data_id={$id}&query_post=update' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $search_results_html .= "<li style='text-align:left;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')) . "' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
 
                 // HTMLを閉じる
@@ -389,7 +389,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '?tab_name={$tab_name}&query_post=search';
+                        // location.href = '?tab_name={$tab_name}&query_post=search';
+                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')) . "';
                     };
                     popup.appendChild(closeButton);
                 });
@@ -627,8 +628,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                $frequency = esc_html($row->frequency);                // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
                 $results[] = <<<END
-                <a href="?tab_name={$name}&data_id={$id}&page_start={$page_start}&page_stage={$page_stage}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                    <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
+                <a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')) . '" onclick="document.cookie = '{$cookie_name}=' + {$id};">
+                    <div class="data_list_item">ID: $id $company_name : $category : 頻度($frequency)</div>
                 </a>
                 END;
 
@@ -646,7 +647,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         if ($current_page > 1) {
             $first_start = 0; // 最初のページ
             $results_f .= <<<END
-            <a href="?tab_name=$name&page_start=$first_start&page_stage=2&flg=$flg">|<</a> 
+            <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">|<</a> 
             END;
         }
 
@@ -654,7 +655,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
             $results_f .= <<<END
-            <a href="?tab_name=$name&page_start=$prev_start&page_stage=2&flg=$flg"><</a>
+            <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '"><</a>
             END;
         }
 
@@ -667,7 +668,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
             $results_f .= <<<END
-             <a href="?tab_name=$name&page_start=$next_start&page_stage=2&flg=$flg">></a>
+             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">></a>
             END;
         }
 
@@ -675,7 +676,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         if ($current_page < $total_pages) {
             $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
             $results_f .= <<<END
-             <a href="?tab_name=$name&page_start=$last_start&page_stage=2&flg=$flg">>|</a>
+             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">>|</a>
             END;
         }
         
