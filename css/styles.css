@@ -709,7 +709,7 @@ input[name="tab_item"] {
 }
 
 /*選択されているタブのスタイルを変える*/
-.tabs input:checked+.tab_item {
+.tabs input:checked+.tab_item, .tab_item.active {
   background-color: #cdcccc;
   color: #3b3b3b;
 }

@@ -2,7 +2,23 @@ document.addEventListener('DOMContentLoaded', function() {
     var tabs = document.querySelectorAll('.tab_item');
     var contents = document.querySelectorAll('.tab_content');
     
-    // ページ読み込み時に「仕事リスト」タブをアクティブにする
+    // URLからタブ名を取得
+    var searchParams = new URLSearchParams(window.location.search);
+    var currentTab = searchParams.get('tab_name') || 'list';
+    
+    // 該当するタブにアクティブクラスを追加
+    tabs.forEach(function(tab) {
+        var tabHref = tab.querySelector('a').getAttribute('href');
+        var tabName = new URLSearchParams(tabHref.split('?')[1]).get('tab_name');
+        
+        if (tabName === currentTab) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+
+    // 旧コード（互換性のために残しておく）
     var defaultTab = document.getElementById('tab-list');
     var defaultContent = document.getElementById('content-list');
     if (defaultTab && defaultContent) {

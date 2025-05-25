@@ -33,10 +33,18 @@ class view_tabs_Class{
 
         // タブの内容を作成
         $view = "<div class=\"tabs\">";
+        // 現在のURL情報を取得
+        $current_url = add_query_arg(NULL, NULL);
+        // ベースURLを作成（現在のURLからtab_nameパラメータを除去）
+        $base_url = remove_query_arg('tab_name', $current_url);
+        
         foreach ($tabs as $key => $value) {
           $checked = $position === $key ? ' checked' : '';
+          $active_class = $position === $key ? ' active' : '';
+          // ベースURLにタブ名を追加
+          $tab_url = add_query_arg('tab_name', $key, $base_url);
           $view .= "<input id=\"$key\" type=\"radio\" name=\"tab_item\"$checked>";
-          $view .= "<label class=\"tab_item\"><a href=\"?tab_name=$key\">$value</a></label>";
+          $view .= "<label class=\"tab_item$active_class\"><a href=\"$tab_url\">$value</a></label>";
         }
 
         $view .= <<<EOF
