@@ -1,13 +1,23 @@
 <?php
 /*
 Plugin Name: KTPWP
-Description: パーマリンク問題があります。
+Description: ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。
+Author: Aiojiipg
+Author URI:https://ktpwp.com/blog/
+License: GPL2
+Text Domain: ktpwp
+Domain Path: /languages
 Version: 0.0.0beta
 */
 
 // プラグイン基本情報を定数として定義（コード内で参照するため）
 define('KTPWP_PLUGIN_NAME', 'KTPWP');
-define('KTPWP_PLUGIN_DESCRIPTION', '仕事のワークフローを管理するためのプラグインです。');
+define('KTPWP_PLUGIN_DESCRIPTION', 'ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。
+Author: Aiojiipg
+Author URI:https://ktpwp.com/blog/
+License: GPL2
+Text Domain: ktpwp
+Domain Path: /languages');
 define('KTPWP_PLUGIN_VERSION', '0.0.0beta');
 
 if (!defined('ABSPATH')) {
