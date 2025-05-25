@@ -31,6 +31,235 @@ if (!defined('MY_PLUGIN_URL')) {
 // プラグインのアクティベーション時の処理を登録
 register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate'));
 
+// リダイレクト処理クラス
+class KTPWP_Redirect {
+    
+    public function __construct() {
+        add_action('template_redirect', array($this, 'handle_redirect'));
+        add_filter('post_link', array($this, 'custom_post_link'), 10, 2);
+        add_filter('page_link', array($this, 'custom_page_link'), 10, 2);
+    }
+
+    public function handle_redirect() {
+        // デバッグ用ログ
+        error_log("KTPWP Debug: handle_redirect called - URL: {$_SERVER['REQUEST_URI']}");
+        
+        // ショートコードが含まれるページの場合はリダイレクトしない
+        if (isset($_GET['tab_name']) || $this->has_ktpwp_shortcode()) {
+            error_log("KTPWP Debug: Redirect skipped - tab_name or shortcode found");
+            return;
+        }
+        
+        if (is_single() || is_page()) {
+            $post = get_queried_object();
+            
+            if ($post && $this->should_redirect($post)) {
+                $external_url = $this->get_external_url($post);
+                if ($external_url) {
+                    // クエリパラメータをクリーンアップしてリダイレクト
+                    $clean_external_url = strtok($external_url, '?');
+                    error_log("KTPWP Debug: Template redirect to: {$clean_external_url}");
+                    wp_redirect($clean_external_url, 301);
+                    exit;
+                }
+            }
+        }
+    }
+
+    /**
+     * 現在のページにKTPWPショートコードが含まれているかチェック
+     */
+    private function has_ktpwp_shortcode() {
+        $post = get_queried_object();
+        if (!$post || !isset($post->post_content)) {
+            return false;
+        }
+        
+        return (
+            has_shortcode($post->post_content, 'kantanAllTab') ||
+            has_shortcode($post->post_content, 'ktpwp_all_tab')
+        );
+    }
+
+    /**
+     * リダイレクト対象かどうかを判定
+     */
+    private function should_redirect($post) {
+        if (!$post) {
+            return false;
+        }
+
+        // ショートコードが含まれるページの場合はリダイレクトしない
+        if ($this->has_ktpwp_shortcode()) {
+            error_log("KTPWP Debug: Shortcode detected, skipping redirect");
+            return false;
+        }
+        
+        // KTPWPのクエリパラメータがある場合はリダイレクトしない
+        if (isset($_GET['tab_name']) || isset($_GET['from_client']) || isset($_GET['order_id'])) {
+            error_log("KTPWP Debug: KTPWP parameters detected, skipping redirect");
+            return false;
+        }
+
+        // external_urlが設定されている投稿のみリダイレクト対象とする
+        $external_url = get_post_meta($post->ID, 'external_url', true);
+        if (!empty($external_url)) {
+            return true;
+        }
+
+        // カスタム投稿タイプ「blog」で、特定の条件を満たす場合のみ
+        if ($post->post_type === 'blog') {
+            // 特定のスラッグやタイトルの場合のみリダイレクト
+            $redirect_slugs = array('redirect-to-ktpwp', 'external-link');
+            return in_array($post->post_name, $redirect_slugs);
+        }
+
+        return false;
+    }
+
+    /**
+     * 外部URLを取得（クエリパラメータなし）
+     */
+    private function get_external_url($post) {
+        if (!$post) {
+            return false;
+        }
+
+        $external_url = get_post_meta($post->ID, 'external_url', true);
+        
+        if (empty($external_url)) {
+            // デフォルトのベースURL
+            $base_url = 'https://ktpwp.com/blog/';
+            
+            if ($post->post_type === 'blog') {
+                $external_url = $base_url;
+            } elseif ($post->post_type === 'post') {
+                $categories = wp_get_post_categories($post->ID, array('fields' => 'slugs'));
+                
+                if (in_array('blog', $categories)) {
+                    $external_url = $base_url;
+                } elseif (in_array('news', $categories)) {
+                    $external_url = $base_url . 'news/';
+                } elseif (in_array('column', $categories)) {
+                    $external_url = $base_url . 'column/';
+                }
+            }
+        }
+        
+        // URLからクエリパラメータを除去
+        if ($external_url) {
+            $external_url = strtok($external_url, '?');
+        }
+        
+        return $external_url;
+    }
+
+    public function custom_post_link($permalink, $post) {
+        if ($post->post_type === 'blog') {
+            $external_url = $this->get_external_url($post);
+            if ($external_url) {
+                return $external_url;
+            }
+        }
+
+        if ($post->post_type === 'post') {
+            $categories = wp_get_post_categories($post->ID, array('fields' => 'slugs'));
+            $redirect_categories = array('blog', 'news', 'column');
+            
+            if (!empty(array_intersect($categories, $redirect_categories))) {
+                $external_url = $this->get_external_url($post);
+                if ($external_url) {
+                    return $external_url;
+                }
+            }
+        }
+
+        return $permalink;
+    }
+
+    public function custom_page_link($permalink, $post_id) {
+        $post = get_post($post_id);
+        
+        if ($post && $this->should_redirect($post)) {
+            $external_url = $this->get_external_url($post);
+            if ($external_url) {
+                return $external_url;
+            }
+        }
+
+        return $permalink;
+    }
+}
+
+// POSTパラメータをGETパラメータに変換する処理
+function ktpwp_handle_form_redirect() {
+    // 特定のPOSTパラメータがある場合、GETパラメータに変換
+    if (isset($_POST['tab_name']) && $_POST['tab_name'] === 'order' && isset($_POST['from_client'])) {
+        error_log("KTPWP Debug: Converting POST to GET for order creation");
+        
+        // リダイレクト用のクリーンなURLを構築
+        $redirect_params = [
+            'tab_name' => sanitize_text_field($_POST['tab_name']),
+            'from_client' => sanitize_text_field($_POST['from_client'])
+        ];
+        
+        if (isset($_POST['customer_name'])) {
+            $redirect_params['customer_name'] = sanitize_text_field($_POST['customer_name']);
+        }
+        if (isset($_POST['user_name'])) {
+            $redirect_params['user_name'] = sanitize_text_field($_POST['user_name']);
+        }
+        if (isset($_POST['client_id'])) {
+            $redirect_params['client_id'] = sanitize_text_field($_POST['client_id']);
+        }
+        
+        // 現在のURLからKTPWPパラメータを除去してクリーンなベースURLを作成
+        $current_url = add_query_arg(NULL, NULL);
+        $clean_url = remove_query_arg([
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post'
+        ], $current_url);
+        
+        // 新しいパラメータを追加してリダイレクト
+        $redirect_url = add_query_arg($redirect_params, $clean_url);
+        
+        // リダイレクト実行
+        wp_redirect($redirect_url, 302);
+        exit;
+    }
+    
+    // 受注書削除処理のPOSTパラメータをGETに変換
+    if (isset($_POST['delete_order']) && isset($_POST['order_id'])) {
+        error_log("KTPWP Debug: Converting POST to GET for order deletion");
+        
+        // リダイレクト用のパラメータを構築
+        $redirect_params = [
+            'tab_name' => 'order',
+            'delete_order' => sanitize_text_field($_POST['delete_order']),
+            'order_id' => sanitize_text_field($_POST['order_id'])
+        ];
+        
+        // クリーンなベースURLを作成
+        $current_url = add_query_arg(NULL, NULL);
+        $clean_url = remove_query_arg([
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post'
+        ], $current_url);
+        
+        // リダイレクト実行
+        $redirect_url = add_query_arg($redirect_params, $clean_url);
+        wp_redirect($redirect_url, 302);
+        exit;
+    }
+}
+
+// WordPress初期化時に処理を実行（より早いタイミングで実行）
+add_action('wp_loaded', 'ktpwp_handle_form_redirect', 1);
+
+// リダイレクト処理を初期化（テスト用に再有効化）
+new KTPWP_Redirect();
+
+
 // ファイルをインクルード
 $includes = [
 	'class-tab-list.php',

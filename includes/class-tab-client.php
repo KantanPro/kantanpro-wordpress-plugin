@@ -387,8 +387,10 @@ class Kntan_Client_Class {
                 // JavaScriptを使用してポップアップ警告を表示
                 echo "<script>
                 alert('検索結果がありません！');
-                window.location.href='?tab_name={$tab_name}&query_post=search';
                 </script>";
+                // リダイレクトの代わりにクエリパラメータを設定
+                $_GET['tab_name'] = $tab_name;
+                $_GET['query_post'] = 'search';
             }
 
             // ロックを解除する
@@ -921,7 +923,12 @@ class Kntan_Client_Class {
         $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list&data_id=' . $current_client_id . '\'">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
-        $workflow_html .= '<form method="post" action="" onsubmit="event.preventDefault(); window.location.href=\'?tab_name=order&from_client=1&customer_name=' . urlencode($order_customer_name) . '&user_name=' . urlencode($order_user_name) . '&client_id=' . urlencode($data_id) . '\';">';
+        $workflow_html .= '<form method="post" action="">';
+        $workflow_html .= '<input type="hidden" name="tab_name" value="order">';
+        $workflow_html .= '<input type="hidden" name="from_client" value="1">';
+        $workflow_html .= '<input type="hidden" name="customer_name" value="' . esc_attr($order_customer_name) . '">';
+        $workflow_html .= '<input type="hidden" name="user_name" value="' . esc_attr($order_user_name) . '">';
+        $workflow_html .= '<input type="hidden" name="client_id" value="' . esc_attr($data_id) . '">';
         $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
         $workflow_html .= '</form>';
         $workflow_html .= '</div>';

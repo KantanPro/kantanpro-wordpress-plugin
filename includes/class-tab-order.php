@@ -222,15 +222,18 @@ class Kntan_Order_Class{
             // 削除処理
             $deleted = $wpdb->delete($table_name, array('id' => $order_id));
             if ($deleted) {
-                // 削除後は最新の受注書または一覧にリダイレクト
+                // リダイレクト処理を無効化 - 代わりに最新の受注書IDを直接設定
                 $latest_order = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY time DESC LIMIT 1");
                 if ($latest_order) {
-                    $redirect_url = add_query_arg('order_id', $latest_order->id, remove_query_arg(['delete_order', 'order_id']));
+                    $_GET['order_id'] = $latest_order->id;
+                    $order_id = $latest_order->id;
                 } else {
-                    $redirect_url = remove_query_arg(['delete_order', 'order_id']);
+                    $_GET['order_id'] = 0;
+                    $order_id = 0;
                 }
-                wp_redirect($redirect_url);
-                exit;
+                $_GET['delete_order'] = null; // delete_orderフラグをクリア
+                
+                error_log("KTPWP Debug: Order deleted, redirect disabled");
             } else {
                 $content .= '<div class="error">受注書の削除に失敗しました。</div>';
             }
@@ -273,10 +276,14 @@ class Kntan_Order_Class{
 
             if ($inserted) {
                 $new_order_id = $wpdb->insert_id; // 挿入された受注書IDを取得
-                // 新規作成された受注書の詳細を表示するためにリダイレクト
-                $redirect_url = add_query_arg('order_id', $new_order_id, remove_query_arg('from_client'));
-                wp_redirect($redirect_url);
-                exit;
+                
+                // リダイレクト処理を無効化 - 代わりにorder_idを直接設定
+                $_GET['order_id'] = $new_order_id;
+                $_GET['from_client'] = null; // from_clientフラグをクリア
+                $order_id = $new_order_id; // ローカル変数も更新
+                
+                // デバッグ用ログ
+                error_log("KTPWP Debug: Order created with ID: {$new_order_id}, redirect disabled");
             } else {
                 // 挿入失敗時のエラーハンドリング
                 $content .= '<div class="error">受注書の作成に失敗しました。</div>';
@@ -355,10 +362,12 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
 
                 // workflowセクション追加（デザイン統一）
                 $content .= '<div class="workflow">';
-                // 削除ボタンをworkflow内に移動
-                $delete_url = add_query_arg(['order_id' => $order_id, 'delete_order' => 1]);
-                $content .= '<a href="#" id="orderDeleteButton" style="color:#fff;background:#d9534f;padding:0px 8px;font-size:16px;border:none;border-radius:4px;cursor:pointer;display:inline-block;text-decoration:none;margin-left:10px;" onclick="event.preventDefault(); confirmDeleteOrder();">受注書を削除</a>';
-                $content .= "<script>\nfunction confirmDeleteOrder() {\n  if (window.confirm('本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。')) {\n    window.location.href = '{$delete_url}';\n  }\n}\n</script>";
+                // 削除ボタンをworkflow内に移動（フォーム送信ベース）
+                $content .= '<form method="post" action="" style="display:inline-block;margin-left:10px;" onsubmit="return confirm(\'本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。\');">';
+                $content .= '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
+                $content .= '<input type="hidden" name="delete_order" value="1">';
+                $content .= '<button type="submit" style="color:#fff;background:#d9534f;padding:0px 8px;font-size:16px;border:none;border-radius:4px;cursor:pointer;">受注書を削除</button>';
+                $content .= '</form>';
                 $content .= '</div>';
 
                 // メール編集フォーム導入により、進捗3の質問内容プロンプトは不要になったため削除

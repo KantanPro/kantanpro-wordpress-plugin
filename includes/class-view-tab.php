@@ -35,14 +35,19 @@ class view_tabs_Class{
         $view = "<div class=\"tabs\">";
         // 現在のURL情報を取得
         $current_url = add_query_arg(NULL, NULL);
-        // ベースURLを作成（現在のURLからtab_nameパラメータを除去）
-        $base_url = remove_query_arg('tab_name', $current_url);
+        
+        // 各タブ用のクリーンなベースURLを作成（KTPWPパラメータを全て除去）
+        $clean_base_url = remove_query_arg([
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post',
+            'page_start', 'page_stage'
+        ], $current_url);
         
         foreach ($tabs as $key => $value) {
           $checked = $position === $key ? ' checked' : '';
           $active_class = $position === $key ? ' active' : '';
-          // ベースURLにタブ名を追加
-          $tab_url = add_query_arg('tab_name', $key, $base_url);
+          // クリーンなベースURLにタブ名のみを追加
+          $tab_url = add_query_arg('tab_name', $key, $clean_base_url);
           $view .= "<input id=\"$key\" type=\"radio\" name=\"tab_item\"$checked>";
           $view .= "<label class=\"tab_item$active_class\"><a href=\"$tab_url\">$value</a></label>";
         }

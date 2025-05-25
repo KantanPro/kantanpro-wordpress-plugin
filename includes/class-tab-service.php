@@ -287,12 +287,13 @@ class Kntan_Service_Class {
             }
 
             // 検索結果が0件の場合の処理
-            else {
-                // JavaScriptを使用してポップアップ警告を表示
+            else {                // JavaScriptを使用してポップアップ警告を表示
                 echo "<script>
                 alert('検索結果がありません！');
-                window.location.href='?tab_name={$tab_name}&query_post=search';
                 </script>";
+                // リダイレクトの代わりにクエリパラメータを設定
+                $_GET['tab_name'] = $tab_name;
+                $_GET['query_post'] = 'search';
             }
 
             // ロックを解除する
