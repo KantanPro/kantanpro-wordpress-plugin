@@ -238,7 +238,7 @@ class Kntan_Service_Class {
                     $service_name = esc_html($row->service_name); // 商品名を取得
                     $category = esc_html($row->category); // カテゴリーを取得
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')) . "' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
+                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
                 }
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
@@ -279,7 +279,7 @@ class Kntan_Service_Class {
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
                         // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')) . "';
+                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')) . "';
                     };
                     popup.appendChild(closeButton);
                 });
@@ -559,17 +559,13 @@ class Kntan_Service_Class {
                 $frequency = esc_html($row->frequency);
                   // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
-                $results[] = <<<END
-                <a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')) . '" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                    <div class="data_list_item">ID: $id $service_name : $category : 頻度($frequency)</div>
-                </a>
-                END;
+                $results[] = '<a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage)) . '">'.
+                    '<div class="data_list_item">ID: ' . $id . ' ' . $service_name . ' : ' . $category . ' : 頻度(' . $frequency . ')</div>'.
+                '</a>';
             }
             $query_max_num = $wpdb->num_rows;
         } else {
-            $results[] = <<<END
-            <div class="data_list_item">データーがありません。</div>
-            END;            
+            $results[] = '<div class="data_list_item">データーがありません。</div>';
         }
 
         $results_f = "<div class=\"pagination\">";
@@ -577,17 +573,13 @@ class Kntan_Service_Class {
         // 最初へリンク
         if ($current_page > 1) {
             $first_start = 0; // 最初のページ
-            $results_f .= <<<END
-             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">|<</a> 
-            END;
+            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg)) . '">|&lt;</a> ';
         }
 
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
-            $results_f .= <<<END
-            <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '"><</a>
-            END;
+            $results_f .= '<a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg)) . '">&lt;</a>';
         }
 
         // 現在のページ範囲表示と総数
@@ -598,17 +590,13 @@ class Kntan_Service_Class {
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
-            $results_f .= <<<END
-             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">></a>
-            END;
+            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;</a>';
         }
 
         // 最後へリンク
         if ($current_page < $total_pages) {
             $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
-            $results_f .= <<<END
-             <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')) . '">>|</a>
-            END;
+            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;|</a>';
         }
         
         $results_f .= "</div></div>";
