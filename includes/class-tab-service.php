@@ -849,11 +849,9 @@ class Kntan_Service_Class {
                 $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
             }
             
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";
-
-            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
+            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
             $data_forms .= <<<END
-            <form action="" method="post" enctype="multipart/form-data" onsubmit="return !!this.image.value;">
+            <form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">
             <div class="file-upload-container">
             <input type="file" name="image" class="file-input">
             <input type="hidden" name="data_id" value="$data_id">
@@ -863,6 +861,15 @@ class Kntan_Service_Class {
             </button>
             </div>
             </form>
+            <script>
+            function checkImageUpload(form) {
+                if (!form.image.value) {
+                    alert('画像が選択されていません。アップロードする画像を選択してください。');
+                    return false;
+                }
+                return true;
+            }
+            </script>
             END;
 
             // 商品画像削除ボタンを追加
