@@ -132,9 +132,7 @@ class Kntan_Service_Class {
             } else {
                 $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
                 $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
-            }
-            $cookie_name = 'ktp_' . $name . '_id';
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }
             $action = 'update';
             $url = '?tab_name='. $tab_name . '&data_id=' . $next_data_id . '&query_post=' . $action;
             $cookie_name = 'ktp_' . $tab_name . '_id';
