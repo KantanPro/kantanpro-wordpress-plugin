@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: KTPWP
-Description: 仕事のワークフローを管理するためのプラグインです。
+Description: パーマリンク問題があります。
 Version: 0.0.0beta
 */
 
