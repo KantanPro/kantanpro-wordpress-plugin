@@ -392,7 +392,8 @@ function KTPWP_Index(){
 			// プラグイン名とバージョンを定数から取得
 			$plugin_name = KTPWP_PLUGIN_NAME;
 			$plugin_version = KTPWP_PLUGIN_VERSION;
-			$update_link_url = esc_url(home_url(add_query_arg(null, null)));
+			$current_page_id = get_queried_object_id();
+			$update_link_url = esc_url(get_permalink($current_page_id));
 			
 			$front_message = <<<END
 			<div class="ktp_header">
