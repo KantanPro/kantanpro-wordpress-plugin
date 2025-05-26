@@ -916,18 +916,34 @@ class Kntan_Client_Class {
             $current_client_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
         } else {
             // 最後のIDを取得
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $current_client_id = $last_id_row ? $last_id_row->id : 0;
+            // $wpdb と $table_name がこのスコープで利用可能である必要がある
+            if ( isset( $wpdb, $table_name ) ) {
+                $query = $wpdb->prepare( "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1" );
+                $last_id_row = $wpdb->get_row($query);
+                $current_client_id = $last_id_row ? $last_id_row->id : 0;
+            }
         }
+        $current_client_id = (int) $current_client_id;
         
         // 注文履歴ボタン - 現在の顧客IDを保持して遷移
-        $order_history_active = ($view_mode === 'order_history') ? 'active' : '';
-        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=order_history&data_id=' . $current_client_id . '\'">注文履歴</button>';
+        $order_history_active = (isset($view_mode) && $view_mode === 'order_history') ? 'active' : '';
+        $order_history_params = array(
+            'tab_name'  => 'client',
+            'view_mode' => 'order_history',
+            'data_id'   => $current_client_id
+        );
+        $order_history_url = add_query_arg( $order_history_params ); // 現在のREQUEST_URIをベースにURLを生成
+        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'' . esc_url( $order_history_url ) . '\'">注文履歴</button>';
         
         // 顧客一覧ボタン - 現在の顧客IDを保持して遷移
-        $customer_list_active = ($view_mode === 'customer_list') ? 'active' : '';
-        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'?tab_name=client&view_mode=customer_list&data_id=' . $current_client_id . '\'">顧客一覧</button>';
+        $customer_list_active = (isset($view_mode) && $view_mode === 'customer_list') ? 'active' : '';
+        $customer_list_params = array(
+            'tab_name'  => 'client',
+            'view_mode' => 'customer_list',
+            'data_id'   => $current_client_id
+        );
+        $customer_list_url = add_query_arg( $customer_list_params ); // 現在のREQUEST_URIをベースにURLを生成
+        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'' . esc_url( $customer_list_url ) . '\'">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="">';
