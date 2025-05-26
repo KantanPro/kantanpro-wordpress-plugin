@@ -251,41 +251,7 @@ class Kntan_Order_Class{
             $client_id = isset($_GET['client_id']) ? intval($_GET['client_id']) : 0;
             error_log("KTPWP Debug: クライアントID取得(GET): " . $client_id);
             
-            // 2. データベースから最新の複製顧客IDを取得（会社名＋担当者名からIDを検索して、その複製を確認）
-            if ($client_id <= 0 && class_exists('Kntan_Client_Relationship_Class')) {
-                // まず会社名と担当者名から基本顧客IDを検索
-                $base_client = $wpdb->get_row($wpdb->prepare(
-                    "SELECT id FROM {$client_table} WHERE company_name = %s AND name = %s",
-                    str_replace('#', '', $customer_name), // '#'を除去して検索（複製元の可能性がある）
-                    $user_name
-                ));
-                
-                if ($base_client) {
-                    // 基本顧客IDが見つかった場合、その顧客の最新複製IDを取得
-                    $duplicated_id = Kntan_Client_Relationship_Class::get_latest_duplicated_client($base_client->id);
-                    if ($duplicated_id) {
-                        $client_id = $duplicated_id;
-                        error_log("KTPWP Debug: 複製関係データベースから顧客ID取得: " . $client_id);
-                    }
-                }
-            }
-            
-            // 3. セッションから取得（下位互換性のため）
-            if ($client_id <= 0 && isset($_SESSION['ktp_duplicated_client_id'])) {
-                $client_id = intval($_SESSION['ktp_duplicated_client_id']);
-                error_log("KTPWP Debug: セッションから複製顧客ID取得: " . $client_id);
-                unset($_SESSION['ktp_duplicated_client_id']); // 使用後消去
-            }
-            
-            // 4. Cookieから取得（下位互換性のため）
-            if ($client_id <= 0 && isset($_COOKIE['ktp_duplicated_client_id'])) {
-                $client_id = intval($_COOKIE['ktp_duplicated_client_id']);
-                error_log("KTPWP Debug: 複製後のCookieからクライアントID取得: " . $client_id);
-                // 一度使用したら削除
-                setcookie('ktp_duplicated_client_id', '', time() - 3600, '/');
-            }
-            
-            // 5. POSTパラメータも確認
+            // 2. POSTパラメータも確認
             if ($client_id <= 0 && isset($_POST['client_id']) && intval($_POST['client_id']) > 0) {
                 $client_id = intval($_POST['client_id']);
                 error_log("KTPWP Debug: POST['client_id']から取得: " . $client_id);
@@ -470,14 +436,6 @@ $content .= '</div>';
                     if ($client_exists) {
                         // 顧客が存在する場合は通常表示
                         $client_id_display = '（顧客ID: ' . esc_html($order_data->client_id) . '）';
-                        
-                        // 複製元の顧客IDも表示（関連性を明示）
-                        if (class_exists('Kntan_Client_Relationship_Class')) {
-                            $source_id = Kntan_Client_Relationship_Class::get_source_client($order_data->client_id);
-                            if ($source_id) {
-                                $client_id_display .= ' <span style="color:#0288d1;">(元ID: ' . esc_html($source_id) . ')</span>';
-                            }
-                        }
                     } else {
                         // 顧客が存在しない場合は警告表示
                         $client_id_display = '（顧客ID: <span style="color:red;">' . esc_html($order_data->client_id) . ' - 顧客データが存在しません</span>）';

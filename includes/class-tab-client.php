@@ -470,94 +470,6 @@ class Kntan_Client_Class {
 
         }
         
-        // 複製
-        elseif( $query_post == 'duplication' ) {
-            // データのIDを取得
-            $data_id = $_POST['data_id'];
-
-            // データを取得
-            $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
-
-            // 会社名の最後に#を追加
-            $data['company_name'] .= '#';
-
-            // IDを削除
-            unset($data['id']);
-
-            // 頻度を0に設定
-            $data['frequency'] = 0;
-
-            // search_fieldの値を更新
-            $data['search_field'] = implode(', ', [
-                $data['time'],
-                $data['company_name'],
-                $data['name'],
-                $data['email'],
-                $data['url'],
-                $data['representative_name'],
-                $data['phone'],
-                $data['postal_code'],
-                $data['prefecture'],
-                $data['city'],
-                $data['address'],
-                $data['building'],
-                $data['closing_day'],
-                $data['payment_month'],
-                $data['payment_day'],
-                $data['payment_method'],
-                $data['tax_category'],
-                $data['memo'],
-                $data['category']
-            ]);
-
-            // データを挿入
-            $insert_result = $wpdb->insert($table_name, $data);
-            if($insert_result === false) {
-                // エラーログに挿入エラーを記録
-                error_log('Duplication error: ' . $wpdb->last_error);
-            } else {
-                // 挿入成功後の処理
-                $new_data_id = $wpdb->insert_id;
-                error_log("KTPWP Debug: 顧客データ複製成功 - 新ID: " . $new_data_id);
-                
-                // 複製関係をデータベースに保存（元のIDと複製したIDの関係を保存）
-                if (class_exists('Kntan_Client_Relationship_Class')) {
-                    Kntan_Client_Relationship_Class::register_duplication($data_id, $new_data_id);
-                }
-                
-                // 複製後即座に受注書作成ボタンが押された場合のための処理
-                // 特別なクッキーに一時的に新しいIDを保存（JavaScript側で読み取り可能に・下位互換性のため）
-                setcookie('ktp_duplicated_client_id', $new_data_id, time() + 300, "/"); // 5分間有効に延長
-                // セッションにも保存（下位互換性のため）
-                if (session_status() !== PHP_SESSION_ACTIVE) {
-                    session_start();
-                }
-                $_SESSION['ktp_duplicated_client_id'] = $new_data_id;
-                error_log("KTPWP Debug: 複製後の顧客ID: " . $new_data_id . " をCookieとセッションに保存");
-                
-                // ロックを解除する
-                $wpdb->query("UNLOCK TABLES;");
-                
-                // 追加後に更新モードにする
-                // リダイレクト
-                $action = 'update';
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
-                $url = add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $new_data_id,
-                    'query_post' => $action
-                ], $base_url);
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header("Location: {$url}");
-                exit;
-            }
-        }
-        
 
         // どの処理にも当てはまらない場合はロック解除
         else {
@@ -643,32 +555,7 @@ class Kntan_Client_Class {
            $order_table = $wpdb->prefix . 'ktp_order';
            
            // 全データ数を取得（この顧客IDに関連する受注書）
-           // 複製関係も含めた顧客IDを使用
            $related_client_ids = [$client_id];
-           
-           // 複製元の顧客IDを取得（関係テーブルから）
-           if (class_exists('Kntan_Client_Relationship_Class')) {
-               $source_id = Kntan_Client_Relationship_Class::get_source_client($client_id);
-               if ($source_id && !in_array($source_id, $related_client_ids)) {
-                   $related_client_ids[] = $source_id;
-               }
-               
-               // 他の複製先の顧客IDも取得して結合（同じ元から複製された兄弟関係）
-               global $wpdb;
-               $relationship_table = $wpdb->prefix . 'ktp_client_relationship';
-               $sibling_ids = $wpdb->get_col($wpdb->prepare(
-                   "SELECT duplicated_client_id FROM {$relationship_table} WHERE source_client_id = %d AND duplicated_client_id != %d",
-                   $source_id, $client_id
-               ));
-               
-               if ($sibling_ids) {
-                   foreach ($sibling_ids as $sibling_id) {
-                       if (!in_array($sibling_id, $related_client_ids)) {
-                           $related_client_ids[] = $sibling_id;
-                       }
-                   }
-               }
-           }
            
            // IDのリストを文字列に変換
            $client_ids_str = implode(',', array_map('intval', $related_client_ids));
@@ -682,32 +569,7 @@ class Kntan_Client_Class {
            $current_page = floor($page_start / $query_limit) + 1;
            
            // この顧客の受注書を取得
-           // 元の顧客IDも確認して、複製元・複製先両方の受注書を取得
            $related_client_ids = [$client_id];
-           
-           // 複製元の顧客IDを取得（関係テーブルから）
-           if (class_exists('Kntan_Client_Relationship_Class')) {
-               $source_id = Kntan_Client_Relationship_Class::get_source_client($client_id);
-               if ($source_id && !in_array($source_id, $related_client_ids)) {
-                   $related_client_ids[] = $source_id;
-               }
-               
-               // 他の複製先の顧客IDも取得して結合（同じ元から複製された兄弟関係）
-               global $wpdb;
-               $relationship_table = $wpdb->prefix . 'ktp_client_relationship';
-               $sibling_ids = $wpdb->get_col($wpdb->prepare(
-                   "SELECT duplicated_client_id FROM {$relationship_table} WHERE source_client_id = %d AND duplicated_client_id != %d",
-                   $source_id, $client_id
-               ));
-               
-               if ($sibling_ids) {
-                   foreach ($sibling_ids as $sibling_id) {
-                       if (!in_array($sibling_id, $related_client_ids)) {
-                           $related_client_ids[] = $sibling_id;
-                       }
-                   }
-               }
-           }
            
            // IDのリストを文字列に変換
            $client_ids_str = implode(',', array_map('intval', $related_client_ids));
@@ -1144,45 +1006,6 @@ class Kntan_Client_Class {
         $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
         $workflow_html .= '</form>';
         
-        // 複製後の顧客IDを自動的に設定するためのJavaScript
-        $workflow_html .= '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // クッキーから複製後のIDを取得する関数
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(";").shift();
-                return null;
-            }
-            
-            // フォーム送信前に顧客IDが設定されているか確認
-            document.getElementById("create-order-form").addEventListener("submit", function(e) {
-                // フォーム送信前に実行
-                const clientIdInput = document.getElementById("client-id-input");
-                const duplicatedClientId = getCookie("ktp_duplicated_client_id");
-                
-                if (duplicatedClientId) {
-                    // 複製したIDがあれば、それを使用
-                    console.log("フォーム送信時、複製後の顧客ID検出: " + duplicatedClientId);
-                    clientIdInput.value = duplicatedClientId;
-                    
-                    // Hidden input にセットした値を再確認
-                    console.log("フォーム送信時の最終client_id値: " + clientIdInput.value);
-                }
-            });
-            
-            // ページ読み込み時にも実行
-            const duplicatedClientId = getCookie("ktp_duplicated_client_id");
-            if (duplicatedClientId) {
-                console.log("複製後の顧客ID検出: " + duplicatedClientId);
-                const clientIdInput = document.getElementById("client-id-input");
-                if (clientIdInput) {
-                    clientIdInput.value = duplicatedClientId;
-                    console.log("受注書作成用のクライアントIDを更新: " + duplicatedClientId);
-                }
-            }
-        });
-        </script>';
         $workflow_html .= '</div>';
         $workflow_html .= '</div>';
         $workflow_html .= '</div>';
@@ -1493,19 +1316,6 @@ class Kntan_Client_Class {
                 <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
                     <span class="material-symbols-outlined">
                         delete
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 複製ボタン
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="duplication">
-                <button type="submit" name="send_post" title="複製する">
-                    <span class="material-symbols-outlined">
-                    content_copy
                     </span>
                 </button>
             </form>

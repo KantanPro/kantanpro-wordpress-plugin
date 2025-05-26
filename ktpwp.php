@@ -24,9 +24,6 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
-// 必要なファイルを読み込み
-require_once(plugin_dir_path(__FILE__) . 'includes/class-tab-client-relationship.php');
-
 // プラグインファイルの定義
 define('KTPWP_PLUGIN_FILE', __FILE__);
 
@@ -234,23 +231,6 @@ function ktpwp_handle_form_redirect() {
         if (isset($_POST['client_id']) && intval($_POST['client_id']) > 0) {
             $client_id = intval($_POST['client_id']);
             error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id);
-        }
-        
-        // セッション情報がある場合は取得（下位互換性のため）
-        if ($client_id <= 0 && session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-        
-        if ($client_id <= 0 && isset($_SESSION['ktp_duplicated_client_id']) && intval($_SESSION['ktp_duplicated_client_id']) > 0) {
-            $client_id = intval($_SESSION['ktp_duplicated_client_id']);
-            error_log("KTPWP Debug: SESSION duplicated_client_id: " . $client_id . " -> リダイレクトパラメータに設定");
-            unset($_SESSION['ktp_duplicated_client_id']); // 一度使用したらクリア
-        }
-        
-        // Cookieがある場合は取得（下位互換性のため）
-        if ($client_id <= 0 && isset($_COOKIE['ktp_duplicated_client_id'])) {
-            $client_id = intval($_COOKIE['ktp_duplicated_client_id']);
-            error_log("KTPWP Debug: COOKIE duplicated_client_id: " . $client_id . " -> リダイレクトパラメータに設定");
         }
         
         if ($client_id > 0) {
