@@ -636,13 +636,13 @@ class Kntan_Service_Class {
           // 表示するフォーム要素を定義
         $fields = [
             // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
-            '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
+            esc_html__('商品名', 'ktpwp') => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => esc_attr__('必須 商品・サービス名', 'ktpwp')],
             // '画像URL' => ['type' => 'text', 'name' => 'image_url'], // 商品画像のURLフィールドはコメントアウト
-            'メモ' => ['type' => 'textarea', 'name' => 'memo'],
-            'カテゴリー' => [
+            esc_html__('メモ', 'ktpwp') => ['type' => 'textarea', 'name' => 'memo'],
+            esc_html__('カテゴリー', 'ktpwp') => [
                 'type' => 'text',
                 'name' => 'category',
-                'options' => '一般',
+                'options' => esc_html__('一般', 'ktpwp'),
                 'suggest' => true,
             ],
         ];
@@ -664,7 +664,7 @@ class Kntan_Service_Class {
                 // 詳細表示部分の開始
                 $data_title = <<<END
                     <div class="data_detail_box">
-                    <h3>■ 商品の詳細</h3>
+                    <h3>■ " . esc_html__('商品の詳細', 'ktpwp') . "</h3>
                 END;
 
                 // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
@@ -696,26 +696,24 @@ class Kntan_Service_Class {
                 // 空のフォームフィールドを生成
                 $data_forms .= '<form method="post" action="">';
                 foreach ($fields as $label => $field) {
-                    $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                    $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
+                    $value = $action === 'update' ? ${$field['name']} : '';
+                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                    $required = isset($field['required']) && $field['required'] ? ' required' : '';
                     $fieldName = $field['name'];
-                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
+                    $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+                    $label_i18n = esc_html__($label, 'ktpwp');
                     if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>";
                     } elseif ($field['type'] === 'select') {
                         $options = '';
-
-                        foreach ($field['options'] as $option) {
-                            $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                        foreach ((array)$field['options'] as $option) {
+                            $selected = $value === $option ? ' selected' : '';
+                            $options .= "<option value=\"{$option}\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                         }
-
-                        $default = isset($field['default']) ? $field['default'] : ''; // デフォルト値を取得
-
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                        $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
+                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
                     } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
+                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
                     }
                 }
 
@@ -729,7 +727,7 @@ class Kntan_Service_Class {
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
                     <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title="追加実行">
+                    <button type='submit' name='send_post' title="<?php echo esc_attr__('追加実行', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     select_check_box
                     </span>
@@ -745,7 +743,7 @@ class Kntan_Service_Class {
                     $data_forms .= <<<END
                     <form method='post' action=''>
                     <input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title="検索実行">
+                    <button type='submit' name='send_post' title="<?php echo esc_attr__('検索実行', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     select_check_box
                     </span>
@@ -762,7 +760,7 @@ class Kntan_Service_Class {
                 <input type='hidden' name='data_id' value=''>
                 <input type='hidden' name='query_post' value='$action'>
                 <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="キャンセル">
+                <button type='submit' name='send_post' title="<?php echo esc_attr__('キャンセル', 'ktpwp'); ?>">
                 <span class="material-symbols-outlined">
                 disabled_by_default
                 </span>            
@@ -780,7 +778,7 @@ class Kntan_Service_Class {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 商品の詳細（ 検索モード ）</h3>
+                <h3>■ <?php echo esc_html__('商品の詳細（検索モード）', 'ktpwp'); ?></h3>
             END;
 
             // 検索フォームを生成
@@ -798,7 +796,7 @@ class Kntan_Service_Class {
             $data_forms .= <<<END
             <form method='post' action=''>
             <input type='hidden' name='query_post' value='$action'>
-            <button type='submit' name='send_post' title="検索実行">
+            <button type='submit' name='send_post' title="<?php echo esc_attr__('検索実行', 'ktpwp'); ?>">
             <span class="material-symbols-outlined">
             select_check_box
             </span>
@@ -814,7 +812,7 @@ class Kntan_Service_Class {
             <input type='hidden' name='data_id' value=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="キャンセル">
+            <button type='submit' name='send_post' title="<?php echo esc_attr__('キャンセル', 'ktpwp'); ?>">
             <span class="material-symbols-outlined">
             disabled_by_default
             </span>            
@@ -879,14 +877,14 @@ class Kntan_Service_Class {
                 $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
             }
             
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
+            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"" . esc_attr__('商品画像', 'ktpwp') . "\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
             $data_forms .= <<<END
             <form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">
             <div class="file-upload-container">
             <input type="file" name="image" class="file-input">
             <input type="hidden" name="data_id" value="$data_id">
             <input type="hidden" name="query_post" value="upload_image">
-            <button type="submit" class="upload-btn" title="画像をアップロード">
+            <button type="submit" class="upload-btn" title="<?php echo esc_attr__('画像をアップロード', 'ktpwp'); ?>">
               <span class="material-symbols-outlined">upload</span>
             </button>
             </div>
@@ -894,7 +892,7 @@ class Kntan_Service_Class {
             <script>
             function checkImageUpload(form) {
                 if (!form.image.value) {
-                    alert('画像が選択されていません。アップロードする画像を選択してください。');
+                    alert('<?php echo esc_js(__('画像が選択されていません。アップロードする画像を選択してください。', 'ktpwp')); ?>');
                     return false;
                 }
                 return true;
@@ -907,7 +905,7 @@ class Kntan_Service_Class {
             <form method="post" action="">
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="delete_image">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
+                <button type="submit" name="send_post" title="<?php echo esc_attr__('削除する', 'ktpwp'); ?>" onclick="return confirm('<?php echo esc_js(__('本当に削除しますか？', 'ktpwp')); ?>')">
                     <span class="material-symbols-outlined">
                         delete
                     </span>
@@ -938,24 +936,22 @@ class Kntan_Service_Class {
 
 
             foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
-
+                $value = $action === 'update' ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+                $label_i18n = esc_html__($label, 'ktpwp');
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>";
                 } elseif ($field['type'] === 'select') {
                     $options = '';
-
-                    foreach ($field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                    foreach ((array)$field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"{$option}\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                     }
-
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>";
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
                 }
             }
 
@@ -972,7 +968,7 @@ class Kntan_Service_Class {
             // 更新ボタンを追加
             $data_forms .= <<<END
             <form method="post" action="">
-                <button type="submit" name="send_post" title="更新する">
+            <button type="submit" name="send_post" title="<?php echo esc_attr__('更新する', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     cached
                     </span>
@@ -985,7 +981,7 @@ class Kntan_Service_Class {
             <form method="post" action="">
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="delete">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
+                <button type="submit" name="send_post" title="<?php echo esc_attr__('削除する', 'ktpwp'); ?>" onclick="return confirm('<?php echo esc_js(__('本当に削除しますか？', 'ktpwp')); ?>')">
                     <span class="material-symbols-outlined">
                         delete
                     </span>
@@ -998,7 +994,7 @@ class Kntan_Service_Class {
             <form method="post" action="">
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="duplication">
-                <button type="submit" name="send_post" title="複製する">
+                <button type="submit" name="send_post" title="<?php echo esc_attr__('複製する', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     content_copy
                     </span>
@@ -1014,7 +1010,7 @@ class Kntan_Service_Class {
                 <input type='hidden' name='data_id' value=''>
                 <input type='hidden' name='query_post' value='$action'>
                 <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="追加する">
+                <button type='submit' name='send_post' title="<?php echo esc_attr__('追加する', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     add
                     </span>
@@ -1028,7 +1024,7 @@ class Kntan_Service_Class {
             $data_forms .= <<<END
             <form method='post' action=''>
                 <input type='hidden' name='query_post' value='$action'>
-                <button type='submit' name='send_post' title="検索する">
+                <button type='submit' name='send_post' title="<?php echo esc_attr__('検索する', 'ktpwp'); ?>">
                     <span class="material-symbols-outlined">
                     search
                     </span>
