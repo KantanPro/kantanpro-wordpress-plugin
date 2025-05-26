@@ -980,7 +980,7 @@ class Kntan_Client_Class {
         );
         $order_history_url = add_query_arg( $order_history_params, $base_page_url );
         $js_redirect_order_history = sprintf("window.location.href='%s'", esc_url($order_history_url));
-        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="' . $js_redirect_order_history . '">注文履歴</button>';
+        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="' . $js_redirect_order_history . '" style="padding: 8px 12px; font-size: 14px;">注文履歴</button>';
         
         // 顧客一覧ボタン - 現在の顧客IDを保持して遷移
         $customer_list_active = (isset($view_mode) && $view_mode === 'customer_list') ? 'active' : '';
@@ -991,7 +991,7 @@ class Kntan_Client_Class {
         );
         $customer_list_url = add_query_arg( $customer_list_params, $base_page_url );
         $js_redirect_customer_list = sprintf("window.location.href='%s'", esc_url($customer_list_url));
-        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="' . $js_redirect_customer_list . '">顧客一覧</button>';
+        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="' . $js_redirect_customer_list . '" style="padding: 8px 12px; font-size: 14px;">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="" id="create-order-form">';
@@ -1003,7 +1003,7 @@ class Kntan_Client_Class {
         $workflow_html .= '<input type="hidden" name="customer_name" value="' . esc_attr($customer_name_to_use) . '">';
         $workflow_html .= '<input type="hidden" name="user_name" value="' . esc_attr($user_name_to_use) . '">';
         $workflow_html .= '<input type="hidden" id="client-id-input" name="client_id" value="' . esc_attr($current_client_id) . '">';
-        $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
+        $workflow_html .= '<button type="submit" class="create-order-btn" style="padding: 8px 12px; font-size: 14px;">受注書作成</button>';
         $workflow_html .= '</form>';
         
         $workflow_html .= '</div>';
@@ -1013,7 +1013,7 @@ class Kntan_Client_Class {
         // データー量を取得
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $data_num = $wpdb->get_results($query);
-        $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
+        $data_num = count($data_num); // 現在のデータ数を取得$data_numに格納
 
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
@@ -1515,6 +1515,7 @@ class Kntan_Client_Class {
         }
         
         // 検索モードでも顧客リストを表示する
+
         $final_data_list = $data_list;
         
         $content = $print . $session_message . $controller_html . $workflow_html . $final_data_list . $data_title . $data_forms . $search_results_list . $div_end;
