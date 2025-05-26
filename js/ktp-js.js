@@ -51,6 +51,11 @@ jQuery(document).ready(function($) {
     });
 });
 
+// ポップアップ要素を作成
+var popupElement = document.createElement('div');
+popupElement.id = 'popupElement';
+document.body.appendChild(popupElement);
+
 // ポップアップのスタイルを設定する
 popupElement.style.position = 'fixed';
 popupElement.style.top = '50%';
@@ -67,6 +72,19 @@ popupElement.style.borderRadius = '10px';
 popupElement.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
 popupElement.style.textAlign = 'center';
 popupElement.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+
+// 初期状態で非表示に設定
+popupElement.style.display = 'none';
+
+// 必要なときに表示する関数を追加
+function showPopup(message) {
+    popupElement.textContent = message;
+    popupElement.style.display = 'block';
+}
+
+function hidePopup() {
+    popupElement.style.display = 'none';
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     var activeTab = document.querySelector('.printer button.active');
