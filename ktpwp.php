@@ -38,7 +38,7 @@ Version: 0.0.0beta
 
 // プラグイン基本情報を定数として定義（コード内で参照するため）
 define('KTPWP_PLUGIN_NAME', 'KTPWP');
-define('KTPWP_PLUGIN_DESCRIPTION', 'ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。Author: Aiojiipg Author URI:https://ktpwp.com/blog/ License: GPL2 Text Domain: ktpwp Domain Path: /languages');
+define('KTPWP_PLUGIN_DESCRIPTION', __('ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。Author: Aiojiipg Author URI:https://ktpwp.com/blog/ License: GPL2 Text Domain: ktpwp Domain Path: /languages', 'ktpwp'));
 define('KTPWP_PLUGIN_VERSION', '0.0.0beta');
 
 if (!defined('ABSPATH')) {
@@ -603,8 +603,8 @@ function KTPWP_Index(){
 add_action('admin_menu', function() {
     add_submenu_page(
         'parent_slug',
-        'ページタイトル',
-        'メニュータイトル',
+        __('ページタイトル', 'ktpwp'),
+        __('メニュータイトル', 'ktpwp'),
         'manage_options',
         'menu_slug',
         'function_name'
@@ -724,7 +724,7 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
     $res->last_updated = isset($release->published_at) ? $release->published_at : '';
     $res->sections = [
         'description' => $plugin_data['Description'],
-        'changelog' => isset($release->body) ? $release->body : 'No changelog provided.',
+        'changelog' => isset($release->body) ? $release->body : __('No changelog provided.', 'ktpwp'),
     ];
     
     return $res;
@@ -737,11 +737,11 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
 add_action('wp_ajax_ktp_update_project_name', function() {
     // 権限チェック
     if (!current_user_can('manage_options')) {
-        wp_send_json_error('権限がありません');
+        wp_send_json_error(__('権限がありません', 'ktpwp'));
     }
     // nonceチェック
     if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'ktp_update_project_name')) {
-        wp_send_json_error('セキュリティ検証に失敗しました');
+        wp_send_json_error(__('セキュリティ検証に失敗しました', 'ktpwp'));
     }
     global $wpdb;
     $order_id = intval($_POST['order_id'] ?? 0);
@@ -757,14 +757,14 @@ add_action('wp_ajax_ktp_update_project_name', function() {
         );
         wp_send_json_success();
     } else {
-        wp_send_json_error('Invalid order_id');
+        wp_send_json_error(__('Invalid order_id', 'ktpwp'));
     }
 });
 
 // 非ログイン時もAjaxを許可（必要なら）
 // 非ログイン時はAjaxで案件名編集不可（セキュリティのため）
 add_action('wp_ajax_nopriv_ktp_update_project_name', function() {
-    wp_send_json_error('ログインが必要です');
+    wp_send_json_error(__('ログインが必要です', 'ktpwp'));
 });
 
 // ajaxurlをフロントにも出力 //この処理は wp_localize_script に置き換えたためコメントアウト
