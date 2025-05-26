@@ -206,51 +206,46 @@ function ktpwp_handle_form_redirect() {
     // 特定のPOSTパラメータがある場合、GETパラメータに変換
     if (isset($_POST['tab_name']) && $_POST['tab_name'] === 'order' && isset($_POST['from_client'])) {
         error_log("KTPWP Debug: Converting POST to GET for order creation");
-        
-        // リダイレクト用のクリーンなURLを構築
+
+        // 厳格なサニタイズ
+        $tab_name = sanitize_text_field($_POST['tab_name']);
+        $from_client = sanitize_text_field($_POST['from_client']);
         $redirect_params = [
-            'tab_name' => sanitize_text_field($_POST['tab_name']),
-            'from_client' => sanitize_text_field($_POST['from_client'])
+            'tab_name' => $tab_name,
+            'from_client' => $from_client
         ];
-        
+
         if (isset($_POST['customer_name'])) {
             $redirect_params['customer_name'] = sanitize_text_field($_POST['customer_name']);
         }
         if (isset($_POST['user_name'])) {
             $redirect_params['user_name'] = sanitize_text_field($_POST['user_name']);
         }
-        
-        // クライアントIDの取得優先順位：
-        // 1. POSTデータを最優先
-        // 2. データベースに記録された関係を確認
-        // 3. セッション（下位互換のため一時的に維持）
-        // 4. Cookie（下位互換のため一時的に維持）
+
+        // クライアントIDの取得（数値のみ許可）
         $client_id = 0;
-        
-        // POSTデータからクライアントIDを取得
-        if (isset($_POST['client_id']) && intval($_POST['client_id']) > 0) {
+        if (isset($_POST['client_id'])) {
             $client_id = intval($_POST['client_id']);
-            error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id);
+            if ($client_id > 0) {
+                $redirect_params['client_id'] = $client_id;
+                error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id);
+            }
         }
-        
-        if ($client_id > 0) {
-            $redirect_params['client_id'] = $client_id;
-        }
-        
+
         // 現在のURLからKTPWPパラメータを除去してクリーンなベースURLを作成
         $current_url = add_query_arg(NULL, NULL);
         $clean_url = remove_query_arg([
-            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id',
             'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post'
         ], $current_url);
-        
+
         // 新しいパラメータを追加してリダイレクト
         $redirect_url = add_query_arg($redirect_params, $clean_url);
-        
+
         // デバッグ用：リダイレクトURLをログに記録
         error_log("KTPWP Debug: リダイレクト先URL: " . $redirect_url);
         error_log("KTPWP Debug: リダイレクトパラメータ: " . json_encode($redirect_params));
-        
+
         // リダイレクト実行
         wp_redirect($redirect_url, 302);
         exit;
@@ -259,21 +254,23 @@ function ktpwp_handle_form_redirect() {
     // 受注書削除処理のPOSTパラメータをGETに変換
     if (isset($_POST['delete_order']) && isset($_POST['order_id'])) {
         error_log("KTPWP Debug: Converting POST to GET for order deletion");
-        
-        // リダイレクト用のパラメータを構築
+
+        // 厳格なサニタイズ
+        $delete_order = sanitize_text_field($_POST['delete_order']);
+        $order_id = intval($_POST['order_id']);
         $redirect_params = [
             'tab_name' => 'order',
-            'delete_order' => sanitize_text_field($_POST['delete_order']),
-            'order_id' => sanitize_text_field($_POST['order_id'])
+            'delete_order' => $delete_order,
+            'order_id' => $order_id > 0 ? $order_id : ''
         ];
-        
+
         // クリーンなベースURLを作成
         $current_url = add_query_arg(NULL, NULL);
         $clean_url = remove_query_arg([
-            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id',
             'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post'
         ], $current_url);
-        
+
         // リダイレクト実行
         $redirect_url = add_query_arg($redirect_params, $clean_url);
         wp_redirect($redirect_url, 302);
