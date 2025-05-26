@@ -333,7 +333,10 @@ class Kntan_Client_Class {
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')));
+                    global $wp;
+                    $current_page_id = get_queried_object_id();
+                    $base_page_url = add_query_arg(array('page_id' => $current_page_id), home_url($wp->request));
+                    $link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), $base_page_url));
                     $search_results_html .= "<li style='text-align:left;'><a href='{$link_url}' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
                 
@@ -375,9 +378,10 @@ class Kntan_Client_Class {
                     closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
-                        // 元の検索モードに戻るために特定のURLにリダイレクト
-                        var redirect_url = '" . esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/'))) . "';
-                        location.href = redirect_url;
+                        // 元の検索モードに戻るために特定のURLにリダイレクト（HTML実体参照のエンコードを回避）
+                        var redirect_url_base = '" . strtok($base_page_url, '?') . "';
+                        var query_string = '?page_id=" . $current_page_id . "&tab_name=" . $tab_name . "&query_post=srcmode';
+                        location.href = redirect_url_base + query_string;
                     };
                     popup.appendChild(closeButton);
                 });
@@ -396,21 +400,22 @@ class Kntan_Client_Class {
                 $_SESSION['ktp_search_message'] = '検索結果はありませんでした。';
                 
                 // 検索モードを維持してリダイレクト
-                $current_url = add_query_arg(NULL, NULL);
-                $base_url = remove_query_arg(['query_post'], $current_url); // query_postのみ削除
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
                 
                 // 検索モードを維持して得意先タブにリダイレクト（検索クエリと検索結果なしフラグを追加）
-                $redirect_params = [
-                    'tab_name' => $tab_name,
-                    'query_post' => 'srcmode',
-                    'search_query' => urlencode($_POST['search_query']),
-                    'no_results' => '1'
-                ];
+                // パラメータを直接クエリ文字列として構築し、HTML実体参照のエンコードを回避
+                $search_query_encoded = urlencode($_POST['search_query']);
                 
-                $redirect_url = add_query_arg($redirect_params, $base_url);
+                // パスとクエリを手動で分離して構築
+                $redirect_url_base = strtok($base_page_url, '?');
+                $query_string = "?page_id=" . $current_page_id . "&tab_name=" . $tab_name . "&query_post=srcmode&search_query=" . $search_query_encoded . "&no_results=1";
+                $redirect_url = $redirect_url_base . $query_string;
+                
                 // デバッグ情報を追加
                 error_log("KTPWP Debug: Redirecting to srcmode with URL: " . $redirect_url);
-                header("Location: " . esc_url($redirect_url));
+                header("Location: " . $redirect_url);
                 exit;
             }
         }
