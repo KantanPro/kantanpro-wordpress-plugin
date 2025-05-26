@@ -555,6 +555,22 @@ class Kntan_Client_Class {
         
         // 表示モードの取得（デフォルトは顧客一覧）
         $view_mode = isset($_GET['view_mode']) ? $_GET['view_mode'] : 'customer_list';
+
+        // ベースURLを現在のページのパーマリンクとして生成
+        global $wp;
+        $request_path = $wp->request; // 現在のリクエストパス (例: 'blog')
+        $base_url_for_query = home_url( $request_path ); // パス部分のURL (例: https://ktpwp.com/blog/)
+
+        $current_page_id = get_queried_object_id(); // 現在のページのIDを取得 (例: 244)
+
+        if ( $current_page_id ) {
+            // page_id があれば、それをベースURLの最初のクエリパラメータとして追加
+            $base_page_url = add_query_arg( 'page_id', $current_page_id, $base_url_for_query );
+            // 結果例: https://ktpwp.com/blog/?page_id=244
+        } else {
+            // page_id が取得できない場合は、パスのみのURLをベースとする
+            $base_page_url = $base_url_for_query;
+        }
         
         // -----------------------------
         // ページネーションリンク
@@ -671,7 +687,7 @@ class Kntan_Client_Class {
                        }
                        
                        // 受注書の詳細へのリンク（シンプルなURL生成）
-                       $detail_url = add_query_arg(array('tab_name' => 'order', 'order_id' => $order_id), home_url('/'));
+                       $detail_url = add_query_arg(array('tab_name' => 'order', 'order_id' => $order_id), $base_page_url);
                        
                        // リスト項目を生成
                        $results[] = <<<END
@@ -732,7 +748,7 @@ class Kntan_Client_Class {
                    
                    // リスト項目
                    $cookie_name = 'ktp_' . $name . '_id';
-                   $link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')));
+                   $link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), $base_page_url));
                    $results[] = <<<END
                    <a href="{$link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                    <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
@@ -765,7 +781,7 @@ class Kntan_Client_Class {
         if ($current_page > 1) {
             $base_params['page_start'] = 0;
             // $first_link = '?' . http_build_query($base_params);
-            $first_link = esc_url(add_query_arg($base_params, home_url('/')));
+            $first_link = esc_url(add_query_arg($base_params, $base_page_url));
             $results_f .= <<<END
             <a href="$first_link">|<</a> 
             END;
@@ -775,7 +791,7 @@ class Kntan_Client_Class {
         if ($current_page > 1) {
             $base_params['page_start'] = ($current_page - 2) * $query_limit;
             // $prev_link = '?' . http_build_query($base_params);
-            $prev_link = esc_url(add_query_arg($base_params, home_url('/')));
+            $prev_link = esc_url(add_query_arg($base_params, $base_page_url));
             $results_f .= <<<END
             <a href="$prev_link"><</a>
             END;
@@ -790,7 +806,7 @@ class Kntan_Client_Class {
         if ($current_page < $total_pages) {
             $base_params['page_start'] = $current_page * $query_limit;
             // $next_link = '?' . http_build_query($base_params);
-            $next_link = esc_url(add_query_arg($base_params, home_url('/')));
+            $next_link = esc_url(add_query_arg($base_params, $base_page_url));
             $results_f .= <<<END
              <a href="$next_link">></a>
             END;
@@ -800,7 +816,7 @@ class Kntan_Client_Class {
         if ($current_page < $total_pages) {
             $base_params['page_start'] = ($total_pages - 1) * $query_limit;
             // $last_link = '?' . http_build_query($base_params);
-            $last_link = esc_url(add_query_arg($base_params, home_url('/')));
+            $last_link = esc_url(add_query_arg($base_params, $base_page_url));
             $results_f .= <<<END
              <a href="$last_link">>|</a>
             END;
@@ -932,9 +948,9 @@ class Kntan_Client_Class {
             'view_mode' => 'order_history',
             'data_id'   => $current_client_id
         );
-        // add_query_arg の第二引数を省略することで、現在のリクエストURIをベースURLとして使用します。
-        $order_history_url = add_query_arg( $order_history_params ); 
-        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'' . esc_url( $order_history_url ) . '\'">注文履歴</button>';
+        $order_history_url = add_query_arg( $order_history_params, $base_page_url );
+        $js_redirect_order_history = sprintf("window.location.href='%s'", esc_url($order_history_url));
+        $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="' . $js_redirect_order_history . '">注文履歴</button>';
         
         // 顧客一覧ボタン - 現在の顧客IDを保持して遷移
         $customer_list_active = (isset($view_mode) && $view_mode === 'customer_list') ? 'active' : '';
@@ -943,9 +959,9 @@ class Kntan_Client_Class {
             'view_mode' => 'customer_list',
             'data_id'   => $current_client_id
         );
-        // add_query_arg の第二引数を省略することで、現在のリクエストURIをベースURLとして使用します。
-        $customer_list_url = add_query_arg( $customer_list_params ); 
-        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'' . esc_url( $customer_list_url ) . '\'">顧客一覧</button>';
+        $customer_list_url = add_query_arg( $customer_list_params, $base_page_url );
+        $js_redirect_customer_list = sprintf("window.location.href='%s'", esc_url($customer_list_url));
+        $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="' . $js_redirect_customer_list . '">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="">';
