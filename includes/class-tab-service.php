@@ -561,12 +561,12 @@ class Kntan_Service_Class {
                   // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
                 $results[] = '<a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage)) . '">'.
-                    '<div class="data_list_item">ID: ' . $id . ' ' . $service_name . ' : ' . $category . ' : 頻度(' . $frequency . ')</div>'.
+                    '<div class="data_list_item">' . esc_html__('ID', 'ktpwp') . ': ' . $id . ' ' . $service_name . ' : ' . $category . ' : ' . esc_html__('頻度', 'ktpwp') . '(' . $frequency . ')</div>'.
                 '</a>';
             }
             $query_max_num = $wpdb->num_rows;
         } else {
-            $results[] = '<div class="data_list_item">データーがありません。</div>';
+            $results[] = '<div class="data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
         }
 
         $results_f = "<div class=\"pagination\">";
