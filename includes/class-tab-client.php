@@ -932,7 +932,8 @@ class Kntan_Client_Class {
             'view_mode' => 'order_history',
             'data_id'   => $current_client_id
         );
-        $order_history_url = add_query_arg( $order_history_params ); // 現在のREQUEST_URIをベースにURLを生成
+        // add_query_arg の第二引数を省略することで、現在のリクエストURIをベースURLとして使用します。
+        $order_history_url = add_query_arg( $order_history_params ); 
         $workflow_html .= '<button type="button" class="view-mode-btn order-history-btn ' . $order_history_active . '" onclick="window.location.href=\'' . esc_url( $order_history_url ) . '\'">注文履歴</button>';
         
         // 顧客一覧ボタン - 現在の顧客IDを保持して遷移
@@ -942,7 +943,8 @@ class Kntan_Client_Class {
             'view_mode' => 'customer_list',
             'data_id'   => $current_client_id
         );
-        $customer_list_url = add_query_arg( $customer_list_params ); // 現在のREQUEST_URIをベースにURLを生成
+        // add_query_arg の第二引数を省略することで、現在のリクエストURIをベースURLとして使用します。
+        $customer_list_url = add_query_arg( $customer_list_params ); 
         $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="window.location.href=\'' . esc_url( $customer_list_url ) . '\'">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
@@ -1302,12 +1304,12 @@ class Kntan_Client_Class {
         $data_src = [
             'company_name' => $company_name,
             'name' => $user_name,
-            'representative_name' => $representative_name,
-            'postal_code' => $postal_code,
-            'prefecture' => $prefecture,
-            'city' => $city,
-            'address' => $address,
-            'building' => $building,
+            'representative_name' => $data_src['representative_name'],
+            'postal_code' => $data_src['postal_code'],
+            'prefecture' => $data_src['prefecture'],
+            'city' => $data_src['city'],
+            'address' => $data_src['address'],
+            'building' => $data_src['building'],
         ];
 
         // データを取得

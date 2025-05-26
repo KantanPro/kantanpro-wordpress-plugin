@@ -347,8 +347,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $category = esc_html($row->category);
                     
                     // 各検索結果に対してリンクを設定
-                    $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), home_url('/')));
-                    $search_results_html .= "<li style='text-align:left;'><a href='{$item_link_url}' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                    $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')));
+                    $search_results_html .= "<li style=\'text-align:left;\'><a href=\'{$item_link_url}\' style=\'text-align:left;\'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
                 }
 
                 // HTMLを閉じる
@@ -358,7 +358,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 $search_results_html_js = json_encode($search_results_html);
 
                 // JavaScriptでポップアップを表示
-                $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search'), home_url('/')));
+                $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')));
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -642,7 +642,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $query_args['page'] = sanitize_text_field($_GET['page']);
                 }
 
-                $item_link_url = esc_url(add_query_arg($query_args, home_url('/')));
+                $item_link_url = esc_url(add_query_arg($query_args));
                 $results[] = <<<END
                 <a href="{$item_link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                     <div class="data_list_item">ID: $id $company_name : $category : 頻度($frequency)</div>
@@ -662,7 +662,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 最初へリンク
         if ($current_page > 1) {
             $first_start = 0; // 最初のページ
-            $first_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
+            $first_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg)));
             $results_f .= <<<END
             <a href="{$first_page_link_url}">|<</a> 
             END;
@@ -671,7 +671,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
-            $prev_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
+            $prev_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg)));
             $results_f .= <<<END
             <a href="{$prev_page_link_url}"><</a>
             END;
@@ -695,7 +695,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             if (isset($_GET['page'])) {
                 $query_args_next['page'] = sanitize_text_field($_GET['page']);
             }
-            $next_page_link_url = esc_url(add_query_arg($query_args_next, home_url('/')));
+            $next_page_link_url = esc_url(add_query_arg($query_args_next));
             $results_f .= <<<END
             <a href="{$next_page_link_url}">></a>
             END;
@@ -714,7 +714,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             if (isset($_GET['page'])) {
                 $query_args_last['page'] = sanitize_text_field($_GET['page']);
             }
-            $last_page_link_url = esc_url(add_query_arg($query_args_last, home_url('/')));
+            $last_page_link_url = esc_url(add_query_arg($query_args_last));
             $results_f .= <<<END
              <a href="{$last_page_link_url}">>>|</a>
             END;
