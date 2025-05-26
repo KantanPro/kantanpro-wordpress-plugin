@@ -35,7 +35,6 @@ jQuery(document).ready(function($) {
 
   // blur時に保存
   $(document).on('blur', '.order_project_name_inline', function() {
-    console.log('blur発火', $(this).val());
     saveProjectName($(this));
   });
 
@@ -43,7 +42,6 @@ jQuery(document).ready(function($) {
   $(document).on('keydown', '.order_project_name_inline', function(e) {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
-      console.log('Enter発火', $(this).val());
       $(this).blur();
     }
   });

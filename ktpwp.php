@@ -1,4 +1,30 @@
 <?php
+// =============================
+// セキュリティ強化: REST API制限 & HTTPヘッダー追加
+// =============================
+
+// 1. 未認証ユーザーのREST APIアクセス制限
+add_filter('rest_authentication_errors', function($result) {
+    if (!is_user_logged_in()) {
+        // ログインしていない場合はREST APIを403でブロック
+        return new WP_Error('rest_forbidden', __('REST APIはログインユーザーのみ利用可能です。', 'ktpwp'), array('status' => 403));
+    }
+    return $result;
+});
+
+// 2. HTTPセキュリティヘッダー追加
+add_action('send_headers', function() {
+    // クリックジャッキング防止
+    header('X-Frame-Options: SAMEORIGIN');
+    // XSS対策
+    header('X-Content-Type-Options: nosniff');
+    // Referrer情報制御
+    header('Referrer-Policy: no-referrer-when-downgrade');
+    // Strict-Transport-Security（HTTPSのみ推奨）
+    if (is_ssl()) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+});
 /*
 Plugin Name: KTPWP
 Description: ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。
