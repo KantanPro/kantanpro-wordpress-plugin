@@ -9,15 +9,7 @@ class Kntan_Report_Class {
     
     function Report_Tab_View( $tab_name ) {
         // アクティベーションキー取得
-        $activation_key = get_option( 'ktp_activation_key' );        // コントローラー/プリンターセクションの共通部分
-        $content = '<div class="controller">';
-        $content .= '<div class="printer">';
-        $content .= '<button title="印刷する">';
-        $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
-        $content .= '</button>';
-        $content .= '<button title="PDF出力">';
-        $content .= '<span class="material-symbols-outlined" aria-label="PDF">description</span>';
-        $content .= '</button>';        $content .= '</div>'; // .printer 終了
+        $activation_key = get_option( 'ktp_activation_key' );        // コントローラー/プリンターセクションの共通部分        $content = '<div class="controller">';
         $content .= '</div>'; // .controller 終了
         
         // workflowセクション追加（デザイン統一）
@@ -36,7 +28,7 @@ class Kntan_Report_Class {
             $content .= '<h3 style="margin:50px 0 15px;color:#333;font-size:24px;text-shadow:0 1px 2px rgba(255,255,255,0.8);">高度なグラフレポート機能</h3>';
             
             // 「今すぐ利用する」ボタン
-            $content .= '<a href="' . admin_url('?page=ktp-license') . '" '
+            $content .= '<a href="' . admin_url('admin.php?page=ktp-license') . '" '
                 . 'style="'
                 . 'display:inline-block;'
                 . 'background:linear-gradient(135deg, #e74c3c, #c0392b);'

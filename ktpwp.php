@@ -24,6 +24,9 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+// 必要なファイルを読み込み
+require_once(plugin_dir_path(__FILE__) . 'includes/class-tab-client-relationship.php');
+
 // プラグインファイルの定義
 define('KTPWP_PLUGIN_FILE', __FILE__);
 
@@ -219,8 +222,39 @@ function ktpwp_handle_form_redirect() {
         if (isset($_POST['user_name'])) {
             $redirect_params['user_name'] = sanitize_text_field($_POST['user_name']);
         }
-        if (isset($_POST['client_id'])) {
-            $redirect_params['client_id'] = sanitize_text_field($_POST['client_id']);
+        
+        // クライアントIDの取得優先順位：
+        // 1. POSTデータを最優先
+        // 2. データベースに記録された関係を確認
+        // 3. セッション（下位互換のため一時的に維持）
+        // 4. Cookie（下位互換のため一時的に維持）
+        $client_id = 0;
+        
+        // POSTデータからクライアントIDを取得
+        if (isset($_POST['client_id']) && intval($_POST['client_id']) > 0) {
+            $client_id = intval($_POST['client_id']);
+            error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id);
+        }
+        
+        // セッション情報がある場合は取得（下位互換性のため）
+        if ($client_id <= 0 && session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        
+        if ($client_id <= 0 && isset($_SESSION['ktp_duplicated_client_id']) && intval($_SESSION['ktp_duplicated_client_id']) > 0) {
+            $client_id = intval($_SESSION['ktp_duplicated_client_id']);
+            error_log("KTPWP Debug: SESSION duplicated_client_id: " . $client_id . " -> リダイレクトパラメータに設定");
+            unset($_SESSION['ktp_duplicated_client_id']); // 一度使用したらクリア
+        }
+        
+        // Cookieがある場合は取得（下位互換性のため）
+        if ($client_id <= 0 && isset($_COOKIE['ktp_duplicated_client_id'])) {
+            $client_id = intval($_COOKIE['ktp_duplicated_client_id']);
+            error_log("KTPWP Debug: COOKIE duplicated_client_id: " . $client_id . " -> リダイレクトパラメータに設定");
+        }
+        
+        if ($client_id > 0) {
+            $redirect_params['client_id'] = $client_id;
         }
         
         // 現在のURLからKTPWPパラメータを除去してクリーンなベースURLを作成
@@ -232,6 +266,10 @@ function ktpwp_handle_form_redirect() {
         
         // 新しいパラメータを追加してリダイレクト
         $redirect_url = add_query_arg($redirect_params, $clean_url);
+        
+        // デバッグ用：リダイレクトURLをログに記録
+        error_log("KTPWP Debug: リダイレクト先URL: " . $redirect_url);
+        error_log("KTPWP Debug: リダイレクトパラメータ: " . json_encode($redirect_params));
         
         // リダイレクト実行
         wp_redirect($redirect_url, 302);
@@ -310,7 +348,7 @@ add_action('plugins_loaded', 'KTPWP_Index');
 function ktpwp_scripts_and_styles() {
 	// 修正前: 'ktp-js', plugins_url('js/ktp-ajax.js', __FILE__), array(), '1.0.0', true
 	wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array('jquery'), '1.0.0', true); // 修正後
-	wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.0', 'all');
+	wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.3', 'all');
 	wp_enqueue_style('ktp-css');
 	// 進捗プルダウン用のスタイルシートを追加
 	wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__), array('ktp-css'), '1.0.0', 'all');
@@ -326,21 +364,51 @@ function ktpwp_scripts_and_styles() {
 	wp_localize_script('ktp-js', 'ktp_ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
 }
 add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
+// 管理画面でも同じスタイルを読み込む
+add_action('admin_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
 function ktp_table_setup() {
-	Create_Table();
-	Update_Table();
+	// プラグイン有効化時にテーブルセットアップを実行
+	// まず必要なクラスファイルを読み込む
+	$class_files = [
+		'class-tab-client.php',
+		'class-tab-service.php',
+		'class-tab-supplier.php',
+		'class-tab-setting.php'
+	];
+	
+	foreach ($class_files as $file) {
+		$file_path = plugin_dir_path(__FILE__) . 'includes/' . $file;
+		if (file_exists($file_path)) {
+			require_once $file_path;
+		} else {
+			error_log("KTPWP Error: Class file not found: {$file_path}");
+		}
+	}
+	
+	// 各クラスでテーブル作成/更新処理を行う
+	if (class_exists('Kntan_Client_Class')) {
+		$client = new Kntan_Client_Class();
+		$client->Create_Table('client');
+		$client->Update_Table('client');
+	}
+	if (class_exists('Kntan_Service_Class')) {
+		$service = new Kntan_Service_Class();
+		$service->Create_Table('service');
+		$service->Update_Table('service');
+	}
+	if (class_exists('Kantan_Supplier_Class')) {
+		$supplier = new Kantan_Supplier_Class();
+		$supplier->Create_Table('supplier');
+		$supplier->Update_Table('supplier');
+	}
+	if (class_exists('Kntan_Setting_Class')) {
+		$setting = new Kntan_Setting_Class();
+		$setting->Create_Table('setting');
+		$setting->Update_Table('setting');
+	}
 }
 register_activation_hook(__FILE__, 'ktp_table_setup');
-
-// --- ここから追加 ---
-function Create_Table() {
-	// テーブル作成処理（ダミー/本番は各クラスで実装）
-}
-function Update_Table() {
-	// テーブル更新処理（ダミー/本番は各クラスで実装）
-}
-// --- ここまで追加 ---
 
 function check_activation_key() {
 	$activation_key = get_site_option('ktp_activation_key');
@@ -460,7 +528,7 @@ function KTPWP_Index(){
 					$client_content = $client->View_Table($tab_name);
 					break;
 				case 'service':
-					$service = new kntan_Service_Class();
+					$service = new Kntan_Service_Class();
 					$service->Create_Table($tab_name);
 					$service->Update_Table($tab_name);
 					$service_content = $service->View_Table($tab_name);

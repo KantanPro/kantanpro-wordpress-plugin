@@ -1321,3 +1321,141 @@ input[name="tab_item"] {
   min-width: 120px;
   max-width: 260px;
 }
+
+/* 検索モード専用スタイル */
+.search-mode-form {
+  background-color: #f8f9fa !important;
+  border: 2px solid #0073aa !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  margin: 10px 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;
+}
+
+/* WordPress管理画面での検索モード専用スタイル（高い特定性） */
+body.wp-admin .search-mode-form, 
+body.wp-admin .search-mode-form.ktpwp-search-form,
+#wpbody .search-mode-form,
+.wrap .search-mode-form {
+  background-color: #f8f9fa !important;
+  border: 2px solid #0073aa !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  margin: 10px 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;
+  display: block !important;
+}
+
+body.wp-admin .search-mode-form .form-group,
+#wpbody .search-mode-form .form-group,
+.wrap .search-mode-form .form-group {
+  margin-bottom: 15px !important;
+}
+
+body.wp-admin .search-mode-form input[type="text"],
+#wpbody .search-mode-form input[type="text"],
+.wrap .search-mode-form input[type="text"] {
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: 2px solid #ddd !important;
+  border-radius: 5px !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.3s ease !important;
+  max-width: none !important;
+}
+
+body.wp-admin .search-mode-form input[type="text"]:focus,
+#wpbody .search-mode-form input[type="text"]:focus,
+.wrap .search-mode_form input[type="text"]:focus {
+  border-color: #0073aa !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1) !important;
+}
+
+body.wp-admin .search-mode-form .no-results,
+#wpbody .search-mode-form .no-results,
+.wrap .search-mode-form .no-results {
+  padding: 12px !important;
+  background-color: #fff3cd !important;
+  border: 1px solid #ffeaa7 !important;
+  border-radius: 5px !important;
+  margin: 10px 0 !important;
+  color: #856404 !important;
+  font-weight: 500 !important;
+  display: block !important;
+}
+
+body.wp-admin .search-mode-form .button-group,
+#wpbody .search-mode-form .button-group,
+.wrap .search-mode-form .button-group {
+  display: flex !important;
+  gap: 10px !important;
+  margin-top: 15px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+body.wp-admin .search-mode-form button,
+#wpbody .search-mode-form button,
+.wrap .search-mode-form button {
+  border: none !important;
+  padding: 10px 20px !important;
+  cursor: pointer !important;
+  border-radius: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+}
+
+body.wp-admin .search-mode-form button[name="send_post"],
+#wpbody .search-mode-form button[name="send_post"],
+.wrap .search-mode-form button[name="send_post"] {
+  background-color: #0073aa !important;
+  color: white !important;
+}
+
+body.wp-admin .search-mode-form button[name="send_post"]:hover,
+#wpbody .search-mode-form button[name="send_post"]:hover,
+.wrap .search-mode-form button[name="send_post"]:hover {
+  background-color: #005a87 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 5px rgba(0, 115, 170, 0.3) !important;
+}
+
+body.wp-admin .search-mode-form button[title="キャンセル"],
+#wpbody .search-mode-form button[title="キャンセル"],
+.wrap .search-mode-form button[title="キャンセル"] {
+  background-color: #666 !important;
+  color: white !important;
+}
+
+body.wp-admin .search-mode-form button[title="キャンセル"]:hover,
+#wpbody .search-mode-form button[title="キャンセル"]:hover,
+.wrap .search-mode-form button[title="キャンセル"]:hover {
+  background-color: #555 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 5px rgba(102, 102, 102, 0.3) !important;
+}
+
+body.wp-admin .search-mode-form .material-symbols-outlined,
+#wpbody .search-mode-form .material-symbols-outlined,
+.wrap .search-mode-form .material-symbols-outlined {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* 検索モードのタイトル（高い特定性） */
+body.wp-admin .data_detail_box.search-mode h3,
+#wpbody .data_detail_box.search-mode h3,
+.wrap .data_detail_box.search-mode h3 {
+  background-color: #e3f2fd !important;
+  color: #0277bd !important;
+  border-bottom: 2px solid #0073aa !important;
+}

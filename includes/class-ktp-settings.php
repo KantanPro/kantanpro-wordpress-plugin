@@ -183,13 +183,7 @@ class KTP_Settings {
             echo '</div>';
             
             // 印刷ボタンセクション
-            echo '<div class="printer">';
-            echo '<h3>印刷</h3>';
-            echo '<p>現在の設定内容を印刷します。</p>';
-            echo '<button type="button" class="button button-secondary" onclick="window.print();">';
-            echo '<span class="dashicons dashicons-printer" style="margin-top: 3px;"></span> 印刷する';
-            echo '</button>';
-            echo '</div>';
+            // 印刷機能は削除されました
             
             echo '</div>'; // .ktp-settings-section
             echo '</div>'; // .ktp-settings-container
@@ -253,13 +247,7 @@ class KTP_Settings {
                     </div>
                     
                     <!-- 印刷ボタンセクション -->
-                    <div class="printer">
-                        <h3>印刷</h3>
-                        <p>現在のライセンス設定内容を印刷します。</p>
-                        <button type="button" class="button button-secondary" onclick="window.print();">
-                            <span class="dashicons dashicons-printer" style="margin-top: 3px;"></span> 印刷する
-                        </button>
-                    </div>
+                    <!-- 印刷機能は削除されました -->
                 </div>
             </div>
         </div>
@@ -280,7 +268,7 @@ class KTP_Settings {
             ),
             'license' => array(
                 'name' => 'ライセンス設定',
-                'url' => admin_url('?page=ktp-license'),
+                'url' => admin_url('admin.php?page=ktp-license'),
                 'icon' => 'dashicons-admin-network'
             )
         );

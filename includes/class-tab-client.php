@@ -386,29 +386,33 @@ class Kntan_Client_Class {
 
             // 検索結果が0件の場合の処理
             else {
-                // JavaScriptを使用してポップアップ警告を表示
-                echo "<script>
-                alert('検索結果がありません！');
-                </script>";
-                // 現在のURLを取得し、不要なパラメータを除去
+                // ロックを解除してから処理
+                $wpdb->query("UNLOCK TABLES;");
+                
+                // セッションに検索結果なしのメッセージを設定
+                if (!session_id()) {
+                    session_start();
+                }
+                $_SESSION['ktp_search_message'] = '検索結果はありませんでした。';
+                
+                // 検索モードを維持してリダイレクト
                 $current_url = add_query_arg(NULL, NULL);
-                $base_url = remove_query_arg(['query_post', 'search_query'], $current_url);
-                // tab_name と query_post=search を付けてリダイレクト
-                $redirect_url = add_query_arg([
+                $base_url = remove_query_arg(['query_post'], $current_url); // query_postのみ削除
+                
+                // 検索モードを維持して得意先タブにリダイレクト（検索クエリと検索結果なしフラグを追加）
+                $redirect_params = [
                     'tab_name' => $tab_name,
-                    'query_post' => 'srcmode' // 検索モードを示すように変更
-                ], $base_url);
-                // header("Location: " . esc_url($redirect_url)); // リダイレクト処理をコメントアウトまたは削除
-                // exit; // exitもコメントアウトまたは削除
-
-                // 代わりに、ページをリロードせずにメッセージを表示し、
-                // フォームは検索モードのままにするなどの対応が考えられます。
-                // ここでは、リダイレクトしないように変更します。
+                    'query_post' => 'srcmode',
+                    'search_query' => urlencode($_POST['search_query']),
+                    'no_results' => '1'
+                ];
+                
+                $redirect_url = add_query_arg($redirect_params, $base_url);
+                // デバッグ情報を追加
+                error_log("KTPWP Debug: Redirecting to srcmode with URL: " . $redirect_url);
+                header("Location: " . esc_url($redirect_url));
+                exit;
             }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            // exit; // このexitは検索結果が1件以上の場合のリダイレクト後に実行されるため、0件の場合の分岐の後に移動、または削除
         }
         
         // 追加
@@ -514,7 +518,23 @@ class Kntan_Client_Class {
             } else {
                 // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
-
+                error_log("KTPWP Debug: 顧客データ複製成功 - 新ID: " . $new_data_id);
+                
+                // 複製関係をデータベースに保存（元のIDと複製したIDの関係を保存）
+                if (class_exists('Kntan_Client_Relationship_Class')) {
+                    Kntan_Client_Relationship_Class::register_duplication($data_id, $new_data_id);
+                }
+                
+                // 複製後即座に受注書作成ボタンが押された場合のための処理
+                // 特別なクッキーに一時的に新しいIDを保存（JavaScript側で読み取り可能に・下位互換性のため）
+                setcookie('ktp_duplicated_client_id', $new_data_id, time() + 300, "/"); // 5分間有効に延長
+                // セッションにも保存（下位互換性のため）
+                if (session_status() !== PHP_SESSION_ACTIVE) {
+                    session_start();
+                }
+                $_SESSION['ktp_duplicated_client_id'] = $new_data_id;
+                error_log("KTPWP Debug: 複製後の顧客ID: " . $new_data_id . " をCookieとセッションに保存");
+                
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
                 
@@ -556,6 +576,11 @@ class Kntan_Client_Class {
     function View_Table( $name ) {
 
         global $wpdb;
+
+        // $search_results_listの使用前に初期化
+        if (!isset($search_results_list)) {
+            $search_results_list = '';
+        }
 
         // -----------------------------
         // リスト表示
@@ -618,7 +643,38 @@ class Kntan_Client_Class {
            $order_table = $wpdb->prefix . 'ktp_order';
            
            // 全データ数を取得（この顧客IDに関連する受注書）
-           $total_query = $wpdb->prepare("SELECT COUNT(*) FROM {$order_table} WHERE client_id = %d", $client_id);
+           // 複製関係も含めた顧客IDを使用
+           $related_client_ids = [$client_id];
+           
+           // 複製元の顧客IDを取得（関係テーブルから）
+           if (class_exists('Kntan_Client_Relationship_Class')) {
+               $source_id = Kntan_Client_Relationship_Class::get_source_client($client_id);
+               if ($source_id && !in_array($source_id, $related_client_ids)) {
+                   $related_client_ids[] = $source_id;
+               }
+               
+               // 他の複製先の顧客IDも取得して結合（同じ元から複製された兄弟関係）
+               global $wpdb;
+               $relationship_table = $wpdb->prefix . 'ktp_client_relationship';
+               $sibling_ids = $wpdb->get_col($wpdb->prepare(
+                   "SELECT duplicated_client_id FROM {$relationship_table} WHERE source_client_id = %d AND duplicated_client_id != %d",
+                   $source_id, $client_id
+               ));
+               
+               if ($sibling_ids) {
+                   foreach ($sibling_ids as $sibling_id) {
+                       if (!in_array($sibling_id, $related_client_ids)) {
+                           $related_client_ids[] = $sibling_id;
+                       }
+                   }
+               }
+           }
+           
+           // IDのリストを文字列に変換
+           $client_ids_str = implode(',', array_map('intval', $related_client_ids));
+           
+           // IDが複数ある場合、IN句を使用
+           $total_query = "SELECT COUNT(*) FROM {$order_table} WHERE client_id IN ({$client_ids_str})";
            $total_rows = $wpdb->get_var($total_query);
            $total_pages = ceil($total_rows / $query_limit);
            
@@ -626,9 +682,40 @@ class Kntan_Client_Class {
            $current_page = floor($page_start / $query_limit) + 1;
            
            // この顧客の受注書を取得
+           // 元の顧客IDも確認して、複製元・複製先両方の受注書を取得
+           $related_client_ids = [$client_id];
+           
+           // 複製元の顧客IDを取得（関係テーブルから）
+           if (class_exists('Kntan_Client_Relationship_Class')) {
+               $source_id = Kntan_Client_Relationship_Class::get_source_client($client_id);
+               if ($source_id && !in_array($source_id, $related_client_ids)) {
+                   $related_client_ids[] = $source_id;
+               }
+               
+               // 他の複製先の顧客IDも取得して結合（同じ元から複製された兄弟関係）
+               global $wpdb;
+               $relationship_table = $wpdb->prefix . 'ktp_client_relationship';
+               $sibling_ids = $wpdb->get_col($wpdb->prepare(
+                   "SELECT duplicated_client_id FROM {$relationship_table} WHERE source_client_id = %d AND duplicated_client_id != %d",
+                   $source_id, $client_id
+               ));
+               
+               if ($sibling_ids) {
+                   foreach ($sibling_ids as $sibling_id) {
+                       if (!in_array($sibling_id, $related_client_ids)) {
+                           $related_client_ids[] = $sibling_id;
+                       }
+                   }
+               }
+           }
+           
+           // IDのリストを文字列に変換
+           $client_ids_str = implode(',', array_map('intval', $related_client_ids));
+           
+           // IDが複数ある場合、IN句を使用
            $query = $wpdb->prepare(
-               "SELECT * FROM {$order_table} WHERE client_id = %d ORDER BY time DESC LIMIT %d, %d", 
-               $client_id, $page_start, $query_limit
+               "SELECT * FROM {$order_table} WHERE client_id IN ({$client_ids_str}) ORDER BY time DESC LIMIT %d, %d", 
+               $page_start, $query_limit
            );
            
            $order_rows = $wpdb->get_results($query);
@@ -899,10 +986,80 @@ class Kntan_Client_Class {
             ],
         ];
         
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
+        // アクションを取得（POSTパラメータを優先、次にGETパラメータ、デフォルトは'update'）
+        $action = isset($_POST['query_post']) ? $_POST['query_post'] : (isset($_GET['query_post']) ? $_GET['query_post'] : 'update');
+        
+        // デバッグ: アクション値を確認
+        error_log("KTPWP Debug: Action value = " . $action);
+        error_log("KTPWP Debug: POST query_post = " . (isset($_POST['query_post']) ? $_POST['query_post'] : 'not set'));
+        error_log("KTPWP Debug: GET query_post = " . (isset($_GET['query_post']) ? $_GET['query_post'] : 'not set'));
+        
+        // アクション値を保護するため、元の値を保存
+        $original_action = $action;
+        error_log("KTPWP Debug: Original action saved = " . $original_action);
+        
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
+        $data_title = ''; // タイトルのHTMLコードを格納する変数を初期化
+        $div_end = ''; // 終了タグを格納する変数を初期化
+        
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
+        // セッションメッセージの確認と表示
+        $session_message = '';
+        if (!session_id()) {
+            session_start();
+        }
+        if (isset($_SESSION['ktp_search_message'])) {
+            $message_id = 'ktp-message-' . uniqid();
+            $session_message = '<div id="' . $message_id . '" class="ktp-message" style="
+                padding: 15px 20px;
+                background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%);
+                border-radius: 6px;
+                margin: 15px 0;
+                color: #333333;
+                font-weight: 500;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                display: flex;
+                align-items: center;
+                font-size: 14px;
+                position: fixed;
+                top: 70px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 9999;
+                opacity: 0;
+                transition: opacity 0.3s ease-in-out;
+                max-width: 90%;
+            ">
+            <span style="
+                margin-right: 10px;
+                color: #ff6b8b;
+                font-size: 18px;
+            " class="material-symbols-outlined">info</span>'
+                . esc_html($_SESSION['ktp_search_message']) . '</div>
+                <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var messageEl = document.getElementById("' . $message_id . '");
+                    if (messageEl) {
+                        // 表示アニメーション
+                        setTimeout(function() {
+                            messageEl.style.opacity = "1";
+                        }, 100);
+                        
+                        // 4秒後に非表示にする
+                        setTimeout(function() {
+                            messageEl.style.opacity = "0";
+                            setTimeout(function() {
+                                if (messageEl.parentNode) {
+                                    messageEl.parentNode.removeChild(messageEl);
+                                }
+                            }, 300);
+                        }, 4000);
+                    }
+                });
+                </script>';
+            unset($_SESSION['ktp_search_message']); // メッセージを表示後に削除
+        }
 
         // controllerブロックを必ず先頭に追加
         $controller_html = '<div class="controller">'
@@ -940,6 +1097,18 @@ class Kntan_Client_Class {
         }
         $current_client_id = (int) $current_client_id;
         
+        // 受注書作成用に現在の顧客IDから最新のデータを取得する
+        $current_customer_name = '';
+        $current_user_name = '';
+        if ($current_client_id > 0) {
+            $current_client_data_query = $wpdb->prepare("SELECT company_name, name FROM {$table_name} WHERE id = %d", $current_client_id);
+            $current_client_data = $wpdb->get_row($current_client_data_query);
+            if ($current_client_data) {
+                $current_customer_name = esc_html($current_client_data->company_name);
+                $current_user_name = esc_html($current_client_data->name);
+            }
+        }
+        
         // 注文履歴ボタン - 現在の顧客IDを保持して遷移
         $order_history_active = (isset($view_mode) && $view_mode === 'order_history') ? 'active' : '';
         $order_history_params = array(
@@ -963,14 +1132,57 @@ class Kntan_Client_Class {
         $workflow_html .= '<button type="button" class="view-mode-btn customer-list-btn ' . $customer_list_active . '" onclick="' . $js_redirect_customer_list . '">顧客一覧</button>';
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
-        $workflow_html .= '<form method="post" action="">';
+        $workflow_html .= '<form method="post" action="" id="create-order-form">';
         $workflow_html .= '<input type="hidden" name="tab_name" value="order">';
         $workflow_html .= '<input type="hidden" name="from_client" value="1">';
-        $workflow_html .= '<input type="hidden" name="customer_name" value="' . esc_attr($order_customer_name) . '">';
-        $workflow_html .= '<input type="hidden" name="user_name" value="' . esc_attr($order_user_name) . '">';
-        $workflow_html .= '<input type="hidden" name="client_id" value="' . esc_attr($data_id) . '">';
+        // 常に最新の顧客データを使用する（複製後のデータを反映）
+        $customer_name_to_use = !empty($current_customer_name) ? $current_customer_name : $order_customer_name;
+        $user_name_to_use = !empty($current_user_name) ? $current_user_name : $order_user_name;
+        $workflow_html .= '<input type="hidden" name="customer_name" value="' . esc_attr($customer_name_to_use) . '">';
+        $workflow_html .= '<input type="hidden" name="user_name" value="' . esc_attr($user_name_to_use) . '">';
+        $workflow_html .= '<input type="hidden" id="client-id-input" name="client_id" value="' . esc_attr($current_client_id) . '">';
         $workflow_html .= '<button type="submit" class="create-order-btn">受注書作成</button>';
         $workflow_html .= '</form>';
+        
+        // 複製後の顧客IDを自動的に設定するためのJavaScript
+        $workflow_html .= '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // クッキーから複製後のIDを取得する関数
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(";").shift();
+                return null;
+            }
+            
+            // フォーム送信前に顧客IDが設定されているか確認
+            document.getElementById("create-order-form").addEventListener("submit", function(e) {
+                // フォーム送信前に実行
+                const clientIdInput = document.getElementById("client-id-input");
+                const duplicatedClientId = getCookie("ktp_duplicated_client_id");
+                
+                if (duplicatedClientId) {
+                    // 複製したIDがあれば、それを使用
+                    console.log("フォーム送信時、複製後の顧客ID検出: " + duplicatedClientId);
+                    clientIdInput.value = duplicatedClientId;
+                    
+                    // Hidden input にセットした値を再確認
+                    console.log("フォーム送信時の最終client_id値: " + clientIdInput.value);
+                }
+            });
+            
+            // ページ読み込み時にも実行
+            const duplicatedClientId = getCookie("ktp_duplicated_client_id");
+            if (duplicatedClientId) {
+                console.log("複製後の顧客ID検出: " + duplicatedClientId);
+                const clientIdInput = document.getElementById("client-id-input");
+                if (clientIdInput) {
+                    clientIdInput.value = duplicatedClientId;
+                    console.log("受注書作成用のクライアントIDを更新: " + duplicatedClientId);
+                }
+            }
+        });
+        </script>';
         $workflow_html .= '</div>';
         $workflow_html .= '</div>';
         $workflow_html .= '</div>';
@@ -982,6 +1194,10 @@ class Kntan_Client_Class {
 
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
+
+                // デバッグ: 追加モード実行時のアクション値確認
+                error_log("KTPWP Debug: Entering istmode - action = " . $action);
+                error_log("KTPWP Debug: Original action = " . $original_action);
 
                 $data_id = $wpdb->insert_id;
 
@@ -1047,11 +1263,11 @@ class Kntan_Client_Class {
 
                 if( $action === 'istmode'){
                     // 追加実行ボタン
-                    $action = 'insert';
+                    $insert_action = 'insert';
                     $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
+                    <input type='hidden' name='query_post' value='$insert_action'>
                     <input type='hidden' name='data_id' value='$data_id'>
                     <button type='submit' name='send_post' title="追加実行">
                     <span class="material-symbols-outlined">
@@ -1061,30 +1277,14 @@ class Kntan_Client_Class {
                     </form>
                     END;
                 }
-                
-                elseif( $action === 'srcmode'){
-
-                    // 検索実行ボタン
-                    $action = 'search';
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title="検索実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
-                }
     
                 // キャンセルボタン
-                $action = 'update';
+                $cancel_action = 'update';
                 $data_id = $data_id - 1;
                 $data_forms .= <<<END
                 <form method='post' action=''>
                 <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='query_post' value='$cancel_action'>
                 <input type='hidden' name='data_id' value='$data_id'>
                 <button type='submit' name='send_post' title="キャンセル">
                 <span class="material-symbols-outlined">
@@ -1100,55 +1300,102 @@ class Kntan_Client_Class {
 
         // 空のフォームを表示(検索モードの場合)
         elseif ($action === 'srcmode') {
-
-            // 表題
+            
+            // デバッグ: 検索モード実行時のアクション値確認
+            error_log("KTPWP Debug: Entering srcmode - action = " . $action);
+            error_log("KTPWP Debug: Original action = " . $original_action);
+            
             $data_title = <<<END
             <div class="data_detail_box search-mode">
                 <h3>■ 顧客の詳細（検索モード）</h3>
             END;
 
-            // 検索モード用のCSSクラスを追加
-            $data_forms = '<div class="search-mode-form">';
+            // 検索モード用のフォーム
+            $data_forms = '<div class="search-mode-form ktpwp-search-form" style="background-color: #f8f9fa !important; border: 2px solid #0073aa !important; border-radius: 8px !important; padding: 20px !important; margin: 10px 0 !important; box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;">';
             $data_forms .= '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" value=\"" . (isset($_POST['search_query']) ? esc_attr($_POST['search_query']) : '') . "\"></div>";
+            
+            // 検索クエリの値を取得（POSTが優先、次にGET）
+            $search_query_value = '';
+            if (isset($_POST['search_query'])) {
+                $search_query_value = esc_attr($_POST['search_query']);
+            } elseif (isset($_GET['search_query'])) {
+                $search_query_value = esc_attr(urldecode($_GET['search_query']));
+            }
+            
+            $data_forms .= '<div class="form-group" style="margin-bottom: 15px !important;">';
+            $data_forms .= '<input type="text" name="search_query" placeholder="フリーワード検索" value="' . $search_query_value . '" style="width: 100% !important; padding: 12px !important; font-size: 16px !important; border: 2px solid #ddd !important; border-radius: 5px !important; box-sizing: border-box !important; transition: border-color 0.3s ease !important;">';
+            $data_forms .= '</div>';
 
-            // 検索結果がない場合のメッセージとアラート
-            if (isset($_POST['query_post']) && $_POST['query_post'] === 'search' && empty($search_results_list)) {
-                $data_forms .= '<div class="no-results">検索結果はありませんでした。</div>';
-                $data_forms .= <<<END
+            // 検索結果がない場合のメッセージ表示
+            if ((isset($_POST['query_post']) && $_POST['query_post'] === 'search' && empty($search_results_list)) || 
+                (isset($_GET['no_results']) && $_GET['no_results'] === '1')) {
+                $no_results_id = 'no-results-' . uniqid();
+                $data_forms .= '<div id="' . $no_results_id . '" class="no-results" style="
+                    padding: 15px 20px !important;
+                    background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%) !important;
+                    border-radius: 6px !important;
+                    margin: 15px 0 !important;
+                    color: #333333 !important;
+                    font-weight: 500 !important;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.08) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    font-size: 14px !important;
+                    opacity: 1;
+                    transition: opacity 0.3s ease-in-out !important;
+                ">
+                <span style="
+                    margin-right: 10px !important;
+                    color: #ff6b8b !important;
+                    font-size: 18px !important;
+                " class="material-symbols-outlined">search_off</span>
+                検索結果が見つかりませんでした。別のキーワードをお試しください。
+                </div>
                 <script>
-                    console.log('検索結果がありません。アラートを表示します。');
-                    alert('検索結果はありませんでした。');
-                </script>
-                END;
+                document.addEventListener("DOMContentLoaded", function() {
+                    var noResultsEl = document.getElementById("' . $no_results_id . '");
+                    if (noResultsEl) {
+                        // 4秒後に非表示にする
+                        setTimeout(function() {
+                            noResultsEl.style.opacity = "0";
+                            setTimeout(function() {
+                                if (noResultsEl.parentNode) {
+                                    noResultsEl.style.display = "none";
+                                }
+                            }, 300);
+                        }, 4000);
+                    }
+                });
+                </script>';
             }
 
             // ボタンを横並びにするためのラップクラスを追加
-            $data_forms .= '<div class="button-group" style="display: flex; gap: 10px;">';
+            $data_forms .= '<div class="button-group" style="display: flex !important; gap: 10px !important; margin-top: 15px !important; align-items: center !important;">';
 
             // 検索実行ボタン
-            $data_forms .= <<<END
-            <button type='submit' name='send_post' title="検索実行" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px;">
-                <span class="material-symbols-outlined">search</span>
-            </button>
-            END;
+            $data_forms .= '<input type="hidden" name="query_post" value="search">';
+            $data_forms .= '<button type="submit" name="send_post" title="検索実行" style="background-color: #0073aa !important; color: white !important; border: none !important; padding: 10px 20px !important; cursor: pointer !important; border-radius: 5px !important; display: flex !important; align-items: center !important; gap: 5px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.3s ease !important;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px !important;">search</span>';
+            $data_forms .= '検索実行';
+            $data_forms .= '</button>';
 
-            // 検索モードのキャンセルボタン
-            $data_forms .= <<<END
-            <form method='post' action='' onsubmit="return true;">
-                <input type='hidden' name='query_post' value='update'>
-                <button type='submit' name='send_post' title="キャンセル" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px;">
-                    <span class="material-symbols-outlined">disabled_by_default</span>
-                </button>
-            </form>
-            END;
+            $data_forms .= '</form>'; // 検索フォームの閉じタグ
+
+            // 検索モードのキャンセルボタン（独立したフォーム）
+            $data_forms .= '<form method="post" action="" style="margin: 0 !important;">';
+            $data_forms .= '<input type="hidden" name="query_post" value="update">';
+            $data_forms .= '<button type="submit" name="send_post" title="キャンセル" style="background-color: #666 !important; color: white !important; border: none !important; padding: 10px 20px !important; cursor: pointer !important; border-radius: 5px !important; display: flex !important; align-items: center !important; gap: 5px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.3s ease !important;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px !important;">disabled_by_default</span>';
+            $data_forms .= 'キャンセル';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
 
             $data_forms .= '</div>'; // ボタンラップクラスの閉じタグ
-            $data_forms .= '</form></div>'; // フォームの閉じタグ
+            $data_forms .= '</div>'; // search-mode-formの閉じタグ
         }            
 
         // 追加・検索 以外なら更新フォームを表示
-        elseif ($action !== 'srcmode' && $action !== 'istmode') { // 論理演算子を || から && に修正
+        elseif ($action !== 'srcmode' && $action !== 'istmode' && $action !== 'search') { // searchも除外
 
             // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
             $data_forms .= <<<END
@@ -1265,12 +1512,12 @@ class Kntan_Client_Class {
             END;
 
             // 追加モードボタン
-            $action = 'istmode';
+            $add_action = 'istmode';
             $data_id = $data_id + 1;
             $data_forms .= <<<END
             <form method='post' action=''>
                 <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='query_post' value='$add_action'>
                 <input type='hidden' name='data_id' value='$data_id'>
                 <button type='submit' name='send_post' title="追加する">
                     <span class="material-symbols-outlined">
@@ -1281,11 +1528,11 @@ class Kntan_Client_Class {
             END;
 
             // 検索モードボタン
-            $action = 'srcmode';
+            $search_action = 'srcmode';
             // $data_id = $data_id;
             $data_forms .= <<<END
             <form method='post' action=''>
-                <input type='hidden' name='query_post' value='$action'>
+                <input type='hidden' name='query_post' value='$search_action'>
                 <button type='submit' name='send_post' title="検索する">
                     <span class="material-symbols-outlined">
                     search
@@ -1299,11 +1546,13 @@ class Kntan_Client_Class {
                             
         $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
         
-        // 詳細表示部分の終了
-        $div_end = <<<END
+        // 詳細表示部分の終了タグを設定（全モード共通）
+        if (empty($div_end)) {
+            $div_end = <<<END
             </div> <!-- data_detail_boxの終了 -->
         </div> <!-- data_contentsの終了 -->
         END;
+        }
 
         // -----------------------------
         // テンプレート印刷
@@ -1312,16 +1561,26 @@ class Kntan_Client_Class {
         // Print_Classのパスを指定
         require_once( dirname( __FILE__ ) . '/class-print.php' );
 
+        // 変数の初期化（未定義の場合に備えて）
+        if (!isset($company_name)) $company_name = '';
+        if (!isset($user_name)) $user_name = '';
+        if (!isset($representative_name)) $representative_name = '';
+        if (!isset($postal_code)) $postal_code = '';
+        if (!isset($prefecture)) $prefecture = '';
+        if (!isset($city)) $city = '';
+        if (!isset($address)) $address = '';
+        if (!isset($building)) $building = '';
+
         // データを指定
         $data_src = [
             'company_name' => $company_name,
             'name' => $user_name,
-            'representative_name' => $data_src['representative_name'],
-            'postal_code' => $data_src['postal_code'],
-            'prefecture' => $data_src['prefecture'],
-            'city' => $data_src['city'],
-            'address' => $data_src['address'],
-            'building' => $data_src['building'],
+            'representative_name' => $representative_name,
+            'postal_code' => $postal_code,
+            'prefecture' => $prefecture,
+            'city' => $city,
+            'address' => $address,
+            'building' => $building,
         ];
 
         // データを取得
@@ -1430,7 +1689,25 @@ class Kntan_Client_Class {
         // controller, workflow（受注書作成ボタン）を$print直後に追加
         // controller_html, workflow_htmlが重複しないようにcontroller_htmlは1回のみ出力
         // プレビューウィンドウはJavaScriptで動的に作成されるため、HTMLに直接書く必要はなくなった
-        $content = $print . $controller_html . $workflow_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        
+        // 必要な変数の初期化確認
+        if (!isset($search_results_list)) {
+            $search_results_list = '';
+        }
+        if (!isset($data_title)) {
+            $data_title = '';
+        }
+        if (!isset($data_forms)) {
+            $data_forms = '';
+        }
+        if (!isset($div_end)) {
+            $div_end = '';
+        }
+        
+        // 検索モードでも顧客リストを表示する
+        $final_data_list = $data_list;
+        
+        $content = $print . $session_message . $controller_html . $workflow_html . $final_data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
         
     }
