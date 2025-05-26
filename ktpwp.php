@@ -66,11 +66,21 @@ class KTPWP_Redirect {
             if ($post && $this->should_redirect($post)) {
                 $external_url = $this->get_external_url($post);
                 if ($external_url) {
-                    // クエリパラメータをクリーンアップしてリダイレクト
-                    $clean_external_url = strtok($external_url, '?');
-                    error_log("KTPWP Debug: Template redirect to: {$clean_external_url}");
-                    wp_redirect($clean_external_url, 301);
-                    exit;
+                    // 外部リダイレクト先の安全性を検証（ホワイトリスト方式）
+                    $allowed_hosts = [
+                        'ktpwp.com',
+                        parse_url(home_url(), PHP_URL_HOST)
+                    ];
+                    $parsed = wp_parse_url($external_url);
+                    $host = isset($parsed['host']) ? $parsed['host'] : '';
+                    if (in_array($host, $allowed_hosts, true)) {
+                        $clean_external_url = $parsed['scheme'] . '://' . $host . (isset($parsed['path']) ? $parsed['path'] : '');
+                        error_log("KTPWP Debug: Template redirect to: {$clean_external_url}");
+                        wp_redirect($clean_external_url, 301);
+                        exit;
+                    } else {
+                        error_log("KTPWP Security: Blocked redirect to unapproved host: {$host}");
+                    }
                 }
             }
         }
