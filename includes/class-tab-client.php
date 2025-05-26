@@ -506,7 +506,8 @@ class Kntan_Client_Class {
 
         // 現在のページのURLを生成
         global $wp;
-        $base_page_url = add_query_arg( null, null, home_url( $wp->request ) );
+        $current_page_id = get_queried_object_id();
+        $base_page_url = add_query_arg( 'page_id', $current_page_id, home_url( $wp->request ) );
 
         // -----------------------------
         // ページネーションリンク
