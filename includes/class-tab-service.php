@@ -231,7 +231,7 @@ class Kntan_Service_Class {
             // 検索結果が複数ある場合の処理
             elseif (count($results) > 1) {
                 // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
+                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ " . esc_html__('検索結果が複数あります！', 'ktpwp') . "</h3><ul>";
 
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
@@ -239,7 +239,7 @@ class Kntan_Service_Class {
                     $service_name = esc_html($row->service_name); // 商品名を取得
                     $category = esc_html($row->category); // カテゴリーを取得
                     // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
+                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>" . sprintf(esc_html__('ID：%1$s 商品名：%2$s カテゴリー：%3$s', 'ktpwp'), $id, $service_name, $category) . "</a></li>";
                 }
                 // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
@@ -268,7 +268,7 @@ class Kntan_Service_Class {
                     document.body.appendChild(popup);
                     // ポップアップを閉じるためのボタンを追加
                     var closeButton = document.createElement('button');
-                    closeButton.textContent = '閉じる';
+                    closeButton.textContent = '" . esc_js(__('閉じる', 'ktpwp')) . "';
                     closeButton.style.fontSize = '0.8em';
                     closeButton.style.color = 'black'; // 文字をもう少し黒く
                     closeButton.style.display = 'block';
@@ -290,7 +290,7 @@ class Kntan_Service_Class {
             // 検索結果が0件の場合の処理
             else {                // JavaScriptを使用してポップアップ警告を表示
                 echo "<script>
-                alert('検索結果がありません！');
+                alert('" . esc_js(__('検索結果がありません！', 'ktpwp')) . "');
                 </script>";
                 // リダイレクトの代わりにクエリパラメータを設定
                 $_GET['tab_name'] = $tab_name;
