@@ -507,13 +507,13 @@ function KTPWP_Index(){
             $current_page_id = get_queried_object_id();
             $update_link_url = esc_url(get_permalink($current_page_id));
 
-            $front_message = <<<END
-            <div class="ktp_header">
-            <div class="parent"><div class="title">{$icon_img}{$plugin_name}</div><div class="version">v{$plugin_version}</div></div>
-            $logged_in_users_html
-            　<a href="$logout_link">ログアウト</a>　<a href="{$update_link_url}">更新</a>　$act_key
-            </div>
-            END;
+            $front_message = '<div class="ktp_header">'
+                . '<div class="parent"><div class="title">' . $icon_img . $plugin_name . '</div><div class="version">v' . $plugin_version . '</div></div>'
+                . $logged_in_users_html
+                . '　<a href="' . $logout_link . '">' . esc_html__('ログアウト', 'ktpwp') . '</a>'
+                . '　<a href="' . $update_link_url . '">' . esc_html__('更新', 'ktpwp') . '</a>'
+                . '　' . $act_key
+                . '</div>';
             $tab_name = isset($_GET['tab_name']) ? $_GET['tab_name'] : 'default_tab'; // URLパラメータからtab_nameを取得
 
             // $order_content など未定義変数の初期化

@@ -522,11 +522,13 @@ class Kntan_Client_Class {
         // 表示範囲
         $query_limit = 20;
         
-        // 表示タイトルの設定
-        $list_title = ($view_mode === 'order_history') ? '■ 注文履歴（レンジ： ' . $query_limit . ' ）' : '■ 顧客リスト（レンジ： ' . $query_limit . ' ）';
+        // 表示タイトルの設定（国際化対応）
+        $list_title = ($view_mode === 'order_history')
+            ? sprintf(esc_html__('■ 注文履歴（レンジ： %d ）', 'ktpwp'), $query_limit)
+            : sprintf(esc_html__('■ 顧客リスト（レンジ： %d ）', 'ktpwp'), $query_limit);
         
         // リスト表示部分の開始
-        $results_h = <<<END
+       $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
             <h3>$list_title</h3>
@@ -609,12 +611,12 @@ class Kntan_Client_Class {
                if ($order_rows) {
                    // 進捗ラベル
                    $progress_labels = [
-                       1 => '受付中',
-                       2 => '見積中',
-                       3 => '作成中',
-                       4 => '完成未請求',
-                       5 => '請求済',
-                       6 => '入金済'
+                       1 => esc_html__('受付中', 'ktpwp'),
+                       2 => esc_html__('見積中', 'ktpwp'),
+                       3 => esc_html__('作成中', 'ktpwp'),
+                       4 => esc_html__('完成未請求', 'ktpwp'),
+                       5 => esc_html__('請求済', 'ktpwp'),
+                       6 => esc_html__('入金済', 'ktpwp')
                    ];
                    
                    foreach ($order_rows as $order) {
@@ -652,14 +654,10 @@ class Kntan_Client_Class {
                        END;
                    }
                } else {
-                   $results[] = <<<END
-                   <div class="data_list_item">この顧客の受注データはありません。</div>
-                   END;
+                   $results[] = '<div class="data_list_item">' . esc_html__('この顧客の受注データはありません。', 'ktpwp') . '</div>';
                }
            } else {
-               $results[] = <<<END
-               <div class="data_list_item">顧客データが見つかりません。</div>
-               END;
+               $results[] = '<div class="data_list_item">' . esc_html__('顧客データが見つかりません。', 'ktpwp') . '</div>';
            }
        } else {
            // 通常の顧客一覧表示（既存のコード）
@@ -704,16 +702,12 @@ class Kntan_Client_Class {
                    // リスト項目
                    $cookie_name = 'ktp_' . $name . '_id';
                    $link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), $base_page_url));
-                   $results[] = <<<END
-                   <a href="{$link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
-                   <div class="data_list_item">ID: $id $company_name : $user_name : $category : 頻度($frequency)</div>
-                   </a>
-                   END;
+           $results[] = '<a href="' . $link_url . '" onclick="document.cookie = \'{$cookie_name}=\' + ' . $id . ';">'
+               . '<div class="data_list_item">' . sprintf(esc_html__('ID: %1$s %2$s : %3$s : %4$s : 頻度(%5$s)', 'ktpwp'), $id, $company_name, $user_name, $category, $frequency) . '</div>'
+               . '</a>';
                }
            } else {
-               $results[] = <<<END
-               <div class="data_list_item">データーがありません。</div>
-               END;
+           $results[] = '<div class="data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
            }
        }
 
@@ -755,7 +749,7 @@ class Kntan_Client_Class {
         // 現在のページ範囲表示と総数
         $page_end = min($total_rows, $current_page * $query_limit);
         $page_start_display = ($current_page - 1) * $query_limit + 1;
-        $results_f .= "<div class='stage'> $page_start_display ~ $page_end / $total_rows</div>";
+        $results_f .= "<div class='stage'> " . sprintf(esc_html__('%1$s ~ %2$s / %3$s', 'ktpwp'), $page_start_display, $page_end, $total_rows) . "</div>";
 
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
@@ -1032,10 +1026,7 @@ class Kntan_Client_Class {
                 $data_id = $wpdb->insert_id;
 
                 // 詳細表示部分の開始
-                $data_title = <<<END
-                    <div class="data_detail_box">
-                    <h3>■ 顧客の詳細</h3>
-                END;
+            $data_title = '<div class="data_detail_box"><h3>' . esc_html__('■ 顧客の詳細', 'ktpwp') . '</h3>';
 
                 // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
                 $data_forms = <<<END
@@ -1064,30 +1055,29 @@ class Kntan_Client_Class {
                 END;
 
                 // 空のフォームフィールドを生成
-                $data_forms .= '<form method="post" action="">';
-                foreach ($fields as $label => $field) {
-                    $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                    $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                    $fieldName = $field['name'];
-                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
-                    if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
-                    } elseif ($field['type'] === 'select') {
-                        $options = '';
-
-                        foreach ($field['options'] as $option) {
-                            $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
-                        }
-
-                        $default = isset($field['default']) ? $field['default'] : ''; // デフォルト値を取得
-
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
-                    } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
+            $data_forms .= '<form method="post" action="">';
+            foreach ($fields as $label => $field) {
+                $value = $action === 'update' ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $fieldName = $field['name'];
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+                $label_i18n = esc_html__($label, 'ktpwp');
+                if ($field['type'] === 'textarea') {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>";
+                } elseif ($field['type'] === 'select') {
+                    $options = '';
+                    foreach ($field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"{$option}\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                     }
+                    $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+                } else {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
                 }
+            }
+
 
                 $data_forms .= "<div class='button'>";
 
@@ -1095,34 +1085,24 @@ class Kntan_Client_Class {
                     // 追加実行ボタン
                     $insert_action = 'insert';
                     $data_id = $data_id + 1;
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$insert_action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title="追加実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
+                    $data_forms .= '<form method="post" action="">'
+                        . '<input type="hidden" name="query_post" value="' . esc_attr($insert_action) . '">' 
+                        . '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">' 
+                        . '<button type="submit" name="send_post" title="' . esc_attr__('追加実行', 'ktpwp') . '">' 
+                        . '<span class="material-symbols-outlined">select_check_box</span>' 
+                        . '</button></form>';
                 }
-    
+
                 // キャンセルボタン
                 $cancel_action = 'update';
                 $data_id = $data_id - 1;
-                $data_forms .= <<<END
-                <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$cancel_action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="キャンセル">
-                <span class="material-symbols-outlined">
-                disabled_by_default
-                </span>            
-                </button>
-                </form>
-                END;
+                $data_forms .= '<form method="post" action="">'
+                    . '<input type="hidden" name="data_id" value="">'
+                    . '<input type="hidden" name="query_post" value="' . esc_attr($cancel_action) . '">' 
+                    . '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">' 
+                    . '<button type="submit" name="send_post" title="' . esc_attr__('キャンセル', 'ktpwp') . '">' 
+                    . '<span class="material-symbols-outlined">disabled_by_default</span>' 
+                    . '</button></form>';
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
