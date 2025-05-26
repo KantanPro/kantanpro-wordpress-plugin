@@ -1,4 +1,6 @@
+
 <?php
+if (!defined('ABSPATH')) exit;
 
 if (!class_exists('Kntan_Order_Class')) {
 class Kntan_Order_Class{
@@ -233,7 +235,7 @@ class Kntan_Order_Class{
                 }
                 $_GET['delete_order'] = null; // delete_orderフラグをクリア
                 
-                error_log("KTPWP Debug: Order deleted, redirect disabled");
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Order deleted, redirect disabled"); }
             } else {
                 $content .= '<div class="error">受注書の削除に失敗しました。</div>';
             }
@@ -249,17 +251,17 @@ class Kntan_Order_Class{
             // 顧客IDを取得（優先順位：GET > DB > SESSION > COOKIE > POST）
             // 1. GETパラメータから取得（ktpwp.phpでリダイレクト時に設定される）
             $client_id = isset($_GET['client_id']) ? intval($_GET['client_id']) : 0;
-            error_log("KTPWP Debug: クライアントID取得(GET): " . $client_id);
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: クライアントID取得(GET): " . $client_id); }
             
             // 2. POSTパラメータも確認
             if ($client_id <= 0 && isset($_POST['client_id']) && intval($_POST['client_id']) > 0) {
                 $client_id = intval($_POST['client_id']);
-                error_log("KTPWP Debug: POST['client_id']から取得: " . $client_id);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: POST['client_id']から取得: " . $client_id); }
             }
             
             // 最終手段：顧客IDが提供されなかった場合は、会社名と担当者名から顧客IDを検索
             if ($client_id <= 0 && $customer_name !== '') {
-                error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索: " . $customer_name . ", " . $user_name);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索: " . $customer_name . ", " . $user_name); }
                 $client = $wpdb->get_row($wpdb->prepare(
                     "SELECT id FROM {$client_table} WHERE company_name = %s AND name = %s",
                     $customer_name, 
@@ -267,9 +269,9 @@ class Kntan_Order_Class{
                 ));
                 if ($client) {
                     $client_id = $client->id;
-                    error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索結果: " . $client_id);
+                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索結果: " . $client_id); }
                 } else {
-                    error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索結果なし");
+                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: 会社名と担当者名から顧客ID検索結果なし"); }
                 }
             }
             
@@ -300,11 +302,11 @@ class Kntan_Order_Class{
                 $order_id = $new_order_id; // ローカル変数も更新
                 
                 // デバッグ用ログ
-                error_log("KTPWP Debug: Order created with ID: {$new_order_id}, redirect disabled");
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Order created with ID: {$new_order_id}, redirect disabled"); }
             } else {
                 // 挿入失敗時のエラーハンドリング
                 $content .= '<div class="error">受注書の作成に失敗しました。</div>';
-                error_log('受注書挿入エラー: ' . $wpdb->last_error);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('受注書挿入エラー: ' . $wpdb->last_error); }
             }
         }
 

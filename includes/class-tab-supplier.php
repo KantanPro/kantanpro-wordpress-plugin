@@ -1,4 +1,5 @@
 <?php
+if (!defined('ABSPATH')) exit;
 
 if (!class_exists('Kantan_Supplier_Class')) {
 class Kantan_Supplier_Class{
@@ -288,7 +289,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             } else {
                 // $data_idが不正な場合のエラーハンドリング
                 // 例: IDが指定されていない、または不正な値の場合
-                error_log('Invalid or missing data_id in Update_Table function');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Invalid or missing data_id in Update_Table function'); }
             }
 
             // ロックを解除する
@@ -443,7 +444,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 ) 
             );
             if($insert_result === false) {
-                error_log('Insert error: ' . $wpdb->last_error);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
             } else {
 
             // ロックを解除する

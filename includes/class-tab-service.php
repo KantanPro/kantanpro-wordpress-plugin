@@ -1,4 +1,5 @@
 <?php
+if (!defined('ABSPATH')) exit;
 require_once 'class-image_processor.php';
 
 if (!class_exists('Kntan_Service_Class')) {
@@ -183,7 +184,7 @@ class Kntan_Service_Class {
             } else {
                 // $data_idが不正な場合のエラーハンドリング
                 // 例: IDが指定されていない、または不正な値の場合
-                error_log('Invalid or missing data_id in Update_Table function');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Invalid or missing data_id in Update_Table function'); }
             }
 
             // ロックを解除する
@@ -314,7 +315,7 @@ class Kntan_Service_Class {
                 ) 
             );
             if($insert_result === false) {
-                error_log('Insert error: ' . $wpdb->last_error);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
             } else {
 
                 // ロックを解除する
@@ -368,7 +369,7 @@ class Kntan_Service_Class {
             $insert_result = $wpdb->insert($table_name, $data);
             if($insert_result === false) {
                 // エラーログに挿入エラーを記録
-                error_log('Duplication error: ' . $wpdb->last_error);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplication error: ' . $wpdb->last_error); }
             } else {
                 // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
@@ -412,7 +413,7 @@ class Kntan_Service_Class {
             $default_image_path = dirname(__FILE__) . '/../images/default/no-image-icon.jpg';
             if (!file_exists($default_image_path)) {
                 // デフォルト画像が存在しない場合、エラーログに記録
-                error_log('Default image not found: ' . $default_image_path);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Default image not found: ' . $default_image_path); }
             }
             
             $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);

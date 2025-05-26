@@ -1,4 +1,5 @@
 <?php
+if (!defined('ABSPATH')) exit;
 
 if (!class_exists('Kntan_Setting_Class')) {
 class Kntan_Setting_Class {
