@@ -414,6 +414,7 @@ function KTPWP_Index(){
 
         //ログイン中なら
         if (is_user_logged_in()) {
+            // XSS対策: 画面に出力する変数は必ずエスケープ
 
             // ユーザーのログインログアウト状況を取得するためのAjaxを登録
             add_action('wp_ajax_get_logged_in_users', 'get_logged_in_users');
@@ -441,10 +442,10 @@ function KTPWP_Index(){
             global $current_user;
 
             // ログアウトのリンク
-            $logout_link = wp_logout_url();
+            $logout_link = esc_url(wp_logout_url());
 
             // ヘッダー表示ログインユーザー名など
-            $act_key = check_activation_key();
+            $act_key = esc_html(check_activation_key());
 
             // ログイン中の全てのユーザーを取得
             $logged_in_users = get_users(array(
@@ -456,28 +457,29 @@ function KTPWP_Index(){
             $current_user_name = '';
             $other_users_names = array();
             foreach ( $logged_in_users as $user ) {
+                $nickname_esc = esc_attr($user->nickname);
                 // 現在ログインしているユーザーの場合は名前を太字にする
                 if ($user->ID == $current_user->ID) {
-                    $current_user_name = '<strong><span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon user_icon--current']) . '</span></strong>';
+                    $current_user_name = '<strong><span title="' . $nickname_esc . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon user_icon--current']) . '</span></strong>';
                 } else {
-                    $other_users_names[] = '<span title="' . $user->nickname . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon']) . '</span>';
+                    $other_users_names[] = '<span title="' . $nickname_esc . '">' . get_avatar($user->ID, 32, '', '', ['class' => 'user_icon']) . '</span>';
                 }
             }
             $other_users_html = count($other_users_names) > 0 ? '' . implode(' ', $other_users_names)  : '';
             $logged_in_users_html = $current_user_name . $other_users_html;
 
             // 画像タグをPHP変数で作成（ベースラインを10px上げる）
-            $icon_img = '<img src="' . plugins_url('images/default/icon.png', __FILE__) . '" style="height:40px;vertical-align:middle;margin-right:8px;position:relative;top:-5px;">';
+            $icon_img = '<img src="' . esc_url(plugins_url('images/default/icon.png', __FILE__)) . '" style="height:40px;vertical-align:middle;margin-right:8px;position:relative;top:-5px;">';
 
             // バージョン番号を定数から取得
-            $plugin_version = defined('MY_PLUGIN_VERSION') ? MY_PLUGIN_VERSION : '';
+            $plugin_version = defined('MY_PLUGIN_VERSION') ? esc_html(MY_PLUGIN_VERSION) : '';
 
             // プラグイン名とバージョンを定数から取得
-            $plugin_name = KTPWP_PLUGIN_NAME;
-            $plugin_version = KTPWP_PLUGIN_VERSION;
+            $plugin_name = esc_html(KTPWP_PLUGIN_NAME);
+            $plugin_version = esc_html(KTPWP_PLUGIN_VERSION);
             $current_page_id = get_queried_object_id();
             $update_link_url = esc_url(get_permalink($current_page_id));
-            
+
             $front_message = <<<END
             <div class="ktp_header">
             <div class="parent"><div class="title">{$icon_img}{$plugin_name}</div><div class="version">v{$plugin_version}</div></div>
