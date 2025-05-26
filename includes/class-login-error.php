@@ -16,12 +16,10 @@ class Kantan_Login_Error{
 
         // ログインのリンク
         $login_link = wp_login_url();        // 表示する内容
-        $content = <<<END
-        <h3>KTPWPを利用するにはログインしてください。</h3>
-        <!--ログイン-->
-        <p><font size="4"><a href="$login_link">ログイン</a></font>　
-        <font size="4"><a href="/welcome-to-ktpwp/">ホームへ</a></font></p>
-        END;
+        $content = '<h3>' . __('KTPWPを利用するにはログインしてください。', 'ktpwp') . '</h3>';
+        $content .= '<!--ログイン-->';
+        $content .= '<p><font size="4"><a href="' . $login_link . '">' . __('ログイン', 'ktpwp') . '</a></font>　';
+        $content .= '<font size="4"><a href="/welcome-to-ktpwp/">' . __('ホームへ', 'ktpwp') . '</a></font></p>';
         return $content;
     }
     // function filter() {
