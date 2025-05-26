@@ -1,4 +1,6 @@
+
 <?php
+if (!defined('ABSPATH')) exit;
 
 class Image_Processor {
 
