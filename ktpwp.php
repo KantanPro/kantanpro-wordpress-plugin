@@ -78,11 +78,11 @@ class KTPWP_Redirect {
 
     public function handle_redirect() {
         // デバッグ用ログ
-        error_log("KTPWP Debug: handle_redirect called - URL: {$_SERVER['REQUEST_URI']}");
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: handle_redirect called - URL: {$_SERVER['REQUEST_URI']}"); }
         
         // ショートコードが含まれるページの場合はリダイレクトしない
         if (isset($_GET['tab_name']) || $this->has_ktpwp_shortcode()) {
-            error_log("KTPWP Debug: Redirect skipped - tab_name or shortcode found");
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Redirect skipped - tab_name or shortcode found"); }
             return;
         }
         
@@ -101,11 +101,11 @@ class KTPWP_Redirect {
                     $host = isset($parsed['host']) ? $parsed['host'] : '';
                     if (in_array($host, $allowed_hosts, true)) {
                         $clean_external_url = $parsed['scheme'] . '://' . $host . (isset($parsed['path']) ? $parsed['path'] : '');
-                        error_log("KTPWP Debug: Template redirect to: {$clean_external_url}");
+                        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Template redirect to: {$clean_external_url}"); }
                         wp_redirect($clean_external_url, 301);
                         exit;
                     } else {
-                        error_log("KTPWP Security: Blocked redirect to unapproved host: {$host}");
+                        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Security: Blocked redirect to unapproved host: {$host}"); }
                     }
                 }
             }
@@ -137,13 +137,13 @@ class KTPWP_Redirect {
 
         // ショートコードが含まれるページの場合はリダイレクトしない
         if ($this->has_ktpwp_shortcode()) {
-            error_log("KTPWP Debug: Shortcode detected, skipping redirect");
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Shortcode detected, skipping redirect"); }
             return false;
         }
         
         // KTPWPのクエリパラメータがある場合はリダイレクトしない
         if (isset($_GET['tab_name']) || isset($_GET['from_client']) || isset($_GET['order_id'])) {
-            error_log("KTPWP Debug: KTPWP parameters detected, skipping redirect");
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: KTPWP parameters detected, skipping redirect"); }
             return false;
         }
 
@@ -241,7 +241,7 @@ class KTPWP_Redirect {
 function ktpwp_handle_form_redirect() {
     // 特定のPOSTパラメータがある場合、GETパラメータに変換
     if (isset($_POST['tab_name']) && $_POST['tab_name'] === 'order' && isset($_POST['from_client'])) {
-        error_log("KTPWP Debug: Converting POST to GET for order creation");
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Converting POST to GET for order creation"); }
 
         // 厳格なサニタイズ
         $tab_name = sanitize_text_field($_POST['tab_name']);
@@ -264,7 +264,7 @@ function ktpwp_handle_form_redirect() {
             $client_id = intval($_POST['client_id']);
             if ($client_id > 0) {
                 $redirect_params['client_id'] = $client_id;
-                error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id);
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: POST client_id: " . $_POST['client_id'] . " -> リダイレクトパラメータに設定: " . $client_id); }
             }
         }
 
@@ -279,8 +279,8 @@ function ktpwp_handle_form_redirect() {
         $redirect_url = add_query_arg($redirect_params, $clean_url);
 
         // デバッグ用：リダイレクトURLをログに記録
-        error_log("KTPWP Debug: リダイレクト先URL: " . $redirect_url);
-        error_log("KTPWP Debug: リダイレクトパラメータ: " . json_encode($redirect_params));
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: リダイレクト先URL: " . $redirect_url); }
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: リダイレクトパラメータ: " . json_encode($redirect_params)); }
 
         // リダイレクト実行
         wp_redirect($redirect_url, 302);
@@ -289,7 +289,7 @@ function ktpwp_handle_form_redirect() {
     
     // 受注書削除処理のPOSTパラメータをGETに変換
     if (isset($_POST['delete_order']) && isset($_POST['order_id'])) {
-        error_log("KTPWP Debug: Converting POST to GET for order deletion");
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Converting POST to GET for order deletion"); }
 
         // 厳格なサニタイズ
         $delete_order = sanitize_text_field($_POST['delete_order']);
@@ -326,7 +326,7 @@ new KTPWP_Redirect();
 if (file_exists(MY_PLUGIN_PATH . 'includes/class-ktp-settings.php')) {
     include_once MY_PLUGIN_PATH . 'includes/class-ktp-settings.php';
 } else {
-    error_log('KTPWP Critical Error: includes/class-ktp-settings.php not found.');
+    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP Critical Error: includes/class-ktp-settings.php not found.'); }
 }
 
 // 全ての関連ファイルをインクルードするために、元の$original_includes配列に戻します。
@@ -351,7 +351,7 @@ foreach ($original_includes as $file) {
         if (file_exists(MY_PLUGIN_PATH . 'includes/' . $file)) {
             include_once MY_PLUGIN_PATH . 'includes/' . $file;
         } else {
-            error_log('KTPWP Warning: File includes/' . $file . ' not found during final include.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP Warning: File includes/' . $file . ' not found during final include.'); }
         }
     }
 }
@@ -401,7 +401,7 @@ function ktp_table_setup() {
         if (file_exists($file_path)) {
             require_once $file_path;
         } else {
-            error_log("KTPWP Error: Class file not found: {$file_path}");
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Error: Class file not found: {$file_path}"); }
         }
     }
     
@@ -640,13 +640,13 @@ function kpwp_github_plugin_update($transient) {
     ]);
     
     if (is_wp_error($response)) {
-        error_log('KTPWP: GitHub API Error - ' . $response->get_error_message());
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP: GitHub API Error - ' . $response->get_error_message()); }
         return $transient;
     }
 
     $release = json_decode(wp_remote_retrieve_body($response));
     if (empty($release) || empty($release->tag_name)) {
-        error_log('KTPWP: GitHub API Response Invalid - ' . wp_remote_retrieve_body($response));
+        if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP: GitHub API Response Invalid - ' . wp_remote_retrieve_body($response)); }
         return $transient;
     }
 
@@ -655,7 +655,7 @@ function kpwp_github_plugin_update($transient) {
     $current_version = $plugin_data['Version'];
     $latest_version = ltrim($release->tag_name, 'v');
     
-    error_log("KTPWP: Current version: $current_version, Latest version: $latest_version");
+    if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP: Current version: $current_version, Latest version: $latest_version"); }
 
     // 新しいバージョンがあればアップデート情報をセット
     if (version_compare($current_version, $latest_version, '<')) {
