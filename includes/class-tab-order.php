@@ -361,15 +361,15 @@ class Kntan_Order_Class{
 
                 $content .= '<div class="controller">';
                 $content .= '<div class="printer">';
-                $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー">';
+                $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー" style="padding: 8px 12px; font-size: 14px;">';
                 $content .= '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
                 $content .= '</button>';
-                $content .= '<button onclick="printOrderContent()" title="印刷する">';
+                $content .= '<button onclick="printOrderContent()" title="印刷する" style="padding: 8px 12px; font-size: 14px;">';
                 $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
                 $content .= '</button>';
                 $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;margin-top:0px;">';
                 $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
-$content .= '<button type="submit" id="orderMailButton" title="メール">';
+$content .= '<button type="submit" id="orderMailButton" title="メール" style="padding: 8px 12px; font-size: 14px;">';
 $content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
                 $content .= '</button>';
                 $content .= '</form>';
@@ -383,7 +383,7 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
                 $content .= '<form method="post" action="" style="display:inline-block;margin-left:10px;" onsubmit="return confirm(\'本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。\');">';
                 $content .= '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
                 $content .= '<input type="hidden" name="delete_order" value="1">';
-                $content .= '<button type="submit" style="color:#fff;background:#d9534f;padding:0px 8px;font-size:16px;border:none;border-radius:4px;cursor:pointer;">受注書を削除</button>';
+                $content .= '<button type="submit" style="color:#fff;background:#d9534f;padding: 8px 12px;font-size:14px;border:none;border-radius:4px;cursor:pointer;">受注書を削除</button>';
                 $content .= '</form>';
                 $content .= '</div>';
 
