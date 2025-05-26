@@ -266,35 +266,50 @@ function ktpwp_handle_form_redirect() {
 // WordPress初期化時に処理を実行（より早いタイミングで実行）
 add_action('wp_loaded', 'ktpwp_handle_form_redirect', 1);
 
-// リダイレクト処理を初期化（テスト用に再有効化）
+// リダイレクト処理を初期化
 new KTPWP_Redirect();
 
 
 // ファイルをインクルード
-$includes = [
+// アクティベーションフックのために class-ktp-settings.php は常にインクルード
+if (file_exists(MY_PLUGIN_PATH . 'includes/class-ktp-settings.php')) {
+    include_once MY_PLUGIN_PATH . 'includes/class-ktp-settings.php';
+} else {
+    error_log('KTPWP Critical Error: includes/class-ktp-settings.php not found.');
+}
+
+// 全ての関連ファイルをインクルードするために、元の$original_includes配列に戻します。
+$original_includes = [
 	'class-tab-list.php',
 	'class-tab-order.php',
 	'class-tab-client.php',
 	'class-tab-service.php',
 	'class-tab-supplier.php',
 	'class-tab-report.php',
-	'class-tab-setting.php',
+	'class-tab-setting.php', // 修正済みファイル
 	'class-login-error.php',
 	'class-view-tab.php',
-	'class-ktp-settings.php',
+	'class-ktp-settings.php', // ループ内のif条件でスキップされます
 	'class-ktp-upgrade.php',
 	'ktp-admin-form.php',
 ];
 
-foreach ($includes as $file) {
-	include_once 'includes/' . $file;
+foreach ($original_includes as $file) {
+	// class-ktp-settings.php は既に上でインクルード済みのため、二重インクルードを避ける
+	if ($file !== 'class-ktp-settings.php') {
+        if (file_exists(MY_PLUGIN_PATH . 'includes/' . $file)) {
+		    include_once MY_PLUGIN_PATH . 'includes/' . $file;
+        } else {
+            error_log('KTPWP Warning: File includes/' . $file . ' not found during final include.');
+        }
+	}
 }
 
 add_action('plugins_loaded', 'KTPWP_Index');
 
 function ktpwp_scripts_and_styles() {
 	// 修正前: 'ktp-js', plugins_url('js/ktp-ajax.js', __FILE__), array(), '1.0.0', true
-	wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array(), '1.0.0', true); // 修正後
+	wp_enqueue_script('ktp-js', plugins_url('js/ktp-js.js', __FILE__), array('jquery'), '1.0.0', true); // 修正後
 	wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.0', 'all');
 	wp_enqueue_style('ktp-css');
 	// 進捗プルダウン用のスタイルシートを追加
@@ -306,6 +321,9 @@ function ktpwp_scripts_and_styles() {
 	wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), '1.0.0', true);
 	// 進捗プルダウン用のJavaScriptを追加
 	wp_enqueue_script('ktp-progress-select', plugins_url('js/progress-select.js', __FILE__), array('jquery'), '1.0.0', true);
+
+	// ajaxurl をフロントエンドに渡す
+	wp_localize_script('ktp-js', 'ktp_ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
 }
 add_action('wp_enqueue_scripts', 'ktpwp_scripts_and_styles');
 
@@ -649,9 +667,9 @@ add_action('wp_ajax_nopriv_ktp_update_project_name', function() {
 	}
 });
 
-// ajaxurlをフロントにも出力
-add_action('wp_head', function() {
+// ajaxurlをフロントにも出力 //この処理は wp_localize_script に置き換えたためコメントアウト
+/* add_action('wp_head', function() {
 	if (!is_admin()) {
 		echo '<script>var ajaxurl = "' . admin_url('admin-ajax.php') . '";</script>';
 	}
-});
+}); */

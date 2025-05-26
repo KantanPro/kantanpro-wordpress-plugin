@@ -1,4 +1,3 @@
-
 <?php
 
 if (!class_exists('Kntan_Setting_Class')) {
