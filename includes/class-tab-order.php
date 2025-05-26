@@ -363,16 +363,16 @@ class Kntan_Order_Class{
 
                 $content .= '<div class="controller">';
                 $content .= '<div class="printer">';
-                $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="プレビュー" style="padding: 8px 12px; font-size: 14px;">';
-                $content .= '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
+                $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="' . esc_attr__('プレビュー', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('プレビュー', 'ktpwp') . '">preview</span>';
                 $content .= '</button>';
-                $content .= '<button onclick="printOrderContent()" title="印刷する" style="padding: 8px 12px; font-size: 14px;">';
-                $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
+                $content .= '<button onclick="printOrderContent()" title="' . esc_attr__('印刷する', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('印刷', 'ktpwp') . '">print</span>';
                 $content .= '</button>';
                 $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;margin-top:0px;">';
                 $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
-$content .= '<button type="submit" id="orderMailButton" title="メール" style="padding: 8px 12px; font-size: 14px;">';
-$content .= '<span class="material-symbols-outlined" aria-label="メール">mail</span>';
+                $content .= '<button type="submit" id="orderMailButton" title="' . esc_attr__('メール', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('メール', 'ktpwp') . '">mail</span>';
                 $content .= '</button>';
                 $content .= '</form>';
                 $content .= '</div>';
@@ -519,9 +519,9 @@ $content .= '</div>';
                 $content .= '</div>'; // .order_cost_box 終了
 
                 $content .= '<div class="order_memo_box box">';
-                $content .= '<h4>■ メモ項目</h4>';
+                $content .= '<h4>■ ' . esc_html__('メモ項目', 'ktpwp') . '</h4>';
                 // TODO: メモの表示・編集フォームを追加
-                $content .= '<div>（後日指示）</div>';
+                $content .= '<div>（' . esc_html__('後日指示', 'ktpwp') . '）</div>';
                 $content .= '</div>'; // .order_memo_box 終了
 
                 $content .= '</div>'; // .order_contents 終了
@@ -529,23 +529,22 @@ $content .= '</div>';
                 // 削除ボタンはworkflow内に移動済み
 
             } else {
-                $content .= '<div class="error">指定された受注書は見つかりませんでした。</div>';
+                $content .= '<div class="error">' . esc_html__('指定された受注書は見つかりませんでした。', 'ktpwp') . '</div>';
             }
 
         } else {
             // 受注書データが存在しない場合でもレイアウトを維持
-            $content .= '
-<div class="controller">
-    <div class="printer">
-        <button id="orderPreviewButton" disabled title="プレビュー">
-            <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
-        </button>
-        <button disabled title="印刷する">
-            <span class="material-symbols-outlined" aria-label="印刷">print</span>
-        </button>
-    </div>
-</div>
-<p>表示する受注書がありません。</p>';
+            $content .= "<div class=\"controller\">\n";
+            $content .= "    <div class=\"printer\">\n";
+            $content .= "        <button id=\"orderPreviewButton\" disabled title=\"" . esc_attr__('プレビュー', 'ktpwp') . "\">\n";
+            $content .= "            <span class=\"material-symbols-outlined\" aria-label=\"" . esc_attr__('プレビュー', 'ktpwp') . "\">preview</span>\n";
+            $content .= "        </button>\n";
+            $content .= "        <button disabled title=\"" . esc_attr__('印刷する', 'ktpwp') . "\">\n";
+            $content .= "            <span class=\"material-symbols-outlined\" aria-label=\"" . esc_attr__('印刷', 'ktpwp') . "\">print</span>\n";
+            $content .= "        </button>\n";
+            $content .= "    </div>\n";
+            $content .= "</div>\n";
+            $content .= "<p>" . esc_html__('表示する受注書がありません。', 'ktpwp') . "</p>";
         }
 
         // ページネーションロジック（表示はしないが計算は残す）
