@@ -344,6 +344,12 @@ function ktpwp_scripts_and_styles() {
     wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
     wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
     wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), '1.0.0', true);
+    // Nonceをjsに渡す（案件名インライン編集用）
+    if (current_user_can('manage_options')) {
+        wp_localize_script('ktp-order-inline-projectname', 'ktpwp_inline_edit_nonce', array(
+            'nonce' => wp_create_nonce('ktp_update_project_name')
+        ));
+    }
     // 進捗プルダウン用のJavaScriptを追加
     wp_enqueue_script('ktp-progress-select', plugins_url('js/progress-select.js', __FILE__), array('jquery'), '1.0.0', true);
 
@@ -512,20 +518,26 @@ function KTPWP_Index(){
                     break;
                 case 'client':
                     $client = new Kntan_Client_Class();
-                    $client->Create_Table($tab_name);
-                    $client->Update_Table($tab_name);
+                    if (current_user_can('manage_options')) {
+                        $client->Create_Table($tab_name);
+                        $client->Update_Table($tab_name);
+                    }
                     $client_content = $client->View_Table($tab_name);
                     break;
                 case 'service':
                     $service = new Kntan_Service_Class();
-                    $service->Create_Table($tab_name);
-                    $service->Update_Table($tab_name);
+                    if (current_user_can('manage_options')) {
+                        $service->Create_Table($tab_name);
+                        $service->Update_Table($tab_name);
+                    }
                     $service_content = $service->View_Table($tab_name);
                     break;
                 case 'supplier':
                     $supplier = new Kantan_Supplier_Class();
-                    $supplier->Create_Table($tab_name);
-                    $supplier->Update_Table($tab_name);
+                    if (current_user_can('manage_options')) {
+                        $supplier->Create_Table($tab_name);
+                        $supplier->Update_Table($tab_name);
+                    }
                     $supplier_content = $supplier->View_Table($tab_name);
                     break;
                 case 'report':
@@ -534,8 +546,10 @@ function KTPWP_Index(){
                     break;
                 case 'setting':
                     $setting = new Kntan_Setting_Class();
-                    $setting->Create_Table($tab_name);
-                    $setting->Update_Table($tab_name);
+                    if (current_user_can('manage_options')) {
+                        $setting->Create_Table($tab_name);
+                        $setting->Update_Table($tab_name);
+                    }
                     $setting_content = $setting->Setting_Tab_View($tab_name);
                     break;
                 default:
@@ -697,7 +711,17 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
 
 
 // 案件名インライン編集用Ajaxハンドラ
+
+// 案件名インライン編集用Ajaxハンドラ（管理者のみ許可＆nonce検証）
 add_action('wp_ajax_ktp_update_project_name', function() {
+    // 権限チェック
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('権限がありません');
+    }
+    // nonceチェック
+    if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'ktp_update_project_name')) {
+        wp_send_json_error('セキュリティ検証に失敗しました');
+    }
     global $wpdb;
     $order_id = intval($_POST['order_id'] ?? 0);
     $project_name = sanitize_text_field($_POST['project_name'] ?? '');
@@ -717,23 +741,9 @@ add_action('wp_ajax_ktp_update_project_name', function() {
 });
 
 // 非ログイン時もAjaxを許可（必要なら）
+// 非ログイン時はAjaxで案件名編集不可（セキュリティのため）
 add_action('wp_ajax_nopriv_ktp_update_project_name', function() {
-    global $wpdb;
-    $order_id = intval($_POST['order_id'] ?? 0);
-    $project_name = sanitize_text_field($_POST['project_name'] ?? '');
-    if ($order_id > 0) {
-        $table = $wpdb->prefix . 'ktp_order';
-        $wpdb->update(
-            $table,
-            ['project_name' => $project_name],
-            ['id' => $order_id],
-            ['%s'],
-            ['%d']
-        );
-        wp_send_json_success();
-    } else {
-        wp_send_json_error('Invalid order_id');
-    }
+    wp_send_json_error('ログインが必要です');
 });
 
 // ajaxurlをフロントにも出力 //この処理は wp_localize_script に置き換えたためコメントアウト

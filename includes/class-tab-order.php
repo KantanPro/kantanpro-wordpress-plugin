@@ -411,7 +411,7 @@ $content .= '<span class="material-symbols-outlined" aria-label="メール">mail
 // ■ 受注書概要（ID: *）案件名フィールドを同一div内で横並びに
 $content .= '<div class="order-header-flex order-header-inline-summary">';
 $content .= '<span class="order-header-title-id">■ 受注書概要（ID: ' . esc_html($order_data->id) . '）'
-    . '<input type="text" id="order_project_name_inline" name="order_project_name_inline" value="' . (isset($order_data->project_name) ? esc_html($order_data->project_name) : '') . '" data-order-id="' . esc_html($order_data->id) . '" class="order-header-projectname" placeholder="案件名" autocomplete="off" />'
+    . '<input type="text" class="order_project_name_inline order-header-projectname" name="order_project_name_inline" value="' . (isset($order_data->project_name) ? esc_html($order_data->project_name) : '') . '" data-order-id="' . esc_html($order_data->id) . '" placeholder="案件名" autocomplete="off" />'
     . '</span>';
 $content .= '<form method="post" action="" class="progress-filter order-header-progress-form" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-left:auto;">';
 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
@@ -500,15 +500,8 @@ $content .= '</div>';
                 $content .= '<div>作成日時：<span id="order_created_time">' . esc_html($formatted_time) . '</span></div>';
                 // 案件名インライン入力をh4タイトル行に移動
                 $project_name = isset($order_data->project_name) ? esc_html($order_data->project_name) : '';
-                $content = preg_replace(
-                  '/(<h4[^>]*>■ 受注書概要.*?)(<span[^>]*>（ID:.*?）<\/span>)/s',
-                  '$1$2'
-                  . '<input type="text" id="order_project_name_inline" name="order_project_name_inline" value="' . $project_name . '" '
-                  . 'data-order-id="' . esc_html($order_data->id) . '" '
-                  . 'style="margin-left:12px;width:220px;max-width:40vw;display:inline-block;font-size:1em;vertical-align:middle;" '
-                  . 'placeholder="案件名" autocomplete="off" />',
-                  $content
-                );
+                // preg_replaceによる重複input出力を削除（1箇所のみ出力）
+                // $content = preg_replace(...); を削除
                 $content .= '</div>'; // .order_info_box 終了
 
                 $content .= '<div class="order_invoice_box box">';
