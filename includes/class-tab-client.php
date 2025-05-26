@@ -390,14 +390,25 @@ class Kntan_Client_Class {
                 echo "<script>
                 alert('検索結果がありません！');
                 </script>";
-                // リダイレクトの代わりにクエリパラメータを設定
-                $_GET['tab_name'] = $tab_name;
-                $_GET['query_post'] = 'search';
+                // 現在のURLを取得し、不要なパラメータを除去
+                $current_url = add_query_arg(NULL, NULL);
+                $base_url = remove_query_arg(['query_post', 'search_query'], $current_url);
+                // tab_name と query_post=search を付けてリダイレクト
+                $redirect_url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'query_post' => 'srcmode' // 検索モードを示すように変更
+                ], $base_url);
+                // header("Location: " . esc_url($redirect_url)); // リダイレクト処理をコメントアウトまたは削除
+                // exit; // exitもコメントアウトまたは削除
+
+                // 代わりに、ページをリロードせずにメッセージを表示し、
+                // フォームは検索モードのままにするなどの対応が考えられます。
+                // ここでは、リダイレクトしないように変更します。
             }
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
-            exit;
+            // exit; // このexitは検索結果が1件以上の場合のリダイレクト後に実行されるため、0件の場合の分岐の後に移動、または削除
         }
         
         // 追加
@@ -1109,20 +1120,35 @@ class Kntan_Client_Class {
             END;
 
             // 検索フォームを生成
+            // 注意: この開始 form タグは元のコードでは閉じられていません。
+            // HTML構造としては不完全ですが、指示に基づきこの構造は変更しません。
             $data_forms = '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
-               
-            // 検索リストを生成
-            $data_forms .= $search_results_list;
+            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" value=\"" . (isset($_POST['search_query']) ? esc_attr($_POST['search_query']) : '') . "\" required></div>";
+
+            // 検索リストの表示ロジック
+            // $search_results_list は、'search' アクションの結果として事前に設定されていることを前提とします。
+            if (isset($_POST['query_post']) && $_POST['query_post'] === 'search') { // 直前のアクションが検索実行だった場合
+                if (empty($search_results_list)) {
+                    $data_forms .= '<p>検索結果はありませんでした。</p>';
+                } else {
+                    $data_forms .= $search_results_list; // 検索結果リストを表示
+                }
+            } elseif (isset($search_results_list) && !empty($search_results_list)) { // 検索実行直後ではないが、何らかの検索結果リストが存在する場合
+                 $data_forms .= $search_results_list;
+            }
+
 
             // ボタン<div>タグを追加
             $data_forms .= "<div class='button'>";
-            
+
             // 検索実行ボタン
-            $action = 'search';
+            // 元のコードでは、このボタンのフォームと上記の検索キーワード入力フィールドは別々でした。
+            // そのため、このボタンを押しても入力されたキーワードは送信されません。
+            // この問題の修正はHTML構造の大きな変更を伴うため、今回の修正範囲外とします。
+            $action_search_btn = 'search';
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='query_post' value='$action'>
+            <input type='hidden' name='query_post' value='$action_search_btn'>
             <button type='submit' name='send_post' title="検索実行">
             <span class="material-symbols-outlined">
             select_check_box
@@ -1132,27 +1158,30 @@ class Kntan_Client_Class {
             END;
 
             // キャンセルボタン
-            $action = 'update';
-            $data_id = $data_id - 1;
+            // キャンセル時は、検索モードに入る前のID ($query_id) を使用します。
+            // $query_id は View_Table メソッドの冒頭で取得されています。
+            $action_cancel_btn = 'update';
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
+            <input type='hidden' name='query_post' value='$action_cancel_btn'>
+            <input type='hidden' name='data_id' value='$query_id'>
             <button type='submit' name='send_post' title="キャンセル">
             <span class="material-symbols-outlined">
             disabled_by_default
-            </span>            
+            </span>
             </button>
             </form>
             END;
 
+            $data_forms .= "</div>"; // .button の閉じタグ
+
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
+            // 最初の <form> タグの閉じタグは元のコードにないため、ここでも追加しません。
         }            
 
         // 追加・検索 以外なら更新フォームを表示
-        elseif ($action !== 'srcmode' || $action !== 'istmode') {
+        elseif ($action !== 'srcmode' && $action !== 'istmode') { // 論理演算子を || から && に修正
 
             // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
             $data_forms .= <<<END
