@@ -629,7 +629,20 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                $category = esc_html($row->category);
                $frequency = esc_html($row->frequency);                // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
-                $item_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage), home_url('/')));
+
+                $query_args = array(
+                    'tab_name' => $name,
+                    'data_id' => $id,
+                    'page_start' => $page_start,
+                    'page_stage' => $page_stage,
+                );
+
+                // 現在の 'page' パラメータを維持する
+                if (isset($_GET['page'])) {
+                    $query_args['page'] = sanitize_text_field($_GET['page']);
+                }
+
+                $item_link_url = esc_url(add_query_arg($query_args, home_url('/')));
                 $results[] = <<<END
                 <a href="{$item_link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                     <div class="data_list_item">ID: $id $company_name : $category : 頻度($frequency)</div>
@@ -672,16 +685,36 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
-            $next_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
+            // 現在の 'page' パラメータを維持する
+            $query_args_next = array(
+                'tab_name' => $name,
+                'page_start' => $next_start,
+                'page_stage' => 2,
+                'flg' => $flg
+            );
+            if (isset($_GET['page'])) {
+                $query_args_next['page'] = sanitize_text_field($_GET['page']);
+            }
+            $next_page_link_url = esc_url(add_query_arg($query_args_next, home_url('/')));
             $results_f .= <<<END
-             <a href="{$next_page_link_url}">>></a>
+            <a href="{$next_page_link_url}">></a>
             END;
         }
 
         // 最後へリンク
         if ($current_page < $total_pages) {
             $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
-            $last_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg), home_url('/')));
+            // 現在の 'page' パラメータを維持する
+            $query_args_last = array(
+                'tab_name' => $name,
+                'page_start' => $last_start,
+                'page_stage' => 2,
+                'flg' => $flg
+            );
+            if (isset($_GET['page'])) {
+                $query_args_last['page'] = sanitize_text_field($_GET['page']);
+            }
+            $last_page_link_url = esc_url(add_query_arg($query_args_last, home_url('/')));
             $results_f .= <<<END
              <a href="{$last_page_link_url}">>>|</a>
             END;
@@ -1165,7 +1198,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             'prefecture' => $prefecture,
             'city' => $city,
             'address' => $address,
-            'building' => $building,
+            'building' => $data_src['building'],
         ];
 
         $customer = $data_src['company_name'];
