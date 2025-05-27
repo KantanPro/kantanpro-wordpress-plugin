@@ -343,8 +343,21 @@ class Kntan_Service_Class {
             // データを取得（SQLインジェクション対策でprepareを使用）
             $data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id), ARRAY_A);
     
-            // 商品名の最後に#を追加
-            $data['service_name'] .= '#';
+            // 商品名の末尾に連番（#2, #3, ...）を付与
+            $original_name = $data['service_name'];
+            // すでに #数字 が付いていれば元の名前を抽出
+            if (preg_match('/^(.*)#(\\d+)$/', $original_name, $matches)) {
+                $base_name = $matches[1];
+            } else {
+                $base_name = $original_name;
+            }
+            // 同じベース名の件数をカウント
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $table_name WHERE service_name REGEXP %s",
+                '^' . preg_quote($base_name, '/') . '#[0-9]+$'
+            ));
+            $next_num = $count ? ((int)$count + 2) : 2; // 2から開始
+            $data['service_name'] = $base_name . '#' . $next_num;
     
             // IDを削除
             unset($data['id']);
