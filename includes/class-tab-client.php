@@ -1397,8 +1397,47 @@ class Kntan_Client_Class {
                 $data_id = $last_id_row ? $last_id_row->id : Null;
             }
 
-            // 表題
-            $data_title = '<div class="data_detail_box"><div class="data_detail_title">■ 顧客の詳細（ ID: ' . esc_html($data_id) . ' ）</div>';
+            // ボタン群HTMLの準備
+            $button_group_html = '<div class="button-group" style="display: flex; gap: 8px; margin-left: auto;">';
+
+            // 削除ボタン
+            $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+            $button_group_html .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $button_group_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+            $button_group_html .= '<input type="hidden" name="query_post" value="delete">';
+            $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('削除する', 'ktpwp') . '" onclick="return confirm(\'' . esc_js(__('本当に削除しますか？', 'ktpwp')) . '\')" class="button-style">';
+            $button_group_html .= '<span class="material-symbols-outlined">delete</span>';
+            $button_group_html .= '</button>';
+            $button_group_html .= '</form>';
+
+            // 追加モードボタン
+            $add_action = 'istmode';
+            $next_data_id = $data_id + 1;
+            $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+            $button_group_html .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $button_group_html .= '<input type="hidden" name="data_id" value="">';
+            $button_group_html .= '<input type="hidden" name="query_post" value="' . esc_attr($add_action) . '">';
+            $button_group_html .= '<input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '">';
+            $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('追加する', 'ktpwp') . '" class="button-style">';
+            $button_group_html .= '<span class="material-symbols-outlined">add</span>';
+            $button_group_html .= '</button>';
+            $button_group_html .= '</form>';
+
+            // 検索モードボタン
+            $search_action = 'srcmode';
+            $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+            $button_group_html .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $button_group_html .= '<input type="hidden" name="query_post" value="' . esc_attr($search_action) . '">';
+            $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('検索する', 'ktpwp') . '" class="button-style">';
+            $button_group_html .= '<span class="material-symbols-outlined">search</span>';
+            $button_group_html .= '</button>';
+            $button_group_html .= '</form>';
+            
+            $button_group_html .= '</div>'; // ボタングループ終了
+            
+            // 表題にボタングループを含める
+            $data_title = '<div class="data_detail_box"><div class="data_detail_title" style="display: flex; align-items: center; justify-content: space-between;">
+            <div>■ 顧客の詳細（ ID: ' . esc_html($data_id) . ' ）</div>' . $button_group_html . '</div>';
 
             // メイン更新フォーム
             $data_forms .= '<form method="post" action="">';
@@ -1424,42 +1463,11 @@ class Kntan_Client_Class {
             $data_forms .= '<input type="hidden" name="query_post" value="update">';
             $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
             $data_forms .= '<div class="button">';
-            $data_forms .= '<button type="submit" name="send_post" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
+            $data_forms .= '<button type="submit" name="send_post" title="' . esc_attr__('更新する', 'ktpwp') . '"><span class="material-symbols-outlined">cached</span></button>';
             $data_forms .= '</div>';
             $data_forms .= '</form>';
-
-            // 削除ボタン
-            $data_forms .= '<form method="post" action="">';
-            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
-            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
-            $data_forms .= '<input type="hidden" name="query_post" value="delete">';
-            $data_forms .= '<button type="submit" name="send_post" title="削除する" onclick="return confirm(\'本当に削除しますか？\')">';
-            $data_forms .= '<span class="material-symbols-outlined">delete</span>';
-            $data_forms .= '</button>';
-            $data_forms .= '</form>';
-
-            // 追加モードボタン
-            $add_action = 'istmode';
-            $next_data_id = $data_id + 1;
-            $data_forms .= '<form method="post" action="">';
-            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
-            $data_forms .= '<input type="hidden" name="data_id" value="">';
-            $data_forms .= '<input type="hidden" name="query_post" value="' . esc_attr($add_action) . '">';
-            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '">';
-            $data_forms .= '<button type="submit" name="send_post" title="追加する">';
-            $data_forms .= '<span class="material-symbols-outlined">add</span>';
-            $data_forms .= '</button>';
-            $data_forms .= '</form>';
-
-            // 検索モードボタン
-            $search_action = 'srcmode';
-            $data_forms .= '<form method="post" action="">';
-            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
-            $data_forms .= '<input type="hidden" name="query_post" value="' . esc_attr($search_action) . '">';
-            $data_forms .= '<button type="submit" name="send_post" title="検索する">';
-            $data_forms .= '<span class="material-symbols-outlined">search</span>';
-            $data_forms .= '</button>';
-            $data_forms .= '</form>';
+            
+            // ボタン群は既にタイトル内に配置済み
 
             $data_forms .= '</div>';
         }
