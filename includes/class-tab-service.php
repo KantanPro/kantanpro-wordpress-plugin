@@ -712,23 +712,23 @@ class Kntan_Service_Class {
                 if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : '';
-                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                    $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
                     $required = isset($field['required']) && $field['required'] ? ' required' : '';
-                    $fieldName = $field['name'];
+                    $fieldName = esc_attr($field['name']);
                     $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
                     $label_i18n = esc_html__($label, 'ktpwp');
                     if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>";
+                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
                     } elseif ($field['type'] === 'select') {
                         $options = '';
                         foreach ((array)$field['options'] as $option) {
                             $selected = $value === $option ? ' selected' : '';
-                            $options .= "<option value=\"{$option}\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
+                            $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                         }
                         $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
                         $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
                     } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
+                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
                     }
                 }
 
