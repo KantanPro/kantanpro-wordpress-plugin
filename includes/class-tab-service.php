@@ -87,11 +87,11 @@ class Kntan_Service_Class {
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
         // POSTデーター受信
-        $data_id = isset($_POST['data_id']) ? $_POST['data_id'] : '';
-        $query_post = isset($_POST['query_post']) ? $_POST['query_post'] : '';
-        $service_name = isset($_POST['service_name']) ? $_POST['service_name'] : '';
-        $memo = isset($_POST['memo']) ? $_POST['memo'] : '';
-        $category = isset($_POST['category']) ? $_POST['category'] : '';
+        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+        $query_post = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : '';
+        $service_name = isset($_POST['service_name']) ? sanitize_text_field($_POST['service_name']) : '';
+        $memo = isset($_POST['memo']) ? sanitize_textarea_field($_POST['memo']) : '';
+        $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
         
         // search_fieldの値を設定
         $search_field_value = implode(', ', [
@@ -195,7 +195,7 @@ class Kntan_Service_Class {
         elseif( $query_post == 'search' ){
 
         // SQLクエリを準備（search_fieldを検索対象にする）
-        $search_query = $_POST['search_query'];
+        $search_query = isset($_POST['search_query']) ? sanitize_text_field($_POST['search_query']) : '';
         $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
             // 検索結果が1つある場合の処理
@@ -338,7 +338,7 @@ class Kntan_Service_Class {
         // 複製
         elseif( $query_post == 'duplication' ) {
             // データのIDを取得
-            $data_id = $_POST['data_id'];
+            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
     
             // データを取得
             $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
