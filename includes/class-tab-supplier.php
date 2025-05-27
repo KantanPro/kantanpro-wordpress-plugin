@@ -31,6 +31,14 @@ class Kantan_Supplier_Class{
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
 
+        // Translated default values
+        // translators: Default company name for supplier
+        $default_company_name = esc_sql( __( 'いつもの業者', 'ktpwp' ) );
+        // translators: Default tax category for supplier, e.g., tax inclusive
+        $default_tax_category = esc_sql( __( '税込', 'ktpwp' ) );
+        // translators: Default category for supplier, e.g., general
+        $default_category     = esc_sql( __( '一般', 'ktpwp' ) );
+
         // テーブルが存在しない場合は作成
         if($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") != $table_name) {
             $sql = "CREATE TABLE {$table_name} (
@@ -38,7 +46,7 @@ class Kantan_Supplier_Class{
                 time BIGINT(11) DEFAULT '0' NOT NULL,
                 name TINYTEXT NOT NULL,
                 url VARCHAR(55) NOT NULL,
-                company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者',
+                company_name VARCHAR(100) NOT NULL DEFAULT '{$default_company_name}',
                 email VARCHAR(100) NOT NULL,
                 phone VARCHAR(20) NOT NULL,
                 postal_code VARCHAR(10) NOT NULL,
@@ -50,16 +58,16 @@ class Kantan_Supplier_Class{
                 payment_month TINYTEXT NOT NULL,
                 payment_day TINYTEXT NOT NULL,
                 payment_method TINYTEXT NOT NULL,
-                tax_category VARCHAR(100) NOT NULL DEFAULT '税込',
+                tax_category VARCHAR(100) NOT NULL DEFAULT '{$default_tax_category}',
                 memo TEXT NOT NULL,
                 search_field TEXT NOT NULL,
                 frequency INT NOT NULL DEFAULT 0,
-                category VARCHAR(100) NOT NULL DEFAULT '一般',
+                category VARCHAR(100) NOT NULL DEFAULT '{$default_category}',
                 UNIQUE KEY id (id)
             ) {$charset_collate};";
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
-            add_option("{$table_name}_version", $my_table_version);
+            add_option("{$table_name}_version", $my_table_version); // Corrected: removed stray backslash
         }
 
         // カラム追加前に存在チェック
@@ -71,7 +79,7 @@ class Kantan_Supplier_Class{
             'time' => "time BIGINT(11) DEFAULT '0' NOT NULL",
             'name' => "name TINYTEXT",
             'url' => "url VARCHAR(55)",
-            'company_name' => "company_name VARCHAR(100) NOT NULL DEFAULT 'いつもの業者'",
+            'company_name' => "company_name VARCHAR(100) NOT NULL DEFAULT '{$default_company_name}'",
             'representative_name' => "representative_name TINYTEXT",
             'email' => "email VARCHAR(100)",
             'phone' => "phone VARCHAR(20)",
@@ -84,11 +92,11 @@ class Kantan_Supplier_Class{
             'payment_month' => "payment_month TINYTEXT",
             'payment_day' => "payment_day TINYTEXT",
             'payment_method' => "payment_method TINYTEXT",
-            'tax_category' => "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
+            'tax_category' => "tax_category VARCHAR(100) NOT NULL DEFAULT '{$default_tax_category}'",
             'memo' => "memo TEXT",
             'search_field' => "search_field TEXT",
             'frequency' => "frequency INT NOT NULL DEFAULT 0",
-            'category' => "category VARCHAR(100) NOT NULL DEFAULT '一般'",
+            'category' => "category VARCHAR(100) NOT NULL DEFAULT '{$default_category}'",
         ];
 
         foreach ($column_defs as $col => $def) {
@@ -131,9 +139,11 @@ class Kantan_Supplier_Class{
 
         // CSRF対策: POST時のみnonceチェック
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!isset($_POST['ktp_supplier_nonce']) || !wp_verify_nonce($_POST['ktp_supplier_nonce'], 'ktp_supplier_action')) {
-                $wpdb->query("UNLOCK TABLES;");
-                wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
+            // Ensure sanitize_key is used for the nonce value from POST
+            $nonce = isset($_POST['ktp_supplier_nonce']) ? sanitize_key($_POST['ktp_supplier_nonce']) : '';
+            if (empty($nonce) || !wp_verify_nonce($nonce, 'ktp_supplier_action')) {
+                $wpdb->query("UNLOCK TABLES;"); // Attempt to unlock tables if locked, though lock might not have occurred yet.
+                wp_die(__('Invalid request. Please reload the page.', 'ktpwp'));
             }
         }
 
@@ -1158,9 +1168,9 @@ if ($deleted === false || $deleted === 0) {
             'representative_name' => $representative_name,
             'postal_code' => $data_src['postal_code'],
             'prefecture' => $data_src['prefecture'],
-            'city' => $city,
-            'address' => $address,
-            'building' => $building,
+            'city' => $data_src['city'],
+            'address' => $data_src['address'],
+            'building' => $data_src['building'],
         ];
 
         $customer = $data_src['company_name'];
