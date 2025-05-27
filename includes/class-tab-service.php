@@ -89,12 +89,11 @@ class Kntan_Service_Class {
 
         // CSRF対策: nonceチェック
         if (
-            isset($_POST['_ktp_service_nonce']) &&
+            !isset($_POST['_ktp_service_nonce']) ||
             !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')
         ) {
-            // nonce不正
             $wpdb->query("UNLOCK TABLES;");
-            wp_die(__('セキュリティ検証に失敗しました。ページを再読み込みしてください。', 'ktpwp'));
+            wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
         }
 
         // POSTデーター受信
@@ -672,119 +671,71 @@ class Kntan_Service_Class {
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
 
-                $data_id = $wpdb->insert_id;
-
-                // 詳細表示部分の開始
-                $data_title = <<<END
-                    <div class="data_detail_box">
-                    <h3>■ " . esc_html__('商品の詳細', 'ktpwp') . "</h3>
-                END;
-
-                // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-                $data_forms = <<<END
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var postalCode = document.querySelector('input[name="postal_code"]');
-                    var prefecture = document.querySelector('input[name="prefecture"]');
-                    var city = document.querySelector('input[name="city"]');
-                    var address = document.querySelector('input[name="address"]');
-                    postalCode.addEventListener('blur', function() {
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                        xhr.addEventListener('load', function() {
-                            var response = JSON.parse(xhr.responseText);
-                            if (response.results) {
-                                var data = response.results[0];
-                                prefecture.value = data.address1;
-                                city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                                address.value = ''; // 番地は空欄に
-                            }
-                        });
-                        xhr.send();
-                    });
-                });
-                </script>
-                END;
-
-                // 空のフォームフィールドを生成
-                $data_forms .= '<form method="post" action="">';
-                // nonceフィールド追加
-                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
-                foreach ($fields as $label => $field) {
-                    $value = $action === 'update' ? ${$field['name']} : '';
-                    $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
-                    $required = isset($field['required']) && $field['required'] ? ' required' : '';
-                    $fieldName = esc_attr($field['name']);
-                    $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
-                    $label_i18n = esc_html__($label, 'ktpwp');
-                    if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
-                    } elseif ($field['type'] === 'select') {
-                        $options = '';
-                        foreach ((array)$field['options'] as $option) {
-                            $selected = $value === $option ? ' selected' : '';
-                            $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
-                        }
-                        $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
-                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
-                    } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
+            $data_id = $wpdb->insert_id;
+            // 詳細表示部分の開始
+            $data_title = <<<END
+<div class="data_detail_box">
+<h3>■ " . esc_html__('商品の詳細', 'ktpwp') . "</h3>
+END;
+            // 郵便番号自動入力JS
+            $data_forms = <<<END
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var postalCode = document.querySelector('input[name="postal_code"]');
+    var prefecture = document.querySelector('input[name="prefecture"]');
+    var city = document.querySelector('input[name="city"]');
+    var address = document.querySelector('input[name="address"]');
+    if(postalCode){
+        postalCode.addEventListener('blur', function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
+            xhr.addEventListener('load', function() {
+                var response = JSON.parse(xhr.responseText);
+                if (response.results) {
+                    var data = response.results[0];
+                    prefecture.value = data.address1;
+                    city.value = data.address2 + data.address3;
+                    address.value = '';
+                }
+            });
+            xhr.send();
+        });
+    }
+});
+</script>
+END;
+            // 1フォームでまとめる
+            $data_forms .= '<form method="post" action="">';
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            foreach ($fields as $label => $field) {
+                $value = $action === 'update' ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $fieldName = esc_attr($field['name']);
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+                $label_i18n = esc_html__($label, 'ktpwp');
+                if ($field['type'] === 'textarea') {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
+                } elseif ($field['type'] === 'select') {
+                    $options = '';
+                    foreach ((array)$field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                     }
+                    $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+                } else {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
                 }
-
-                $data_forms .= "<div class='button'>";
-
-                if( $action === 'istmode'){
-                    // 追加実行ボタン
-                    $action = 'insert';
-                    $data_id = $data_id + 1;
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title="<?php echo esc_attr__('追加実行', 'ktpwp'); ?>">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
-                }
-                
-                elseif( $action === 'srcmode'){
-
-                    // 検索実行ボタン
-                    $action = 'search';
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title="<?php echo esc_attr__('検索実行', 'ktpwp'); ?>">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
-                }
-    
-                // キャンセルボタン
-                $action = 'update';
-                $data_id = $data_id - 1;
-                $data_forms .= <<<END
-                <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="<?php echo esc_attr__('キャンセル', 'ktpwp'); ?>">
-                <span class="material-symbols-outlined">
-                disabled_by_default
-                </span>            
-                </button>
-                </form>
-                END;
-
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= '</div>';
+            }
+            $data_forms .= '<div class="button">';
+            // 追加実行ボタン
+            $data_forms .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
+            // 検索実行ボタン
+            $data_forms .= '<button type="submit" name="query_post" value="search" title="' . esc_attr__('検索実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
+            // キャンセルボタン
+            $data_forms .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
+            $data_forms .= '</div></form><div class="add"></div>';
         }
 
         // 空のフォームを表示(検索モードの場合)
