@@ -762,503 +762,509 @@ class Kntan_Service_Class {
 
     function View_Table( $name ) { // $name が信頼できる内部値であると仮定
         global $wpdb;
-        // ... ここに $service_name, $category などの他の初期化が存在する場合 ...
+        $content = ''; // Initialize content string
+        $table_name_full = $wpdb->prefix . 'ktp_' . $name;
 
-        // 現在のアクションを決定しサニタイズする
-        $action = 'update'; // デフォルトアクション
+        // Define fields for this specific tab (service)
+        // This should ideally be a class property or passed to the method
+        $this->fields_definition = [
+            // Translators: Label for the service name input field.\r\n            __('商品名', 'ktpwp') => ['name' => 'service_name', 'type' => 'text', 'required' => true, 'placeholder' => __('商品名を入力', 'ktpwp')],
+            // Translators: Label for the category select field.\r\n            __('カテゴリー', 'ktpwp') => ['name' => 'category', 'type' => 'select', 'options' => $this->get_category_options($table_name_full), 'default' => __('カテゴリーを選択', 'ktpwp'), 'required' => true],
+            // Translators: Label for the memo textarea field.\r\n            __('メモ', 'ktpwp') => ['name' => 'memo', 'type' => 'textarea', 'placeholder' => __('メモを入力', 'ktpwp')]
+        ];
+
+        // Determine current action and sanitize
+        $action = 'update'; // Default action
         $is_post_request = ($_SERVER['REQUEST_METHOD'] === 'POST');
 
         if ($is_post_request && isset($_POST['query_post'])) {
             $action = sanitize_text_field(wp_unslash($_POST['query_post']));
-
-            // View_Table内で処理されるPOSTアクションによるビューモード変更のNonce検証
-            // (例: 「追加モード」または「検索モード」ビューへの切り替え、または「検索キャンセル」)
-            // データ変更アクション (insert, update, delete など) のNonceは
-            // Update_Table メソッドで検証されるべきです。
-            $nonce_value = null;
-            $nonce_action_expected = null;
-            $nonce_field_name = null;
-
-            if ($action === 'istmode') { // 「追加モード」ボタン
-                $nonce_field_name = '_ktp_add_mode_nonce';
-                $nonce_action_expected = 'ktp_add_mode_service';
-            } elseif ($action === 'srcmode' && isset($_POST['_ktp_search_mode_nonce'])) {
-                // これは検索モードに *入る* ボタンのためのものです。
-                // 実際の検索 *実行* (query_post=search) は Update_Table によって処理されます。
-                $nonce_field_name = '_ktp_search_mode_nonce';
-                $nonce_action_expected = 'ktp_search_mode_service';
-            } elseif ($action === 'update' && isset($_POST['_ktp_cancel_search_nonce'])) {
-                // これは「検索キャンセル」ボタン用で、action=update をPOSTしますが、
-                // 固有のNonceフィールドの存在によって識別されます。
-                $nonce_field_name = '_ktp_cancel_search_nonce';
-                $nonce_action_expected = 'ktp_cancel_search_service';
-            }
-
-            if ($nonce_field_name && $nonce_action_expected) {
-                if (!isset($_POST[$nonce_field_name])) {
-                    wp_die(esc_html__('Security check failed: Nonce field missing for view state change.', 'ktpwp'));
-                }
-                $nonce_value = sanitize_text_field(wp_unslash($_POST[$nonce_field_name]));
-                if (!wp_verify_nonce($nonce_value, $nonce_action_expected)) {
-                    wp_die(esc_html__('Security check failed: Invalid nonce for view state change.', 'ktpwp'));
-                }
-            }
+            // Nonce verification for view mode changes
+            $this->verify_view_mode_nonce($action);
         } elseif (!$is_post_request && isset($_GET['action'])) {
-            // GETによってアクションがトリガーされる場合もここでサニタイズ
-            // 通常、GETによる状態変更アクションやモード切り替えはNonceなしでは非推奨
             $action = sanitize_text_field(wp_unslash($_GET['action']));
-            // これらのGETアクションがNonce保護を必要とする場合 (例: リンク用)、URLにNonceが必要になり、
-            // ここで検証が必要。現時点ではアクション値のサニタイズのみ。
+            // Consider nonce for GET actions if they change state
         }
         
-        // $action の元の行:
-        // $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';
-        // これは上記のより堅牢なブロックに置き換えられました。
-        
-        $cookie_name = 'ktp_'. $name . '_id'; // $cookie_name の定義を確認 (例)
+        // Get data_id from cookie or GET parameter
+        $data_id = $this->get_current_data_id($name);
 
-        // ... filter_input を使用した $query_id の決定などの既存コード (これは良い) ...
-
-        // 空のフォームを表示(追加モードの場合)
+        // Handle different actions
         if ($action === 'istmode') {
+            $content .= $this->render_insert_mode_form($name);
+        } elseif ($action === 'srcmode') {
+            $content .= $this->render_search_mode_form($name, $data_id);
+        } else { // Default to 'update' mode (displaying existing data or empty form if no data_id)
+            $content .= $this->render_update_mode_form($name, $data_id);
+        }
 
-            $data_id = 0; // 新規追加なのでIDは0
-            $service_name = '';
-            $memo = '';
-            $category = '';
+        // Common elements: Data list and navigation buttons
+        $content .= $this->render_data_list($name, $data_id);
+        $content .= $this->render_navigation_buttons($name, $data_id, $action);
 
-            // 詳細表示部分の開始とフォームを詳細ボックス内に含める
-            $data_title = '<div class="data_detail_box">' .
-                          '<div class="data_detail_title">■ ' . esc_html__('商品追加中', 'ktpwp') . '</div>';
-            
-            // 郵便番号自動入力JSをdata_titleに追加
-            $data_title .= <<<END
+        // Add messages if any (e.g., after update, delete)
+        if (isset($_GET['message'])) {
+            $message_type = sanitize_text_field($_GET['message']);
+            $message_text = '';
+            if ($message_type === 'updated') {
+                // Translators: Message displayed after a successful update.\r\n                $message_text = __('更新しました。', 'ktpwp');
+            } elseif ($message_type === 'inserted') {
+                // Translators: Message displayed after a successful insertion.\r\n                $message_text = __('追加しました。', 'ktpwp');
+            } elseif ($message_type === '1') { // Corresponds to delete success
+                // Translators: Message displayed after a successful deletion.\r
+                $message_text = __('商品が削除されました。', 'ktpwp');
+            }
+            if ($message_text) {
+                $content = '<div class="notice notice-success is-dismissible ktpwp-notice"><p>' . esc_html($message_text) . '</p></div>' . $content;
+            }
+        }
+
+        return $content;
+    }
+
+    private function verify_view_mode_nonce($action) {
+        $nonce_value = null;
+        $nonce_action_expected = null;
+        $nonce_field_name = null;
+
+        if ($action === 'istmode') {
+            $nonce_field_name = '_ktp_add_mode_nonce';
+            $nonce_action_expected = 'ktp_add_mode_service';
+        } elseif ($action === 'srcmode' && isset($_POST['_ktp_search_mode_nonce'])) {
+            $nonce_field_name = '_ktp_search_mode_nonce';
+            $nonce_action_expected = 'ktp_search_mode_service';
+        } elseif ($action === 'update' && isset($_POST['_ktp_cancel_search_nonce'])) {
+            $nonce_field_name = '_ktp_cancel_search_nonce';
+            $nonce_action_expected = 'ktp_cancel_search_service';
+        }
+
+        if ($nonce_field_name && $nonce_action_expected) {
+            if (!isset($_POST[$nonce_field_name])) {
+                wp_die(esc_html__('Security check failed: Nonce field missing for view state change.', 'ktpwp'));
+            }
+            $nonce_value = sanitize_text_field(wp_unslash($_POST[$nonce_field_name]));
+            if (!wp_verify_nonce($nonce_value, $nonce_action_expected)) {
+                wp_die(esc_html__('Security check failed: Invalid nonce for view state change.', 'ktpwp'));
+            }
+        }
+    }
+
+    private function get_current_data_id($tab_name) {
+        $cookie_name = 'ktp_' . $tab_name . '_id';
+        $data_id = 1; // Default
+        if (isset($_COOKIE[$cookie_name])) {
+            $data_id = intval($_COOKIE[$cookie_name]);
+        } elseif (isset($_GET['data_id'])) {
+            $data_id = intval($_GET['data_id']);
+        }
+        return max(1, $data_id); // Ensure it's at least 1
+    }
+
+    private function render_insert_mode_form($tab_name) {
+        $form_html = '<div class="data_detail_box">';
+        // Translators: Title for the section when adding a new service item.\r\n        $form_html .= '<div class="data_detail_title">■ ' . esc_html__('商品追加中', 'ktpwp') . '</div>';
+        $form_html .= $this->get_postal_code_script(); // Assuming this is still relevant for service tab
+        $form_html .= '<form method="post" action="">';
+        if (function_exists('wp_nonce_field')) {
+            $form_html .= wp_nonce_field('ktp_insert_service', '_ktp_insert_nonce', true, false);
+        }
+        $form_html .= $this->generate_form_fields_html($this->fields_definition, null, false); // false for is_update_mode
+        $form_html .= '<div class="button" style="display: flex; gap: 8px;">';
+        // Translators: Button text for submitting a new service item.\r\n        $form_html .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
+        // Translators: Button text for cancelling the add operation.\r\n        $form_html .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
+        $form_html .= '</div></form><div class="add"></div></div>'; // Closing data_detail_box
+        return $form_html;
+    }
+
+    private function render_search_mode_form($tab_name, $current_data_id) {
+        $form_html = '<div class="data_detail_box">';
+        // Translators: Title for the section when in search mode for services.\r\n        $form_html .= '<div class="data_detail_title">■ ' . esc_html__('商品の詳細（検索モード）', 'ktpwp') . '</div>';
+        $form_html .= '<form method="post" action="">';
+        if (function_exists('wp_nonce_field')) {
+            $form_html .= wp_nonce_field('ktp_search_service', '_ktp_search_nonce', true, false);
+        }
+        // Translators: Placeholder text for the search input field.\r\n        $form_html .= '<div class="form-group"><input type="text" name="search_query" placeholder="' . esc_attr__('フリーワード', 'ktpwp') . '" required></div>';
+        // $form_html .= $search_results_list; // This needs to be handled by Update_Table or AJAX
+        $form_html .= '<div class="button" style="display: flex; gap: 8px;">';
+        // Search execute button
+        // Translators: Button text for executing a search.\r\n        $form_html .= '<button type="submit" name="query_post" value="search" title="' . esc_attr__('検索実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
+        // Cancel button (form inside form is not ideal, consider restructuring or JS for cancel)
+        $form_html .= '</form>'; // Close search form
+
+        // Cancel button - separate form or JS to change query_post and submit main form
+        $form_html .= '<form method="post" action="" style="display: inline-block;">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for cancelling search action.\r\n            $form_html .= wp_nonce_field('ktp_cancel_search_service', '_ktp_cancel_search_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($current_data_id) . '">'; // Or a sensible default
+        $form_html .= '<input type="hidden" name="query_post" value="update">'; // Go back to update view
+        // Translators: Button text for cancelling search.\r\n        $form_html .= '<button type="submit" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
+        $form_html .= '</form>';
+
+        $form_html .= '</div><div class="add"></div></div>'; // Closing data_detail_box
+        return $form_html;
+    }
+
+    private function render_update_mode_form($tab_name, $data_id) {
+        global $wpdb;
+        $table_name_full = $wpdb->prefix . 'ktp_' . $tab_name;
+        $form_html = '';
+
+        $current_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name_full} WHERE id = %d", $data_id));
+
+        if (!$current_data && $data_id > 0) { // Data ID was specified but not found
+            // Try to load the first available record if the current ID is invalid
+            $first_data = $wpdb->get_row("SELECT * FROM {$table_name_full} ORDER BY id ASC LIMIT 1");
+            if ($first_data) {
+                $data_id = $first_data->id;
+                $current_data = $first_data;
+                // Update cookie with the valid ID
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
+                $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), $cookie_path, $cookie_domain);
+            } else {
+                // No data in the table at all, display a message or an empty "insert" like form
+                // Translators: Message shown when no service data is found for display.\r\n                return '<div class="data_detail_box"><p>' . esc_html__('表示できる商品データがありません。最初の商品を追加してください。', 'ktpwp') . '</p>' . $this->render_insert_mode_form($tab_name) . '</div>';
+            }
+        } elseif (!$current_data && $data_id === 0) { // Should be handled by insert_mode, but as a fallback
+             // Translators: Message shown when no service data is available and trying to update (should not happen often).\r\n            return '<div class="data_detail_box"><p>' . esc_html__('商品データが見つかりません。商品を追加してください。', 'ktpwp') . '</p>' . $this->render_insert_mode_form($tab_name) . '</div>';
+        }
+
+        // If $current_data is still null here, it means no data exists at all.
+        // The above block tries to load first data or shows insert form.
+        // If we reach here with $current_data, we proceed to display it.
+
+        $form_html .= '<div class="data_detail_box">';
+        // Translators: Title for the section displaying service details. %s is the service name.\r\n        $detail_title = $current_data ? sprintf(esc_html__('商品の詳細: %s', 'ktpwp'), esc_html($current_data->service_name)) : esc_html__('商品の詳細', 'ktpwp');
+        $form_html .= '<div class="data_detail_title">■ ' . $detail_title . ' (ID: ' . esc_html($data_id) . ')</div>';
+
+        // Image display and upload/delete forms
+        $db_image_url = $current_data ? $current_data->image_url : '';
+        $image_url = $this->get_effective_image_url($data_id, $db_image_url);
+
+        // Translators: Alt text for the service image.\r\n        $form_html .= '<div class="image"><img src="' . esc_url($image_url) . '" alt="' . esc_attr__('商品画像', 'ktpwp') . '" class="product-image" onerror="this.src=\\'' . esc_url(plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg') . '\\'"></div>';
+        $form_html .= '<div class="image_upload_form">';
+        // Image Upload Form
+        $form_html .= '<form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for uploading service image.\r\n            $form_html .= wp_nonce_field('ktp_upload_image_service_' . $data_id, '_ktp_upload_image_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $form_html .= '<input type="hidden" name="tab_name" value="' . esc_attr($tab_name) . '">';
+        $form_html .= '<input type="file" name="image_file" accept="image/jpeg, image/png, image/gif" required>';
+        // Translators: Button text to upload an image.\r\n        $form_html .= '<button type="submit" name="query_post" value="upload_image" title="' . esc_attr__('画像アップロード', 'ktpwp') . '"><span class="material-symbols-outlined">file_upload</span></button>';
+        $form_html .= '</form>';
+        // Image Delete Form
+        $form_html .= '<form action="" method="post" style="display: inline-block;">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for deleting service image.\r\n            $form_html .= wp_nonce_field('ktp_delete_image_service_' . $data_id, '_ktp_delete_image_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $form_html .= '<input type="hidden" name="tab_name" value="' . esc_attr($tab_name) . '">';
+        // Translators: Button text to delete an image.\r\n        $form_html .= '<button type="submit" name="query_post" value="delete_image" title="' . esc_attr__('画像削除', 'ktpwp') . '"><span class="material-symbols-outlined">delete</span></button>';
+        $form_html .= '</form>';
+        $form_html .= '</div>'; // close image_upload_form
+
+        // Main data form
+        $form_html .= '<form method="post" action="" name="service_form">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for updating service data.\r\n            $form_html .= wp_nonce_field('ktp_update_service_' . $data_id, '_ktp_update_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $form_html .= $this->generate_form_fields_html($this->fields_definition, $current_data, true); // true for is_update_mode
+
+        $form_html .= '<div class="button" style="display: flex; gap: 8px;">';
+        // Update button
+        // Translators: Button text to update existing service data.\r\n        $form_html .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('更新実行', 'ktpwp') . '"><span class="material-symbols-outlined">save</span></button>';
+
+        // Delete button (form-in-form, consider JS or separate form)
+        $form_html .= '</form>'; // Close main data form
+
+        // Delete Form (separate for clarity and proper nonce)
+        $form_html .= '<form method="post" action="" style="display:inline-block;" onsubmit="return confirm(\'' . esc_js(__('本当にこの商品を削除しますか？', 'ktpwp')) . '\');">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for deleting a service item.\r\n            $form_html .= wp_nonce_field('ktp_delete_service_' . $data_id, '_ktp_delete_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $form_html .= '<input type="hidden" name="tab_name" value="' . esc_attr($tab_name) . '">';
+        // Translators: Button text to delete a service item.\r\n        $form_html .= '<button type="submit" name="query_post" value="delete" title="' . esc_attr__('削除実行', 'ktpwp') . '"><span class="material-symbols-outlined">delete_forever</span></button>';
+        $form_html .= '</form>';
+
+        // Duplicate button (separate form)
+        $form_html .= '<form method="post" action="" style="display:inline-block;">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for duplicating a service item.\r\n            $form_html .= wp_nonce_field('ktp_duplicate_service_' . $data_id, '_ktp_duplicate_nonce', true, false);
+        }
+        $form_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $form_html .= '<input type="hidden" name="tab_name" value="' . esc_attr($tab_name) . '">';
+        // Translators: Button text to duplicate a service item.\r\n        $form_html .= '<button type="submit" name="query_post" value="duplication" title="' . esc_attr__('複製実行', 'ktpwp') . '"><span class="material-symbols-outlined">content_copy</span></button>';
+        $form_html .= '</form>';
+
+        $form_html .= '</div>'; // close .button div
+        $form_html .= '<div class="add"></div></div>'; // Closing data_detail_box
+        return $form_html;
+    }
+
+    private function render_data_list($tab_name, $current_data_id) {
+        global $wpdb;
+        $table_name_full = $wpdb->prefix . 'ktp_' . $tab_name;
+        $list_html = '<div class="data_list_box">';
+        // Translators: Title for the list of services.\r\n        $list_html .= '<div class="data_list_title">■ ' . esc_html__('商品一覧', 'ktpwp') . '</div>';
+        $list_html .= '<form method="get" action="" id="service_list_filter_form">';
+        // Keep existing query parameters
+        if (isset($_GET['page'])) { // Assuming it's within WP admin or a page with 'page' query var
+            $list_html .= '<input type="hidden" name="page" value="' . esc_attr(sanitize_text_field($_GET['page'])) . '">';
+        }
+        $list_html .= '<input type="hidden" name="tab_name" value="' . esc_attr($tab_name) . '">';
+        
+        // Category filter
+        $categories = $this->get_category_options($table_name_full, true); // true to get all distinct categories
+        $current_category_filter = isset($_GET['category_filter']) ? sanitize_text_field($_GET['category_filter']) : '';
+        // Translators: Label for the category filter dropdown.
+        $list_html .= '<label for="category_filter">' . esc_html__('カテゴリーで絞り込み:', 'ktpwp') . '</label>';
+        $list_html .= '<select name="category_filter" id="category_filter" onchange="document.getElementById(\'service_list_filter_form\').submit();">';
+        // Translators: Default option for category filter, showing all categories.\r\n        $list_html .= '<option value="">' . esc_html__('すべてのカテゴリー', 'ktpwp') . '</option>';
+        foreach ($categories as $category) {
+            $cat_val = esc_attr($category);
+            $selected = ($current_category_filter === $category) ? ' selected' : '';
+            $list_html .= '<option value="' . $cat_val . '"' . $selected . '>' . esc_html($category) . '</option>';
+        }
+        $list_html .= '</select>';
+        // $list_html .= '<input type="submit" value="' . esc_attr__('絞り込み', 'ktpwp') . '">'; // Submit on change instead
+        $list_html .= '</form>';
+
+        // Pagination variables
+        $items_per_page = 20;
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $items_per_page;
+
+        // Build query for data list
+        $query_args = [];
+        $sql = "SELECT SQL_CALC_FOUND_ROWS * FROM {$table_name_full}";
+        if (!empty($current_category_filter)) {
+            $sql .= " WHERE category = %s";
+            $query_args[] = $current_category_filter;
+        }
+        $sql .= " ORDER BY id DESC LIMIT %d OFFSET %d";
+        $query_args[] = $items_per_page;
+        $query_args[] = $offset;
+
+        $results = $wpdb->get_results($wpdb->prepare($sql, $query_args));
+        $total_items = $wpdb->get_var("SELECT FOUND_ROWS()");
+        $total_pages = ceil($total_items / $items_per_page);
+
+        if ($results) {
+            $list_html .= '<ul>';
+            foreach ($results as $row) {
+                $id = intval($row->id);
+                $service_name = esc_html($row->service_name);
+                $category = esc_html($row->category);
+                $class = ($id === $current_data_id) ? ' class="current"' : '';
+
+                $link_url_params = ['tab_name' => $tab_name, 'data_id' => $id];
+                if (isset($_GET['page'])) { $link_url_params['page'] = sanitize_text_field($_GET['page']); }
+                if (!empty($current_category_filter)) { $link_url_params['category_filter'] = $current_category_filter; }
+                if ($current_page > 1) { $link_url_params['paged'] = $current_page; }
+
+                $base_url = remove_query_arg(['message', 'query_post', '_ktp_nonce']); // Clean base URL for links
+                $link_url = add_query_arg($link_url_params, $base_url);
+
+                // Translators: List item in service list. 1: Service Name, 2: Category.\r\n                $list_html .= "<li{$class}><a href=\"" . esc_url($link_url) . "\">" . sprintf(esc_html__('%1$s (%2$s)', 'ktpwp'), $service_name, $category) . "</a></li>";
+            }
+            $list_html .= '</ul>';
+
+            // Pagination
+            if ($total_pages > 1) {
+                $list_html .= '<div class="pagination">';
+                $page_links = paginate_links([
+                    'base' => add_query_arg('paged', '%#%'),
+                    'format' => '',
+                    'prev_text' => __('&laquo; Previous'),
+                    'next_text' => __('Next &raquo;'),
+                    'total' => $total_pages,
+                    'current' => $current_page
+                ]);
+                $list_html .= $page_links;
+                $list_html .= '</div>';
+            }
+        } else {
+            // Translators: Message shown when no services are found in the list (possibly after filtering).\r\n            $list_html .= '<p>' . esc_html__('商品が見つかりません。', 'ktpwp') . '</p>';
+        }
+        $list_html .= '</div>'; // close data_list_box
+        return $list_html;
+    }
+
+    private function render_navigation_buttons($tab_name, $current_data_id, $current_action) {
+        global $wpdb;
+        $table_name_full = $wpdb->prefix . 'ktp_' . $tab_name;
+        $nav_html = '<div class="data_navi_box">';
+
+        // Previous button
+        $prev_id = $wpdb->get_var($wpdb->prepare("SELECT MAX(id) FROM {$table_name_full} WHERE id < %d", $current_data_id));
+        if ($prev_id) {
+            $link_url = add_query_arg(['tab_name' => $tab_name, 'data_id' => $prev_id]);
+            // Translators: Navigation button to go to the previous service item.\r\n            $nav_html .= '<a href="' . esc_url($link_url) . '" title="' . esc_attr__('前へ', 'ktpwp') . '"><span class="material-symbols-outlined">arrow_back_ios</span></a>';
+        } else {
+            // Translators: Disabled navigation button (no previous item).\r\n            $nav_html .= '<span class="material-symbols-outlined disabled" title="' . esc_attr__('前へ', 'ktpwp') . '">arrow_back_ios</span>';
+        }
+
+        // Next button
+        $next_id = $wpdb->get_var($wpdb->prepare("SELECT MIN(id) FROM {$table_name_full} WHERE id > %d", $current_data_id));
+        if ($next_id) {
+            $link_url = add_query_arg(['tab_name' => $tab_name, 'data_id' => $next_id]);
+            // Translators: Navigation button to go to the next service item.\r\n            $nav_html .= '<a href="' . esc_url($link_url) . '" title="' . esc_attr__('次へ', 'ktpwp') . '"><span class="material-symbols-outlined">arrow_forward_ios</span></a>';
+        } else {
+            // Translators: Disabled navigation button (no next item).\r\n            $nav_html .= '<span class="material-symbols-outlined disabled" title="' . esc_attr__('次へ', 'ktpwp') . '">arrow_forward_ios</span></a>';
+        }
+
+        // Add New button (as a form post to change mode)
+        $nav_html .= '<form method="post" action="" style="display:inline-block;">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for switching to add new service mode.\r\n            $nav_html .= wp_nonce_field('ktp_add_mode_service', '_ktp_add_mode_nonce', true, false);
+        }
+        $nav_html .= '<input type="hidden" name="query_post" value="istmode">';
+        // Translators: Navigation button to add a new service item.\r\n        $nav_html .= '<button type="submit" title="' . esc_attr__('商品追加', 'ktpwp') . '"><span class="material-symbols-outlined">add_box</span></button>';
+        $nav_html .= '</form>';
+
+        // Search button (as a form post to change mode)
+        $nav_html .= '<form method="post" action="" style="display:inline-block;">';
+        if (function_exists('wp_nonce_field')) {
+            // Translators: Nonce for switching to search mode for services.\r\n            $nav_html .= wp_nonce_field('ktp_search_mode_service', '_ktp_search_mode_nonce', true, false);
+        }
+        $nav_html .= '<input type="hidden" name="query_post" value="srcmode">';
+        // Translators: Navigation button to search for service items.\r\n        $nav_html .= '<button type="submit" title="' . esc_attr__('商品検索', 'ktpwp') . '"><span class="material-symbols-outlined">search</span></button>';
+        $nav_html .= '</form>';
+
+        $nav_html .= '</div>'; // close data_navi_box
+        return $nav_html;
+    }
+
+    private function get_category_options($table_name, $distinct = false) {
+        global $wpdb;
+        if ($distinct) {
+            $results = $wpdb->get_col("SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != '' ORDER BY category ASC");
+            return $results ? $results : [];
+        }
+        // Predefined options or fetch from a settings page if dynamic
+        // For now, let's assume a fixed list or that they are created on-the-fly
+        // This part might need adjustment based on how categories are managed.
+        // If categories are purely dynamic from existing entries, the $distinct=true path is better.
+        // For a dropdown in the form, you might want a predefined list + an "other" option.
+        // For simplicity, let's use the distinct values from the table for now.
+        $categories = $wpdb->get_col("SELECT DISTINCT category FROM {$table_name} WHERE category IS NOT NULL AND category != '' ORDER BY category ASC");
+        $options = [];
+        if ($categories) {
+            foreach ($categories as $cat) {
+                $options[$cat] = $cat; // value => label
+            }
+        }
+        // Add some default/common categories if the list is empty or to ensure they exist
+        $default_categories = [__('一般', 'ktpwp'), __('おすすめ', 'ktpwp'), __('新商品', 'ktpwp')];
+        foreach ($default_categories as $def_cat) {
+            if (!isset($options[$def_cat])) {
+                $options[$def_cat] = $def_cat;
+            }
+        }
+        return $options;
+    }
+
+    // Helper methods for View_Table
+    private function get_postal_code_script() {
+        return <<<END
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var postalCode = document.querySelector('input[name="postal_code"]');
     var prefecture = document.querySelector('input[name="prefecture"]');
     var city = document.querySelector('input[name="city"]');
     var address = document.querySelector('input[name="address"]');
-    if(postalCode){
+    if(postalCode && prefecture && city && address){
         postalCode.addEventListener('blur', function() {
+            if (!postalCode.value) return;
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-            xhr.addEventListener('load', function() {
-                var response = JSON.parse(xhr.responseText);
-                if (response.results) {
-                    var data = response.results[0];
-                    prefecture.value = data.address1;
-                    city.value = data.address2 + data.address3;
-                    address.value = '';
+            xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + encodeURIComponent(postalCode.value));
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.results && response.results.length > 0) {
+                            var result = response.results[0];
+                            prefecture.value = result.address1 || '';
+                            city.value = result.address2 || '';
+                            address.value = result.address3 || '';
+                        }
+                    } catch (e) {
+                        // console.error('Error parsing JSON response from ZipCloud API:', e);
+                    }
                 }
-            });
+            };
+            xhr.onerror = function() {
+                // console.error('Network error when trying to fetch address from ZipCloud API.');
+            };
             xhr.send();
         });
     }
 });
 </script>
 END;
-            // 1フォームでまとめる - これもdata_titleに追加
-            $data_title .= '<form method="post" action="">';
-            // if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
-            if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_insert_service', '_ktp_insert_nonce', true, false); } // New specific nonce for insert
-            foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : '';
-                $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
-                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // ここを修正
-                $fieldName = esc_attr($field['name']);
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
-                $label_i18n = esc_html__($label, 'ktpwp');
-                if ($field['type'] === 'textarea') {
-                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
-                } elseif ($field['type'] === 'select') {
-                    $options = '';
-                    foreach ((array)$field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : '';
-                        $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
-                    }
-                    $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
-                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
-                } else {
-                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
-                }
-            }
-            $data_title .= '<div class="button" style="display: flex; gap: 8px;">';
-            // 追加実行ボタン
-            $data_title .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
-            // キャンセルボタン
-            $data_title .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
-            $data_title .= '</div></form><div class="add"></div>';
-            
-            // data_detail_boxの閉じタグを追加
-            $data_title .= '</div>';
-        }
-
-        // 空のフォームを表示(検索モードの場合)
-        elseif ($action === 'srcmode') {
-
-            // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <div class="data_detail_title">■ <?php echo esc_html__('商品の詳細（検索モード）', 'ktpwp'); ?></div>
-            END;
-
-            // 検索フォームを生成
-            $data_forms = '<form method="post" action="">';
-            // nonceフィールド追加
-            // if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_search_service', '_ktp_search_nonce', true, false); } // New specific nonce for search
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
-            // 検索リストを生成
-            $data_forms .= $search_results_list;
-            // ボタン<div>タグを追加
-            $data_forms .= "<div class='button' style='display: flex; gap: 8px;'>";
-            // 検索実行ボタン
-            $action_search = 'search';
-            // $nonce_field_search = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
-            $nonce_field_search = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_search_service', '_ktp_search_nonce', true, false) : ''; // New specific nonce for search
-            $data_forms .= "<form method='post' action='' style='display: inline-block;'>";
-            $data_forms .= $nonce_field_search;
-            $data_forms .= "<input type='hidden' name='query_post' value='" . esc_attr($action_search) . "'>";
-            $data_forms .= "<button type='submit' name='send_post' title='" . esc_attr__('検索実行', 'ktpwp') . "'>";
-            $data_forms .= "<span class='material-symbols-outlined'>select_check_box</span>";
-            $data_forms .= "</button></form>";
-            // キャンセルボタン
-            $action_cancel = 'update';
-            $data_id_cancel = $data_id - 1;
-            // $nonce_field_cancel = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce, not strictly necessary for cancel but good for consistency if it were a state-changing cancel
-            $nonce_field_cancel = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_cancel_search_service', '_ktp_cancel_search_nonce', true, false) : ''; // New specific nonce for cancel search (though likely just a redirect)
-            $data_forms .= "<form method='post' action='' style='display: inline-block;'>";
-            $data_forms .= $nonce_field_cancel;
-            $data_forms .= "<input type='hidden' name='data_id' value=''>";
-            $data_forms .= "<input type='hidden' name='query_post' value='" . esc_attr($action_cancel) . "'>";
-            $data_forms .= "<input type='hidden' name='data_id' value='" . esc_attr($data_id_cancel) . "'>";
-            $data_forms .= "<button type='submit' name='send_post' title='" . esc_attr__('キャンセル', 'ktpwp') . "'>";
-            $data_forms .= "<span class='material-symbols-outlined'>disabled_by_default</span>";
-            $data_forms .= "</button></form>";
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= '</div>';
-        }            
-
-        // 追加・検索 以外なら更新フォームを表示
-        // elseif ($action !== 'srcmode' || $action !== 'istmode') { // 元の誤った条件
-        elseif ($action !== 'srcmode' && $action !== 'istmode') { // 修正された論理条件
-
-            // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-            $data_forms .= <<<END
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var postalCode = document.querySelector('input[name="postal_code"]');
-                var prefecture = document.querySelector('input[name="prefecture"]');
-                var city = document.querySelector('input[name="city"]');
-                var address = document.querySelector('input[name="address"]');
-                postalCode.addEventListener('blur', function() {
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                    xhr.addEventListener('load', function() {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.results) {
-                            var data = response.results[0];
-                            prefecture.value = data.address1;
-                            city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                            address.value = ''; // 番地は空欄に
-                        }
-                    });
-                    xhr.send();
-                });
-            });
-            </script>
-            END;
-            
-            // データを取得
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'ktp_' . $name;
-            
-            // データを取得
-            $query = "SELECT * FROM {$table_name} WHERE id = %d";
-            $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));            $image_url = '';
-            foreach ($post_row as $row) {
-                $image_url = esc_html($row->image_url);
-            }
-            
-            // 画像URLが空または無効な場合、デフォルト画像を使用
-            if (empty($image_url)) {
-                $image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
-            }
-            
-            // アップロード画像が存在するか確認
-            $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
-            $upload_file = $upload_dir . $data_id . '.jpeg';
-            if (file_exists($upload_file)) {
-                $plugin_url = plugin_dir_url(dirname(__FILE__));
-                $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
-            }
-            
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"" . esc_attr__('商品画像', 'ktpwp') . "\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
-            // 商品画像アップロードフォーム
-            // $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
-            $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_upload_image_service_' . $data_id, '_ktp_upload_image_nonce', true, false) : ''; // New specific nonce for image upload
-            $data_forms .= '<form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">';
-            $data_forms .= $nonce_field_upload;
-            $data_forms .= '<div class="file-upload-container">';
-            $data_forms .= '<input type="file" name="image" class="file-input">';
-            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
-            $data_forms .= '<input type="hidden" name="query_post" value="upload_image">';
-            $data_forms .= '<button type="submit" class="upload-btn" title="画像をアップロード">';
-            $data_forms .= '<span class="material-symbols-outlined">upload</span>';
-            $data_forms .= '</button>';
-            $data_forms .= '</div>';
-            $data_forms .= '</form>';
-            $data_forms .= '<script>function checkImageUpload(form) { if (!form.image.value) { alert("画像が選択されていません。アップロードする画像を選択してください。"); return false; } return true; }</script>';
-
-            // 商品画像削除ボタン
-            // $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
-            $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_delete_image_service_' . $data_id, '_ktp_delete_image_nonce', true, false) : ''; // New specific nonce for image delete
-            $data_forms .= '<form method="post" action="">';
-            $data_forms .= $nonce_field_delete;
-            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
-            $data_forms .= '<input type="hidden" name="query_post" value="delete_image">';
-            $data_forms .= '<button type="submit" name="send_post" title="削除する" onclick="return confirm(\'本当に削除しますか？\')">';
-            $data_forms .= '<span class="material-symbols-outlined">delete</span>';
-            $data_forms .= '</button>';
-            $data_forms .= '</form>';
-
-            $data_forms .= '</div>';
-            
-            $data_forms .= "<div class=\"add\">";
-            // ここで不要な空フォームは出力しない
-            // cookieに保存されたIDを取得
-            $cookie_name = 'ktp_'. $name . '_id';
-            if (isset($_GET['data_id'])) {
-                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-            } elseif (isset($_COOKIE[$cookie_name])) {
-                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-            } else {
-                $data_id = $last_id_row ? $last_id_row->id : Null;
-            }
-
-            // ボタンHTMLを格納する変数
-            $action_buttons_html = '<div class="button-group" style="display: flex; gap: 8px;">';
-
-            // 削除ボタン
-            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // 修正前
-            $delete_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field( 'ktp_delete_service_' . $data_id, '_ktp_delete_nonce', true, false ) : ''; // 修正後：削除アクション専用のNonce
-            $action_buttons_html .= <<<END
-            <form method="post" action="" style="display: inline-block;">
-            {$delete_nonce_html}
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="delete">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm(\\\'本当に削除しますか？\\\')">
-                    <span class="material-symbols-outlined">
-                        delete
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 複製ボタン
-            // $duplicate_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // 複製や他のアクションは共通のNonceを使用 (Old)
-            $duplicate_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_duplicate_service_' . $data_id, '_ktp_duplicate_nonce', true, false) : ''; // New specific nonce for duplication
-            $action_buttons_html .= <<<END
-            <form method="post" action="" style="display: inline-block;">
-            {$duplicate_nonce_html}
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="duplication">
-                <button type="submit" name="send_post" title="複製する">
-                    <span class="material-symbols-outlined">
-                    content_copy
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 追加モードボタン
-            $add_action = 'istmode';
-            $next_data_id = $data_id + 1; // 複製や新規追加時のIDとして利用する想定
-            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_add_mode_service', '_ktp_add_mode_nonce', true, false) : ''; // New specific nonce for add mode button
-            $action_buttons_html .= <<<END
-            <form method='post' action='' style="display: inline-block;">
-            $nonce_field
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$add_action'>
-                <input type='hidden' name='data_id' value='$next_data_id'>
-                <button type='submit' name='send_post' title="追加する">
-                    <span class="material-symbols-outlined">
-                    add
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 検索モードボタン
-            $search_action = 'srcmode';
-            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_search_mode_service', '_ktp_search_mode_nonce', true, false) : ''; // New specific nonce for search mode button
-            $action_buttons_html .= <<<END
-            <form method='post' action='' style="display: inline-block;">
-            $nonce_field
-                <input type='hidden' name='query_post' value='$search_action'>
-                <button type='submit' name='send_post' title="検索する">
-                    <span class="material-symbols-outlined">
-                    search
-                    </span>
-                </button>
-            </form>
-            END;
-            $action_buttons_html .= '</div>'; // button-group の閉じタグ
-
-            // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <div class="data_detail_title">■ 商品の詳細（ ID： $data_id ） $action_buttons_html</div>
-            END;
-            
-            // 更新フォームの開始
-            $data_forms .= "<form name='service_form' method='post' action=''>";
-            // if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_update_service_' . $data_id, '_ktp_update_nonce', true, false); } // New specific nonce for update
-            foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : '';
-                $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
-                $required = isset($field['required']) && $field['required'] ? ' required' : '';
-                $fieldName = esc_attr($field['name']);
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
-                $label_i18n = esc_html__($label, 'ktpwp');
-                if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
-                } elseif ($field['type'] === 'select') {
-                    $options = '';
-                    foreach ((array)$field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : '';
-                        $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
-                    }
-                    $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
-                } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
-                }
-            }
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"update\">";
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
-            $data_forms .= "<div class='button'>";
-            $data_forms .= "<button type=\"submit\" name=\"send_post\" title=\"更新する\"><span class=\"material-symbols-outlined\">cached</span></button>";
-            $data_forms .= "</div>";
-            $data_forms .= "</form>";
-
-            // 検索リストを生成
-            if (!isset($search_results_list)) {
-                $search_results_list = '';
-            }
-            // $data_forms .= $search_results_list; // ボタンを移動したので、ここでは追加しない
-
-            // 削除・複製・追加・検索は個別フォーム＋nonceで出力していた箇所を削除
-            // $data_forms .= <<<END
-            // ... (削除されるボタンのHTML) ...
-            // END;
-            // ... (削除されるボタンのHTML) ...
-            // END;
-            // ... (削除されるボタンのHTML) ...
-            // END;
-            // ... (削除されるボタンのHTML) ...
-            // END;
-        }
-                            
-        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
-        
-        // 詳細表示部分の終了
-        $div_end = <<<END
-            </div> <!-- data_detail_boxの終了 -->
-        </div> <!-- data_contentsの終了 -->
-        END;
-
-        // -----------------------------
-        // テンプレート印刷
-        // -----------------------------
-
-        // Print_Classのパスを指定
-        require_once( dirname( __FILE__ ) . '/class-print.php' );
-
-        // データを指定
-        $data_src = [
-            'service_name' => $service_name,
-            'category' => $category,
-            'image_url' => $image_url
-        ];
-
-        $customer = $data_src['service_name'];
-        $data = [
-            'service_name' => $service_name,
-            'category' => $category,
-            'image_url' => $image_url
-        ];
-
-        $print_html = new Print_Class($data);
-        $print_html = $print_html->generateHTML();
-
-        // PHP
-        $print_html = json_encode($print_html);  // JSON形式にエンコード
-
-        // JavaScript
-        $print = <<<END
-        <script>
-            var isPreviewOpen = false;            function printContent() {
-                var printContent = $print_html;
-                var printWindow = window.open('', '_blank');
-                printWindow.document.open();
-                printWindow.document.write('<html><head><title>印刷</title></head><body>');
-                printWindow.document.write(printContent);
-                printWindow.document.write('<script>window.onafterprint = function(){ window.close(); }<\/script>');
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.print();  // Add this line
-                
-                // 印刷後、プレビューが開いていれば閉じる
-                if (isPreviewOpen) {
-                    togglePreview();
-                }
-            }
-
-            function togglePreview() {
-                var previewWindow = document.getElementById('previewWindow');
-                var previewButton = document.getElementById('previewButton');
-                if (isPreviewOpen) {
-                    previewWindow.style.display = 'none';
-                    previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="プレビュー">preview</span>';
-                    isPreviewOpen = false;
-                } else {
-                    var printContent = $print_html;
-                    previewWindow.innerHTML = printContent;
-                    previewWindow.style.display = 'block';
-                    previewButton.innerHTML = '<span class="material-symbols-outlined" aria-label="閉じる">close</span>';
-                    isPreviewOpen = true;
-                }
-            }
-
-            // about:blankを閉じる
-            // window.onafterprint = function() {
-            //     window.close();
-            // }
-
-        </script>        <div class="controller">
-            <div class="printer">
-                <button id="previewButton" onclick="togglePreview()" title="プレビュー">
-                    <span class="material-symbols-outlined" aria-label="プレビュー">preview</span>
-                </button>
-                <button onclick="printContent()" title="印刷する">
-                    <span class="material-symbols-outlined" aria-label="印刷">print</span>
-                </button>
-            </div>        </div>
-        <div class="workflow">
-        </div>
-        <div id="previewWindow" style="display: none;"></div>
-        END;
-
-        // コンテンツを返す
-        $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
-        return $content;
-        
     }
 
+    private function get_effective_image_url($data_id, $db_image_url) {
+        $image_url = $db_image_url ? esc_url($db_image_url) : '';
+
+        $upload_dir_path_base = plugin_dir_path(dirname(__FILE__)) . 'images/upload/';
+        $upload_url_base = plugin_dir_url(dirname(__FILE__)) . 'images/upload/';
+        
+        $potential_image_filename = $data_id . '.jpeg'; // Assuming jpeg, adjust if other types are possible
+
+        if ($data_id && file_exists($upload_dir_path_base . $potential_image_filename)) {
+            $image_url = $upload_url_base . $potential_image_filename;
+        } elseif (empty($image_url)) {
+            $image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
+        }
+        return $image_url;
+    }
+
+    private function generate_form_fields_html($fields_definition, $current_data, $is_update_mode) {
+        $form_html = '';
+        foreach ($fields_definition as $label => $field) {
+            $value = '';
+            if ($is_update_mode) {
+                $value = isset($current_data->{$field['name']}) ? $current_data->{$field['name']} : '';
+            }
+            // For insert mode, $value remains empty or uses a default if specified in $field definition
+
+            $pattern_attr = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
+            $required_attr = isset($field['required']) && $field['required'] ? ' required' : '';
+            $field_name_attr = esc_attr($field['name']);
+            $placeholder_attr = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+            $label_i18n = esc_html__($label, 'ktpwp');
+
+            $form_html .= "<div class=\"form-group\"><label>{$label_i18n}：</label> ";
+            if ($field['type'] === 'textarea') {
+                $form_html .= "<textarea name=\"{$field_name_attr}\"{$pattern_attr}{$required_attr}>" . esc_textarea($value) . "</textarea>";
+            } elseif ($field['type'] === 'select') {
+                $options_html = '';
+                if (!empty($field['options']) && is_array($field['options'])) {
+                    foreach ($field['options'] as $option_value => $option_label) {
+                        // If options is simple array ['val1', 'val2'], use value as label too
+                        $opt_val = is_string($option_value) || is_numeric($option_value) ? $option_value : $option_label;
+                        $selected_attr = ($value === $opt_val) ? ' selected' : '';
+                        $options_html .= "<option value=\"" . esc_attr($opt_val) . "\"{$selected_attr}>" . esc_html__($option_label, 'ktpwp') . "</option>";
+                    }
+                }
+                $default_option_label = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : esc_html__('選択してください', 'ktpwp');
+                $form_html .= "<select name=\"{$field_name_attr}\"{$required_attr}><option value=\"\">{$default_option_label}</option>{$options_html}</select>";
+            } else { // text, email, number, etc.
+                $form_html .= "<input type=\"" . esc_attr($field['type']) . "\" name=\"{$field_name_attr}\" value=\"" . esc_attr($value) . "\"{$pattern_attr}{$required_attr}{$placeholder_attr}>";
+            }
+            $form_html .= "</div>";
+        }
+        return $form_html;
+    }
+    
+    // Placeholder for $this->fields_definition, assuming it's a class property
+    // protected $fields_definition = []; // Initialize in constructor or elsewhere
+
+} // End of Kntan_Service_Class
 }
-} // class_exists

@@ -12,6 +12,7 @@ if (!class_exists('Kntan_Client_Class')) {
         // -----------------------------
     function Create_Table($tab_name) {
         global $wpdb;
+        // translators: Version number for the client data table.
         $my_table_version = '1.0.1';
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
         $charset_collate = $wpdb->get_charset_collate();
@@ -19,25 +20,45 @@ if (!class_exists('Kntan_Client_Class')) {
         $columns_def = [
             "id MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
             "time BIGINT(11) DEFAULT '0' NOT NULL",
+            // translators: Database column comment: Client's name or contact person's name.
             "name TINYTEXT",
+            // translators: Database column comment: Client's website URL.
             "url VARCHAR(55)",
+            // translators: Database column comment: Client's company name. Default is '初めてのお客様' (New Customer).
             "company_name VARCHAR(100) NOT NULL DEFAULT '初めてのお客様'",
+            // translators: Database column comment: Client's representative name.
             "representative_name TINYTEXT",
+            // translators: Database column comment: Client's email address.
             "email VARCHAR(100)",
+            // translators: Database column comment: Client's phone number.
             "phone VARCHAR(20)",
+            // translators: Database column comment: Client's postal code.
             "postal_code VARCHAR(10)",
+            // translators: Database column comment: Client's prefecture.
             "prefecture TINYTEXT",
+            // translators: Database column comment: Client's city.
             "city TINYTEXT",
+            // translators: Database column comment: Client's street address.
             "address TEXT",
+            // translators: Database column comment: Client's building name.
             "building TINYTEXT",
+            // translators: Database column comment: Client's closing day for billing.
             "closing_day TINYTEXT",
+            // translators: Database column comment: Client's payment month for billing.
             "payment_month TINYTEXT",
+            // translators: Database column comment: Client's payment day for billing.
             "payment_day TINYTEXT",
+            // translators: Database column comment: Client's preferred payment method.
             "payment_method TINYTEXT",
+            // translators: Database column comment: Client's tax category (e.g., tax included, tax excluded). Default is '税込' (Tax Included).
             "tax_category VARCHAR(100) NOT NULL DEFAULT '税込'",
+            // translators: Database column comment: Memo for client.
             "memo TEXT",
+            // translators: Database column comment: Concatenated field for searching purposes.
             "search_field TEXT",
+            // translators: Database column comment: Frequency of interaction or access.
             "frequency INT NOT NULL DEFAULT 0",
+            // translators: Database column comment: Client category. Default is '一般' (General).
             "category VARCHAR(100) NOT NULL DEFAULT '一般'",
             "UNIQUE KEY id (id)"
         ];
@@ -134,6 +155,7 @@ if (!class_exists('Kntan_Client_Class')) {
             }
 
             if (!empty($nonce_action) && !$verified) {
+                // translators: Error message displayed when a security check (nonce verification) fails.
                 wp_die(esc_html__('Security check failed. Please try again.', 'ktpwp'));
             }
         }
@@ -240,7 +262,9 @@ if (!class_exists('Kntan_Client_Class')) {
                 $redirect_url = add_query_arg([
                     'tab_name' => $tab_name,
                     // 'data_id' => $data_id, // Keep current context if any, or clear
+                    // translators: URL parameter value indicating search mode.
                     'query_post' => 'srcmode', // Stay in search mode to display multiple results message/list
+                    // translators: URL parameter value indicating that search results are stored in the session for the 'client' tab.
                     'search_results_key' => 'client' // Indicate that results are in session
                 ], admin_url('admin.php?page=ktpwp-plugin'));
                 wp_safe_redirect($redirect_url);
@@ -248,12 +272,15 @@ if (!class_exists('Kntan_Client_Class')) {
             } else {
                 $wpdb->query("UNLOCK TABLES;"); // Reinstated
                 if (!session_id()) { session_start(); }
+                // translators: Message displayed when a search yields no results.
                 $_SESSION['ktp_search_message_client'] = __('検索結果はありませんでした。', 'ktpwp');
                 $redirect_url = add_query_arg([
                     'tab_name' => $tab_name,
                     // 'data_id' => $data_id, // Keep current context
+                    // translators: URL parameter value indicating search mode. (Duplicate, consider if needed in this context too)
                     'query_post' => 'srcmode',
                     'search_query' => $search_query_term,
+                    // translators: URL parameter value indicating that no search results were found.
                     'no_results' => '1'
                 ], admin_url('admin.php?page=ktpwp-plugin'));
                 wp_safe_redirect($redirect_url);
@@ -281,6 +308,7 @@ if (!class_exists('Kntan_Client_Class')) {
                 error_log('KTPWP Insert error: ' . $wpdb->last_error);
                 $wpdb->query("UNLOCK TABLES;"); // Reinstated
                 // Redirect with error message or handle error display
+                // translators: URL parameter value indicating an error occurred during data insertion.
                 $redirect_url = add_query_arg(['tab_name' => $tab_name, 'query_post' => 'istmode', 'insert_error' => '1'], admin_url('admin.php?page=ktpwp-plugin'));
                 wp_safe_redirect($redirect_url);
                 exit;
@@ -305,6 +333,7 @@ if (!class_exists('Kntan_Client_Class')) {
     function View_Table($name) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $name;
+        // translators: Base admin URL for the plugin page. This is used to construct various links.
         $base_admin_url = admin_url('admin.php?page=ktpwp-plugin'); // Define base URL for plugin page
 
         if (!session_id() && (isset($_GET['search_results_key']) || isset($_GET['no_results']) || isset($_GET['insert_error']))) {
@@ -336,6 +365,7 @@ if (!class_exists('Kntan_Client_Class')) {
             }
 
             if (!empty($nonce_action_key) && !$nonce_valid) {
+                // translators: Error message displayed when a security check for view state change fails.
                 wp_die(esc_html__('Security check failed for view state change. Please try again.', 'ktpwp'));
             }
             
@@ -410,7 +440,7 @@ if (!class_exists('Kntan_Client_Class')) {
 
         // $view_mode is already defined earlier in the function from $_GET['view_mode']
         // $list_title_text is also already defined based on $view_mode
-
+        // translators: Title for the data list box. Content varies based on view_mode (e.g., "Client List", "Order History"). This string is dynamically populated.
         $data_list_html .= '<div class="data_contents"><div class="data_list_box"><div class="data_list_title">' . esc_html($list_title_text) . '</div>';
         $data_list_html .= '<div class="data_list_items">'; // Wrapper for items
 
@@ -502,11 +532,11 @@ if (!class_exists('Kntan_Client_Class')) {
             /* translators: Form field label: Email. */
             'メール' => ['type' => 'email', 'name' => 'email'],
             /* translators: Form field label: URL. */
-            'URL' => ['type' => 'text', 'name' => 'url', 'placeholder' => 'https://....'],
+            'URL' => ['type' => 'text', 'name' => 'url', 'placeholder' => /* translators: Placeholder text for URL input. Example: https://.... */ 'https://....'],
             /* translators: Form field label: Representative name. */
             '代表者名' => ['type' => 'text', 'name' => 'representative_name', 'placeholder' => /* translators: Placeholder text for representative name input. */ __('代表者名', 'ktpwp')],
             /* translators: Form field label: Phone number. */
-            '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\d*', 'placeholder' => /* translators: Placeholder text for phone number input. Instructs to use half-width numbers without hyphens. */ __('半角数字 ハイフン不要', 'ktpwp')],
+            '電話番号' => ['type' => 'text', 'name' => 'phone', 'pattern' => '\\\\d*', 'placeholder' => /* translators: Placeholder text for phone number input. Instructs to use half-width numbers without hyphens. */ __('半角数字 ハイフン不要', 'ktpwp')],
             /* translators: Form field label: Postal code. */
             '郵便番号' => ['type' => 'text', 'name' => 'postal_code', 'pattern' => '[0-9]*', 'placeholder' => /* translators: Placeholder text for postal code input. Instructs to use half-width numbers without hyphens. Note: This string is shared with phone number. */ __('半角数字 ハイフン不要', 'ktpwp')],
             /* translators: Form field label: Prefecture. */
@@ -518,19 +548,19 @@ if (!class_exists('Kntan_Client_Class')) {
             /* translators: Form field label: Building name. */
             '建物名' => ['type' => 'text', 'name' => 'building'],
             /* translators: Form field label: Closing day. */
-            '締め日' => ['type' => 'select', 'name' => 'closing_day', 'options' => ['5日', '10日', '15日', '20日', '25日', '末日', 'なし'], 'default' => 'なし'],
+            '締め日' => ['type' => 'select', 'name' => 'closing_day', 'options' => [/* translators: Closing day option: 5th of the month */ '5日', /* translators: Closing day option: 10th of the month */ '10日', /* translators: Closing day option: 15th of the month */ '15日', /* translators: Closing day option: 20th of the month */ '20日', /* translators: Closing day option: 25th of the month */ '25日', /* translators: Closing day option: End of month */ '末日', /* translators: Closing day option: None */ 'なし'], 'default' => /* translators: Default closing day option: None */ 'なし'],
             /* translators: Form field label: Payment month. */
-            '支払月' => ['type' => 'select', 'name' => 'payment_month', 'options' => ['今月', '翌月', '翌々月', 'その他'], 'default' => 'その他'],
+            '支払月' => ['type' => 'select', 'name' => 'payment_month', 'options' => [/* translators: Payment month option: This month */ '今月', /* translators: Payment month option: Next month */ '翌月', /* translators: Payment month option: Month after next */ '翌々月', /* translators: Payment month option: Other */ 'その他'], 'default' => /* translators: Default payment month option: Other */ 'その他'],
             /* translators: Form field label: Payment day. */
-            '支払日' => ['type' => 'select', 'name' => 'payment_day', 'options' => ['即日', '5日', '10日', '15日', '20日', '25日', '末日'], 'default' => '即日'],
+            '支払日' => ['type' => 'select', 'name' => 'payment_day', 'options' => [/* translators: Payment day option: Same day */ '即日', /* translators: Payment day option: 5th of the month */ '5日', /* translators: Payment day option: 10th of the month */ '10日', /* translators: Payment day option: 15th of the month */ '15日', /* translators: Payment day option: 20th of the month */ '20日', /* translators: Payment day option: 25th of the month */ '25日', /* translators: Payment day option: End of month */ '末日'], 'default' => /* translators: Default payment day option: Same day */ '即日'],
             /* translators: Form field label: Payment method. */
-            '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => ['銀行振込（後）','銀行振込（前）', 'クレジットカード', '現金集金'], 'default' => '銀行振込（前）'],
+            '支払方法' => ['type' => 'select', 'name' => 'payment_method', 'options' => [/* translators: Payment method option: Bank transfer (postpayment) */ '銀行振込（後）',/* translators: Payment method option: Bank transfer (prepayment) */'銀行振込（前）', /* translators: Payment method option: Credit card */ 'クレジットカード', /* translators: Payment method option: Cash collection */ '現金集金'], 'default' => /* translators: Default payment method option: Bank transfer (prepayment) */ '銀行振込（前）'],
             /* translators: Form field label: Tax category. */
-            '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => ['外税', '内税'], 'default' => '内税'],
+            '税区分' => ['type' => 'select', 'name' => 'tax_category', 'options' => [/* translators: Tax category option: Tax excluded */ '外税', /* translators: Tax category option: Tax included */ '内税'], 'default' => /* translators: Default tax category option: Tax included */ '内税'],
             /* translators: Form field label: Memo. */
             'メモ' => ['type' => 'textarea', 'name' => 'memo'],
             /* translators: Form field label: Category. */
-            'カテゴリー' => ['type' => 'text', 'name' => 'category', 'default' => '一般', 'suggest' => true],
+            'カテゴリー' => ['type' => 'text', 'name' => 'category', 'default' => /* translators: Default category for a client. */ '一般', 'suggest' => true],
         ];
 
         // Main form (for Insert or Update)
