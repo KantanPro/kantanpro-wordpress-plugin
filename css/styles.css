@@ -59,16 +59,16 @@
   height: 32px !important;
   display: inline-block;
   object-fit: cover;
+}
 
 /* データ詳細タイトル・リストタイトルのスタイル */
 .data_detail_title,
 .data_list_title {
-  font-weight: bold;
-  background-color: rgba(173, 216, 230, 0.3); /* 控えめな水色の背景色 */
+  font-weight: 700; /* より太い太字に */
+  background-color: rgba(173, 216, 230, 0.4); /* 少し濃い目の水色の背景色 */
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 15px;
-}
 }
 
 /* ログイン中ユーザーのアイコンを丸くする */
