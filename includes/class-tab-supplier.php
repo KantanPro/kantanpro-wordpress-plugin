@@ -389,7 +389,7 @@ if ($deleted === false || $deleted === 0) {
             global $wp;
             $current_page_id = get_queried_object_id();
             $base_page_url = add_query_arg(array('page_id' => $current_page_id), home_url($wp->request));
-            $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
+            $search_results_html = "<div class='data_contents'><div class='search_list_box'><div class='data_list_title'>■ 検索結果が複数あります！</div><ul>";
             foreach ($results as $row) {
                 $id = esc_html($row->id);
                 $company_name = esc_html($row->company_name);
@@ -644,7 +644,7 @@ if ($deleted === false || $deleted === 0) {
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <h3>■ 協力会社リスト（レンジ： $query_limit ）</h3>
+            <div class="data_list_title">■ 協力会社リスト（レンジ： $query_limit ）</div>
         END;
         
        // スタート位置を決める
@@ -816,7 +816,7 @@ if ($deleted === false || $deleted === 0) {
         if (!$post_row || count($post_row) === 0) {
             // data_idがURLで指定されている場合は、最大IDにフォールバックせずエラー表示
             if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
-                // echo '<div class="data_detail_box"><h3>■ 協力会社の詳細</h3><div style="color:red;font-weight:bold;">追加直後のデータが見つかりません（ID: ' . esc_html($query_id) . '）</div></div>';
+                // echo '<div class="data_detail_box"><div class="data_detail_title">■ 協力会社の詳細</div><div style="color:red;font-weight:bold;">追加直後のデータが見つかりません（ID: ' . esc_html($query_id) . '）</div></div>';
                 // return; // return を有効にすると、データがない場合にここで処理が終了します。
             }
             // それ以外は最大IDで再取得
@@ -827,7 +827,7 @@ if ($deleted === false || $deleted === 0) {
                 $post_row = $wpdb->get_results($query);
             }
             if (!$post_row || count($post_row) === 0) {
-                echo '<div class="data_detail_box"><h3>■ 協力会社の詳細</h3><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
+                echo '<div class="data_detail_box"><div class="data_detail_title">■ 協力会社の詳細</div><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
                 return;
             }
         }
@@ -903,7 +903,7 @@ if ($deleted === false || $deleted === 0) {
             // 詳細表示部分の開始
             $data_title = <<<END
                 <div class="data_detail_box">
-                <h3>■ 協力会社の詳細</h3>
+                <div class="data_detail_title">■ 協力会社の詳細</div>
             END;
             // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
             $data_forms = <<<END
@@ -970,7 +970,7 @@ if ($deleted === false || $deleted === 0) {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box search-mode">
-                <h3>■ 協力会社の詳細（検索モード）</h3>
+                <div class="data_detail_title">■ 協力会社の詳細（検索モード）</div>
             END;
 
             // 検索モード用のフォーム（得意先タブと同じ構造・装飾に）
@@ -1093,7 +1093,7 @@ if ($deleted === false || $deleted === 0) {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ ID: $query_id ）</h3>
+                <div class="data_detail_title">■ 協力会社の詳細（ ID: $query_id ）</div>
             END;
 
             foreach ($fields as $label => $field) {

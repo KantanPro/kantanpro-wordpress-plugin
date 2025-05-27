@@ -242,7 +242,7 @@ class Kntan_Service_Class {
             // 検索結果が複数ある場合の処理
             elseif (count($results) > 1) {
                 // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ " . esc_html__('検索結果が複数あります！', 'ktpwp') . "</h3><ul>";
+                $search_results_html = "<div class='data_contents'><div class='search_list_box'><div class='data_list_title'>■ " . esc_html__('検索結果が複数あります！', 'ktpwp') . "</div><ul>";
 
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
@@ -535,13 +535,12 @@ class Kntan_Service_Class {
         
         // 表示範囲
         $query_limit = 20;
-        
-        // リスト表示部分の開始
+          // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <h3>■ 商品リスト（レンジ： $query_limit ）</h3>
-        END;        // スタート位置を決める
+            <div class="data_list_title">■ 商品リスト（レンジ： $query_limit ）</div>
+        END;// スタート位置を決める
         $page_stage = $_GET['page_stage'] ?? '';
         $page_start = $_GET['page_start'] ?? 0;
         $flg = $_GET['flg'] ?? '';
@@ -678,7 +677,7 @@ class Kntan_Service_Class {
             // 詳細表示部分の開始
             $data_title = <<<END
 <div class="data_detail_box">
-<h3>■ " . esc_html__('商品の詳細', 'ktpwp') . "</h3>
+<div class="data_detail_title">■ " . esc_html__('商品の詳細', 'ktpwp') . "</div>
 END;
             // 郵便番号自動入力JS
             $data_forms = <<<END
@@ -747,7 +746,7 @@ END;
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ <?php echo esc_html__('商品の詳細（検索モード）', 'ktpwp'); ?></h3>
+                <div class="data_detail_title">■ <?php echo esc_html__('商品の詳細（検索モード）', 'ktpwp'); ?></div>
             END;
 
             // 検索フォームを生成
@@ -876,12 +875,10 @@ END;
                 $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
             } else {
                 $data_id = $last_id_row ? $last_id_row->id : Null;
-            }
-
-            // 表題
+            }            // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 商品の詳細（ ID： $data_id ）</h3>
+                <div class="data_detail_title">■ 商品の詳細（ ID： $data_id ）</div>
             END;
 
             // 本体フォーム（更新用）

@@ -332,7 +332,7 @@ class Kntan_Client_Class {
             // 検索結果が複数ある場合の処理
             elseif (count($results) > 1) {
                 // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
+                $search_results_html = "<div class='data_contents'><div class='search_list_box'><div class='data_list_title'>■ 検索結果が複数あります！</div><ul>";
 
                 // 検索結果のリストを生成
                 foreach ($results as $row) {
@@ -540,7 +540,7 @@ class Kntan_Client_Class {
        $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <h3>$list_title</h3>
+            <div class="data_list_title">$list_title</div>
         END;
         
        // スタート位置を決める
@@ -612,7 +612,7 @@ class Kntan_Client_Class {
                $results_h = <<<END
                <div class="data_contents">
                    <div class="data_list_box">
-                   <h3>■ {$client_name} の注文履歴（担当者：{$client_user_name}）</h3>
+                   <div class="data_list_title">■ {$client_name} の注文履歴（担当者：{$client_user_name}）</div>
                END;
                
                $results = array(); // 結果を格納する配列を初期化
@@ -824,7 +824,7 @@ class Kntan_Client_Class {
             }
             // それでもデータがなければ「データがありません」
             if (!$post_row || count($post_row) === 0) {
-                echo '<div class="data_detail_box"><h3>■ 顧客の詳細</h3><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
+                echo '<div class="data_detail_box"><div class="data_detail_title">■ 顧客の詳細</div><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
                 return;
             }
         }
@@ -1062,7 +1062,7 @@ class Kntan_Client_Class {
                 $data_id = $wpdb->insert_id;
 
                 // 詳細表示部分の開始
-            $data_title = '<div class="data_detail_box"><h3>' . esc_html__('■ 顧客の詳細', 'ktpwp') . '</h3>';
+            $data_title = '<div class="data_detail_box"><div class="data_detail_title">' . esc_html__('■ 顧客の詳細', 'ktpwp') . '</div>';
 
                 // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
                 $data_forms = <<<END
@@ -1157,7 +1157,7 @@ class Kntan_Client_Class {
             
             $data_title = <<<END
             <div class="data_detail_box search-mode">
-                <h3>■ 顧客の詳細（検索モード）</h3>
+                <div class="data_detail_title">■ 顧客の詳細（検索モード）</div>
             END;
 
             // 検索モード用のフォーム
@@ -1286,7 +1286,7 @@ class Kntan_Client_Class {
             }
 
             // 表題
-            $data_title = '<div class="data_detail_box"><h3>■ 顧客の詳細（ ID: ' . esc_html($data_id) . ' ）</h3>';
+            $data_title = '<div class="data_detail_box"><div class="data_detail_title">■ 顧客の詳細（ ID: ' . esc_html($data_id) . ' ）</div>';
 
             // メイン更新フォーム
             $data_forms .= '<form method="post" action="">';
