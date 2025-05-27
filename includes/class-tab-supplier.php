@@ -191,16 +191,7 @@ class Kantan_Supplier_Class{
 
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
-            // デバッグ用: 削除直前のIDとテーブル名を表示
-            echo '<div style="color:blue;font-weight:bold;">DEBUG: 削除対象ID: ' . esc_html($data_id) . ' / テーブル: ' . esc_html($table_name) . '</div>';
 
-            // 削除対象レコードの存在確認
-            $debug_row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $data_id), ARRAY_A);
-            if ($debug_row) {
-                echo '<div style="color:green;">DEBUG: レコード存在: '; var_dump($debug_row); echo '</div>';
-            } else {
-                echo '<div style="color:red;">DEBUG: id=' . esc_html($data_id) . ' のレコードは存在しません</div>';
-            }
 
             // 実際の削除処理（型指定を外す）
             $deleted = $wpdb->delete(
@@ -215,12 +206,7 @@ class Kantan_Supplier_Class{
             $wpdb->query("UNLOCK TABLES;");
 
             if ($deleted === false || $deleted === 0) {
-                // 削除失敗時はエラーを表示・ログ出力
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('Supplier delete error: ' . $wpdb->last_error . ' | SQL: ' . $delete_query);
-                }
-                echo '<div style="color:red;font-weight:bold;">削除に失敗しました。管理者にご連絡ください。<br>DBエラー: ' . esc_html($wpdb->last_error) . '<br>SQL: ' . esc_html($delete_query) . '</div>';
-                // 画面描画を継続
+                // 画面描画を継続（エラー時の画面出力・ログ出力も削除）
             } else {
                 // データ削除後に表示するデータIDを適切に設定
                 $next_id_query = "SELECT id FROM {$table_name} WHERE id > %d ORDER BY id ASC LIMIT 1";
