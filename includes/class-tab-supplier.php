@@ -118,9 +118,16 @@ class Kantan_Supplier_Class{
     // -----------------------------
 
     function Update_Table( $tab_name) {
-
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
+
+        // POSTデータ受信＆サニタイズ（最初に実行）
+        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : '';
+        $query_post = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : '';
+
+        // --- デバッグログ: Update_Table呼び出しとPOST内容 ---
+        error_log('KTPWP Debug: Update_Table called. POST=' . print_r($_POST, true));
+        error_log('KTPWP Debug: query_post=' . $query_post . ', data_id=' . $data_id);
 
         // CSRF対策: POST時のみnonceチェック
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -132,10 +139,6 @@ class Kantan_Supplier_Class{
 
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
-
-        // POSTデータ受信＆サニタイズ
-        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : '';
-        $query_post = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : '';
         $company_name = isset($_POST['company_name']) ? sanitize_text_field($_POST['company_name']) : '';
         $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
         $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
@@ -191,53 +194,88 @@ class Kantan_Supplier_Class{
 
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
-
-
-            // 実際の削除処理（型指定を外す）
-            $deleted = $wpdb->delete(
-                $table_name,
-                array('id' => $data_id)
-            );
-
-            // DELETE直後のクエリを退避
-            $delete_query = $wpdb->last_query;
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            if ($deleted === false || $deleted === 0) {
-                // 画面描画を継続（エラー時の画面出力・ログ出力も削除）
-            } else {
-                // データ削除後に表示するデータIDを適切に設定
-                $next_id_query = "SELECT id FROM {$table_name} WHERE id > %d ORDER BY id ASC LIMIT 1";
-                $next_id_result = $wpdb->get_row($wpdb->prepare($next_id_query, $data_id));
-                if ($next_id_result) {
-                    $next_data_id = $next_id_result->id;
-                } else {
-                    $prev_id_query = "SELECT id FROM {$table_name} WHERE id < %d ORDER BY id DESC LIMIT 1";
-                    $prev_id_result = $wpdb->get_row($wpdb->prepare($prev_id_query, $data_id));
-                    $next_data_id = $prev_id_result ? $prev_id_result->id : '';
-                }
-                $cookie_name = 'ktp_' . $tab_name . '_id';
-                $action = 'update';
-                // 現在のURLを取得
+            error_log('KTPWP Debug: delete branch entered.');
+            // 削除前にID存在チェック
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $data_id));
+            error_log('KTPWP Debug: delete existence check. exists=' . $exists . ' for id=' . $data_id);
+            if (!$exists) {
+                // 存在しない場合は最大IDのレコードにリダイレクト
+                $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                $max_id = $max_id_row ? $max_id_row->id : '';
                 $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
+                $base_url = remove_query_arg(['data_id', 'query_post'], $current_url);
                 $redirect_args = [
                     'tab_name' => $tab_name,
-                    'query_post' => $action
+                    'query_post' => 'update'
                 ];
-                if ($next_data_id !== '') {
-                    $redirect_args['data_id'] = $next_data_id;
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                if ($max_id !== '') {
+                    $redirect_args['data_id'] = $max_id;
+                    // クッキーも更新
+                    setcookie($cookie_name, $max_id, time() + (86400 * 30), "/");
+                } else {
+                    // データが全て消えた場合
+                    $redirect_args['data_id'] = '';
+                    setcookie($cookie_name, '', time() - 3600, "/");
                 }
+                $redirect_args['delete_error'] = 1;
                 $redirect_url = esc_url(add_query_arg($redirect_args, $base_url));
-                setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
+                $wpdb->query("UNLOCK TABLES;");
                 header("Location: {$redirect_url}");
                 exit;
             }
-        }    
+
+            // 実際の削除処理
+            $deleted = $wpdb->delete(
+                $table_name,
+                array('id' => intval($data_id)),
+                array('%d')
+            );
+
+            error_log('KTPWP Debug: delete result=' . var_export($deleted, true) . ' for id=' . $data_id);
+error_log('KTPWP Debug: last_error=' . $wpdb->last_error);
+error_log('KTPWP Debug: last_query=' . $wpdb->last_query);
+
+// ロックを解除する
+$wpdb->query("UNLOCK TABLES;");
+
+if ($deleted === false || $deleted === 0) {
+    if (!session_id()) { session_start(); }
+    $_SESSION['ktp_db_error_message'] = '削除に失敗しました。SQLエラー: ' . esc_html($wpdb->last_error) . '<br>クエリ: ' . esc_html($wpdb->last_query);
+    error_log('KTPWP Debug: 削除失敗');
+    // exitしない→画面描画を続行しView_Tableでエラー表示
+} else {
+    // データ削除後に表示するデータIDを適切に設定
+    $next_id_query = "SELECT id FROM {$table_name} WHERE id > %d ORDER BY id ASC LIMIT 1";
+    $next_id_result = $wpdb->get_row($wpdb->prepare($next_id_query, $data_id));
+    if ($next_id_result) {
+        $next_data_id = $next_id_result->id;
+    } else {
+        $prev_id_query = "SELECT id FROM {$table_name} WHERE id < %d ORDER BY id DESC LIMIT 1";
+        $prev_id_result = $wpdb->get_row($wpdb->prepare($prev_id_query, $data_id));
+        $next_data_id = $prev_id_result ? $prev_id_result->id : '';
+    }
+    error_log('KTPWP Debug: 削除成功。次に表示するID=' . $next_data_id);
+    $cookie_name = 'ktp_' . $tab_name . '_id';
+    $action = 'update';
+    // global $wp;
+    // $current_page_id = get_queried_object_id();
+    // $base_page_url = add_query_arg(array('page_id' => $current_page_id), home_url($wp->request));
+    // $redirect_args = [
+    // 'tab_name' => $tab_name,
+    // 'query_post' => $action
+    // ];
+    // if ($next_data_id !== '') {
+    // $redirect_args['data_id'] = $next_data_id;
+    // }
+    // $redirect_url = esc_url(add_query_arg($redirect_args, $base_page_url));
+    setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // クッキーは設定しておく
+    // header("Location: {$redirect_url}");
+    // exit;
+    $_GET['data_id'] = $next_data_id;
+    $_GET['query_post'] = $action;
+}
+        }
         
         // 更新
         elseif( $query_post == 'update' ){
@@ -454,27 +492,20 @@ class Kantan_Supplier_Class{
             );
             if($insert_result === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
+                if (!session_id()) { session_start(); }
+                $_SESSION['ktp_db_error_message'] = '追加に失敗しました。<br>SQLエラー: ' . esc_html($wpdb->last_error) . '<br>';
             } else {
+                $wpdb->query("UNLOCK TABLES;");
+                $action = 'update';
+                // 追加直後のIDを $wpdb->insert_id から取得する
+                $data_id = $wpdb->insert_id;
 
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP Debug: insert completed. data_id=' . $data_id); }
 
-            // 追加後に更新モードにする
-            // リダイレクト
-            $action = 'update';
-            $data_id = $wpdb->insert_id;
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_id, query_postパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-            // 新しいパラメータを追加
-            $redirect_url = esc_url(add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $data_id,
-                'query_post' => $action
-            ], $base_url));
-            header("Location: {$redirect_url}");
-            exit;
+                $_GET['data_id'] = $data_id;
+                $_GET['query_post'] = $action;
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // クッキーは設定しておく
             }
 
         }
@@ -522,30 +553,23 @@ class Kantan_Supplier_Class{
             // データを挿入
             $insert_result = $wpdb->insert($table_name, $data);
             if($insert_result === false) {
-                // エラーログに挿入エラーを記録
                 error_log('Duplication error: ' . $wpdb->last_error);
+                if (!session_id()) { session_start(); }
+                $_SESSION['ktp_db_error_message'] = '複製に失敗しました。<br>SQLエラー: ' . esc_html($wpdb->last_error) . '<br>';
             } else {
-                // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
-
-                // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
-                
-                // 追加後に更新モードにする
-                // リダイレクト
                 $action = 'update';
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg(array('page_id' => $current_page_id), home_url($wp->request));
                 $redirect_url = esc_url(add_query_arg([
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action
-                ], $base_url));
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
+                ], $base_page_url));
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/");
                 header("Location: {$redirect_url}");
                 exit;
             }
@@ -560,13 +584,43 @@ class Kantan_Supplier_Class{
 
     }
 
+
+
     
     // -----------------------------
     // テーブルの表示
     // -----------------------------
 
+
     function View_Table( $name ) {
-        global $wpdb;
+        global $wpdb, $wp; // $wp をグローバルに追加
+
+        // ベースURLの構築
+        $current_url_path = home_url( $wp->request );
+        $base_url_params = [];
+
+        if ( get_queried_object_id() ) {
+            $base_url_params['page_id'] = get_queried_object_id();
+        }
+        if ( isset( $_GET['page'] ) ) {
+            $base_url_params['page'] = sanitize_text_field( $_GET['page'] );
+        }
+        $base_url_params['tab_name'] = $name;
+        $base_page_url = add_query_arg( $base_url_params, $current_url_path );
+        
+        // フォームアクション用のベースURL (ページネーションパラメータ等は含めない)
+        $form_action_base_url = $base_page_url;
+
+        // --- DBエラー表示（セッションから） ---
+        if (!session_id()) { session_start(); }
+        if (isset($_SESSION['ktp_db_error_message'])) {
+            echo '<div class="ktp-db-error" style="background:#ffeaea;color:#b30000;padding:14px 20px;margin:18px 0 20px 0;border:2px solid #b30000;border-radius:7px;font-weight:bold;font-size:1.1em;">'
+                . '<span style="font-size:1.2em;">⚠️ <b>DBエラー</b></span><br>'
+                . $_SESSION['ktp_db_error_message']
+                . '</div>';
+            unset($_SESSION['ktp_db_error_message']);
+        }
+        // --- ここまで ---
 
         // $search_results_listの使用前に初期化
         if (!isset($search_results_list)) {
@@ -613,7 +667,9 @@ class Kantan_Supplier_Class{
         $current_page = floor($page_start / $query_limit) + 1;
 
         // データを取得
-       $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+
+       // 最新ID順（降順）で表示するように修正
+       $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY id DESC LIMIT %d, %d", $page_start, $query_limit);
        $post_row = $wpdb->get_results($query);
        if( $post_row ){
            foreach ($post_row as $row){
@@ -641,18 +697,14 @@ class Kantan_Supplier_Class{
                 $cookie_name = 'ktp_' . $name . '_id';
 
                 $query_args = array(
-                    'tab_name' => $name,
                     'data_id' => $id,
                     'page_start' => $page_start,
                     'page_stage' => $page_stage,
+                    // 'flg' => $flg, // 必要に応じて維持
                 );
+                // 'page' と 'tab_name' は $base_page_url に含まれる
 
-                // 現在の 'page' パラメータを維持する
-                if (isset($_GET['page'])) {
-                    $query_args['page'] = sanitize_text_field($_GET['page']);
-                }
-
-                $item_link_url = esc_url(add_query_arg($query_args));
+                $item_link_url = esc_url(add_query_arg($query_args, $base_page_url));
                 $results[] = <<<END
                 <a href="{$item_link_url}" onclick="document.cookie = '{$cookie_name}=' + {$id};">
                     <div class="data_list_item">ID: $id $company_name : $category : 頻度($frequency)</div>
@@ -672,7 +724,8 @@ class Kantan_Supplier_Class{
         // 最初へリンク
         if ($current_page > 1) {
             $first_start = 0; // 最初のページ
-            $first_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg)));
+            $first_page_link_args = array('page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg);
+            $first_page_link_url = esc_url(add_query_arg($first_page_link_args, $base_page_url));
             $results_f .= <<<END
             <a href="{$first_page_link_url}">|<</a> 
             END;
@@ -681,7 +734,8 @@ class Kantan_Supplier_Class{
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
-            $prev_page_link_url = esc_url(add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg)));
+            $prev_page_link_args = array('page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg);
+            $prev_page_link_url = esc_url(add_query_arg($prev_page_link_args, $base_page_url));
             $results_f .= <<<END
             <a href="{$prev_page_link_url}"><</a>
             END;
@@ -695,17 +749,13 @@ class Kantan_Supplier_Class{
         // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
-            // 現在の 'page' パラメータを維持する
             $query_args_next = array(
-                'tab_name' => $name,
                 'page_start' => $next_start,
                 'page_stage' => 2,
                 'flg' => $flg
             );
-            if (isset($_GET['page'])) {
-                $query_args_next['page'] = sanitize_text_field($_GET['page']);
-            }
-            $next_page_link_url = esc_url(add_query_arg($query_args_next));
+            // 'page' と 'tab_name' は $base_page_url に含まれる
+            $next_page_link_url = esc_url(add_query_arg($query_args_next, $base_page_url));
             $results_f .= <<<END
             <a href="{$next_page_link_url}">></a>
             END;
@@ -714,17 +764,13 @@ class Kantan_Supplier_Class{
         // 最後へリンク
         if ($current_page < $total_pages) {
             $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
-            // 現在の 'page' パラメータを維持する
             $query_args_last = array(
-                'tab_name' => $name,
                 'page_start' => $last_start,
                 'page_stage' => 2,
                 'flg' => $flg
             );
-            if (isset($_GET['page'])) {
-                $query_args_last['page'] = sanitize_text_field($_GET['page']);
-            }
-            $last_page_link_url = esc_url(add_query_arg($query_args_last));
+            // 'page' と 'tab_name' は $base_page_url に含まれる
+            $last_page_link_url = esc_url(add_query_arg($query_args_last, $base_page_url));
             $results_f .= <<<END
              <a href="{$last_page_link_url}">>>|</a>
             END;
@@ -743,7 +789,9 @@ class Kantan_Supplier_Class{
         $cookie_name = 'ktp_' . $name . '_id';
         if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
+            // クッキーも即時更新（追加直後やURL遷移時に常に最新IDを保持）
+            setcookie($cookie_name, $query_id, time() + (86400 * 30), "/");
+        } else if (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
             $cookie_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
             // クッキーIDがDBに存在するかチェック
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $cookie_id));
@@ -759,19 +807,25 @@ class Kantan_Supplier_Class{
             $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
             $query_id = $max_id_row ? $max_id_row->id : '';
         }
+
+        // 以降で$query_idを上書きしないこと！
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
         if (!$post_row || count($post_row) === 0) {
-            // 存在しないIDの場合は最大IDを取得して再表示
+            // data_idがURLで指定されている場合は、最大IDにフォールバックせずエラー表示
+            if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
+                // echo '<div class="data_detail_box"><h3>■ 協力会社の詳細</h3><div style="color:red;font-weight:bold;">追加直後のデータが見つかりません（ID: ' . esc_html($query_id) . '）</div></div>';
+                // return; // return を有効にすると、データがない場合にここで処理が終了します。
+            }
+            // それ以外は最大IDで再取得
             $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
             if ($max_id_row && isset($max_id_row->id)) {
                 $query_id = $max_id_row->id;
                 $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
                 $post_row = $wpdb->get_results($query);
             }
-            // それでもデータがなければ「データがありません」
             if (!$post_row || count($post_row) === 0) {
                 echo '<div class="data_detail_box"><h3>■ 協力会社の詳細</h3><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
                 return;
@@ -829,19 +883,23 @@ class Kantan_Supplier_Class{
         ];
         
         // アクションを取得（POST優先、なければGET、なければ'update'）
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : (isset($_GET['query_post']) ? $_GET['query_post'] : 'update');
-        $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
-        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
+        $action = 'update';
+        if (isset($_POST['query_post'])) {
+            $action = sanitize_text_field($_POST['query_post']);
+        } elseif (isset($_GET['query_post'])) {
+            $action = sanitize_text_field($_GET['query_post']);
+        }
 
-        // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
-        $data_num = $wpdb->get_results($query);
-        $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
+        // フォーム表示用のアクション（istmode:追加、srcmode:検索、update:更新）
+        $form_action = $action;
+        if ($action === 'istmode' || $action === 'srcmode') {
+            $data_id = ''; // 追加モードの場合はdata_idを空に
+        }
 
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
-
-            $data_id = $wpdb->insert_id;
+            // 追加モードは data_id を空にする
+            $data_id = '';
             // 詳細表示部分の開始
             $data_title = <<<END
                 <div class="data_detail_box">
@@ -873,10 +931,10 @@ class Kantan_Supplier_Class{
             </script>
             END;
             // 空のフォームフィールドを生成
-            $data_forms .= '<form method="post" action="">';
+            $data_forms .= '<form method="post" action="' . esc_url($form_action_base_url) . '">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
             foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : '';
+                $value = '';
                 $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
                 $required = isset($field['required']) && $field['required'] ? ' required' : '';
                 $fieldName = $field['name'];
@@ -898,10 +956,10 @@ class Kantan_Supplier_Class{
             $data_forms .= "<div class='button'>";
             // 追加実行ボタン
             $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
-            $data_forms .= "<input type='hidden' name='data_id' value='" . esc_attr($data_id + 1) . "'>";
+            $data_forms .= "<input type='hidden' name='data_id' value=''>";
             $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
             // キャンセルボタン
-            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><input type='hidden' name='data_id' value='" . esc_attr($data_id) . "'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
+            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
             $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
             $data_forms .= '</form>';
@@ -917,7 +975,7 @@ class Kantan_Supplier_Class{
 
             // 検索モード用のフォーム（得意先タブと同じ構造・装飾に）
             $data_forms = '<div class="search-mode-form ktpwp-search-form" style="background-color: #f8f9fa !important; border: 2px solid #0073aa !important; border-radius: 8px !important; padding: 20px !important; margin: 10px 0 !important; box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;">';
-            $data_forms .= '<form method="post" action="">';
+            $data_forms .= '<form method="post" action="' . esc_url($form_action_base_url) . '">';
             $data_forms .= function_exists('wp_nonce_field') ? wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false) : '';
             // 検索クエリの値を取得（POSTが優先、次にGET）
             $search_query_value = '';
@@ -985,7 +1043,7 @@ class Kantan_Supplier_Class{
             $data_forms .= '</form>';
 
             // 検索モードのキャンセルボタン（独立したフォーム）
-            $data_forms .= '<form method="post" action="" style="margin: 0 !important;">';
+            $data_forms .= '<form method="post" action="' . esc_url($form_action_base_url) . '" style="margin: 0 !important;">';
             $data_forms .= function_exists('wp_nonce_field') ? wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false) : '';
             $data_forms .= '<input type="hidden" name="query_post" value="update">';
             $data_forms .= '<button type="submit" name="send_post" title="キャンセル" style="background-color: #666 !important; color: white !important; border: none !important; padding: 10px 20px !important; cursor: pointer !important; border-radius: 5px !important; display: flex !important; align-items: center !important; gap: 5px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.3s ease !important;">';
@@ -1029,48 +1087,37 @@ class Kantan_Supplier_Class{
                         
             $data_forms .= "<div class=\"add\">";
             // 1つのフォームで全ての操作ボタンをラップ
-            $data_forms .= "<form method=\"post\" action=\"\">";
+            $data_forms .= "<form method=\"post\" action=\"" . esc_url($form_action_base_url) . "\">";
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-
-            // cookieに保存されたIDを取得
-            $cookie_name = 'ktp_'. $name . '_id';
-            if (isset($_GET['data_id'])) {
-                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-            } elseif (isset($_COOKIE[$cookie_name])) {
-                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-            } else {
-                $data_id = $last_id_row ? $last_id_row->id : Null;
-            }
 
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ ID: $data_id ）</h3>
+                <h3>■ 協力会社の詳細（ ID: $query_id ）</h3>
             END;
 
             foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
+                $value = isset(${$field['name']}) ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : '';
 
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>";
                 } elseif ($field['type'] === 'select') {
                     $options = '';
-
                     foreach ($field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>";
                     }
-
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>";
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
                 }
             }
 
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
+            // hidden data_id は常に現在表示中のID（$query_id）
+            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$query_id}\">";
 
             // 検索リストを生成
             $data_forms .= $search_results_list;
@@ -1079,10 +1126,8 @@ class Kantan_Supplier_Class{
             $data_forms .= '<button type="submit" name="query_post" value="update" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
             // 削除ボタン
             $data_forms .= '<button type="submit" name="query_post" value="delete" title="削除する" onclick="return confirm(\'本当に削除しますか？\')"><span class="material-symbols-outlined">delete</span></button>';
-            // 複製ボタンは削除
-            // 追加モードボタン（data_idをhiddenで渡す）
-            $next_data_id = $data_id + 1;
-            $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative;"><span class="material-symbols-outlined">add</span><input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '"></button>';
+            // 追加モードボタン（data_idは空で渡す）
+            $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative;"><span class="material-symbols-outlined">add</span></button>';
             // 検索モードボタン
             $data_forms .= '<button type="submit" name="query_post" value="srcmode" title="検索する"><span class="material-symbols-outlined">search</span></button>';
             $data_forms .= "<div class=\"add\"></div>";
@@ -1090,7 +1135,7 @@ class Kantan_Supplier_Class{
             $data_forms .= '</form>';
         }
                             
-        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
+        $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
         
         // 詳細表示部分の終了
         $div_end = <<<END
@@ -1106,15 +1151,16 @@ class Kantan_Supplier_Class{
         require_once( dirname( __FILE__ ) . '/class-print.php' );
 
         // データを指定
+
         $data_src = [
             'company_name' => $company_name,
             'name' => $user_name,
             'representative_name' => $representative_name,
             'postal_code' => $postal_code,
-            'prefecture' => $prefecture,
+            'prefecture' => $data_src['prefecture'],
             'city' => $city,
             'address' => $address,
-            'building' => $data_src['building'],
+            'building' => $building,
         ];
 
         $customer = $data_src['company_name'];
