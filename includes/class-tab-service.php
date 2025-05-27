@@ -531,15 +531,16 @@ class Kntan_Service_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $name;
             // -----------------------------
         // ページネーションリンク
-        // -----------------------------
-        
-        // 表示範囲
-        $query_limit = 20;
-          // リスト表示部分の開始
+        // -----------------------------        // 表示範囲（1ページあたりの表示件数）
+        $query_limit = 20; // 明示的に20件に設定
+        if (!is_numeric($query_limit) || $query_limit <= 0) {
+            $query_limit = 20; // 不正な値の場合はデフォルト値に
+        }
+        // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <div class="data_list_title">■ 商品リスト（レンジ： $query_limit ）</div>
+            <div class="data_list_title">■ 商品リスト</div>
         END;// スタート位置を決める
         $page_stage = $_GET['page_stage'] ?? '';
         $page_start = $_GET['page_start'] ?? 0;
@@ -549,11 +550,15 @@ class Kntan_Service_Class {
         }
         $query_range = $page_start . ',' . $query_limit;
 
-        $query_order_by = 'frequency';
-
-        // 全データ数を取得
+        $query_order_by = 'frequency';        // 全データ数を取得
         $total_query = "SELECT COUNT(*) FROM {$table_name}";
         $total_rows = $wpdb->get_var($total_query);
+        
+        // ゼロ除算防止のための安全対策
+        if ($query_limit <= 0) {
+            $query_limit = 20; // デフォルト値の設定
+        }
+        
         $total_pages = ceil($total_rows / $query_limit);
 
         // 現在のページ番号を計算
