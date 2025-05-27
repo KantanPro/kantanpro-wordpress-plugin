@@ -522,6 +522,10 @@ class Kntan_Client_Class {
         $sort_by = 'id';
         $sort_order = 'DESC';
         
+        // 注文履歴用のソート順（デフォルトは日付の降順）
+        $order_sort_by = 'time';
+        $order_sort_order = 'DESC';
+        
         if (isset($_GET['sort_by'])) {
             $sort_by = sanitize_text_field($_GET['sort_by']);
             // 安全なカラム名のみ許可（SQLインジェクション対策）
@@ -535,6 +539,22 @@ class Kntan_Client_Class {
             $sort_order_param = strtoupper(sanitize_text_field($_GET['sort_order']));
             // ASCかDESCのみ許可
             $sort_order = ($sort_order_param === 'ASC') ? 'ASC' : 'DESC';
+        }
+        
+        // 注文履歴のソート順を取得
+        if (isset($_GET['order_sort_by'])) {
+            $order_sort_by = sanitize_text_field($_GET['order_sort_by']);
+            // 安全なカラム名のみ許可（SQLインジェクション対策）
+            $allowed_order_columns = array('id', 'time', 'progress', 'project_name');
+            if (!in_array($order_sort_by, $allowed_order_columns)) {
+                $order_sort_by = 'time'; // 不正な値の場合はデフォルトに戻す
+            }
+        }
+        
+        if (isset($_GET['order_sort_order'])) {
+            $order_sort_order_param = strtoupper(sanitize_text_field($_GET['order_sort_order']));
+            // ASCかDESCのみ許可
+            $order_sort_order = ($order_sort_order_param === 'ASC') ? 'ASC' : 'DESC';
         }
         
         // 現在のページのURLを生成
@@ -555,8 +575,10 @@ class Kntan_Client_Class {
             ? esc_html__('■ 注文履歴', 'ktpwp')
             : esc_html__('■ 顧客リスト', 'ktpwp');
             
-        // ソートプルダウンを追加（顧客リストの場合のみ）
+        // ソートプルダウンを追加
         $sort_dropdown = '';
+        
+        // 顧客リストのソートプルダウン
         if ($view_mode !== 'order_history') {
             // 現在のURLからソート用プルダウンのアクションURLを生成
             $sort_url = add_query_arg(array('tab_name' => $name), $base_page_url);
@@ -582,6 +604,38 @@ class Kntan_Client_Class {
                 '<select id="sort-order" name="sort_order">' .
                 '<option value="ASC" ' . selected($sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
                 '<option value="DESC" ' . selected($sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
+                '</select>' .
+                '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
+                '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
+                '</button>' .
+                '</form></div>';
+        }
+        // 注文履歴のソートプルダウン
+        else {
+            // 現在のURLからソート用プルダウンのアクションURLを生成
+            $sort_url = add_query_arg(array('tab_name' => $name, 'view_mode' => 'order_history', 'data_id' => $client_id ?? ''), $base_page_url);
+            
+            // ソート用プルダウンのHTMLを構築
+            $sort_dropdown = '<div class="sort-dropdown" style="float:right;margin-left:10px;">' .
+                '<form method="get" action="' . esc_url($sort_url) . '" style="display:flex;align-items:center;">';
+            
+            // 現在のGETパラメータを維持するための隠しフィールド
+            foreach ($_GET as $key => $value) {
+                if ($key !== 'order_sort_by' && $key !== 'order_sort_order') {
+                    $sort_dropdown .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                }
+            }
+            
+            $sort_dropdown .= 
+                '<select id="order-sort-select" name="order_sort_by" style="margin-right:5px;">' .
+                '<option value="id" ' . selected($order_sort_by, 'id', false) . '>' . esc_html__('注文ID', 'ktpwp') . '</option>' .
+                '<option value="time" ' . selected($order_sort_by, 'time', false) . '>' . esc_html__('日付', 'ktpwp') . '</option>' .
+                '<option value="progress" ' . selected($order_sort_by, 'progress', false) . '>' . esc_html__('進捗', 'ktpwp') . '</option>' .
+                '<option value="project_name" ' . selected($order_sort_by, 'project_name', false) . '>' . esc_html__('案件名', 'ktpwp') . '</option>' .
+                '</select>' .
+                '<select id="order-sort-order" name="order_sort_order">' .
+                '<option value="ASC" ' . selected($order_sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
+                '<option value="DESC" ' . selected($order_sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
                 '</select>' .
                 '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
                 '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
@@ -645,9 +699,12 @@ class Kntan_Client_Class {
            // IDのリストを文字列に変換
            $client_ids_str = implode(',', array_map('intval', $related_client_ids));
            
-           // IDが複数ある場合、IN句を使用
+           // IDが複数ある場合、IN句を使用（ソートオプションを適用）
+           $order_sort_column = esc_sql($order_sort_by); // SQLインジェクション対策
+           $order_sort_direction = $order_sort_order === 'ASC' ? 'ASC' : 'DESC'; // SQLインジェクション対策
+           
            $query = $wpdb->prepare(
-               "SELECT * FROM {$order_table} WHERE client_id IN ({$client_ids_str}) ORDER BY time DESC LIMIT %d, %d", 
+               "SELECT * FROM {$order_table} WHERE client_id IN ({$client_ids_str}) ORDER BY {$order_sort_column} {$order_sort_direction} LIMIT %d, %d", 
                $page_start, $query_limit
            );
            
@@ -665,7 +722,7 @@ class Kntan_Client_Class {
                $results_h = <<<END
                <div class="data_contents">
                    <div class="data_list_box">
-                   <div class="data_list_title">■ {$client_name} の注文履歴</div>
+                   <div class="data_list_title">■ {$client_name} の注文履歴 $sort_dropdown</div>
                END;
                
                $results = array(); // 結果を格納する配列を初期化
