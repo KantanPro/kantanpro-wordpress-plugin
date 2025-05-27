@@ -86,13 +86,24 @@ class Kntan_Service_Class {
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
         
+
+        // CSRF対策: nonceチェック
+        if (
+            isset($_POST['_ktp_service_nonce']) &&
+            !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')
+        ) {
+            // nonce不正
+            $wpdb->query("UNLOCK TABLES;");
+            wp_die(__('セキュリティ検証に失敗しました。ページを再読み込みしてください。', 'ktpwp'));
+        }
+
         // POSTデーター受信
         $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
         $query_post = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : '';
         $service_name = isset($_POST['service_name']) ? sanitize_text_field($_POST['service_name']) : '';
         $memo = isset($_POST['memo']) ? sanitize_textarea_field($_POST['memo']) : '';
         $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
-        
+
         // search_fieldの値を設定
         $search_field_value = implode(', ', [
             current_time('mysql'),
@@ -697,6 +708,8 @@ class Kntan_Service_Class {
 
                 // 空のフォームフィールドを生成
                 $data_forms .= '<form method="post" action="">';
+                // nonceフィールド追加
+                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : '';
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
@@ -785,6 +798,8 @@ class Kntan_Service_Class {
 
             // 検索フォームを生成
             $data_forms = '<form method="post" action="">';
+            // nonceフィールド追加
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
             $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
                
             // 検索リストを生成
@@ -886,6 +901,10 @@ class Kntan_Service_Class {
             <input type="file" name="image" class="file-input">
             <input type="hidden" name="data_id" value="$data_id">
             <input type="hidden" name="query_post" value="upload_image">
+            END;
+            // nonceフィールド追加
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            $data_forms .= <<<END
             <button type="submit" class="upload-btn" title="<?php echo esc_attr__('画像をアップロード', 'ktpwp'); ?>">
               <span class="material-symbols-outlined">upload</span>
             </button>
