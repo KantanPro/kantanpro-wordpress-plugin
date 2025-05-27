@@ -312,115 +312,113 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         $search_query = $_POST['search_query'];
         $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
-            // 検索結果が1つある場合の処理
-            if (count($results) == 1) {
-
-                // 検索結果のIDを取得
-                $id = $results[0]->id;
-
-                // 頻度の値を+1する
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
-                        $id
-                    )
-                );
-
-                // 検索後に更新モードにする
-                $action = 'update';
-                $data_id = $id;
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
-                $redirect_url = esc_url(add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $data_id,
-                    'query_post' => $action
-                ], $base_url));
-                header("Location: {$redirect_url}");
-
-            }
-
-            // 検索結果が複数ある場合の処理
-            elseif (count($results) > 1) {
-                // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
-
-                // 検索結果のリストを生成
-                foreach ($results as $row) {
-                    $id = esc_html($row->id);
-                    $email = esc_html($row->email);
-                    $company_name = esc_html($row->company_name);
-                    $category = esc_html($row->category);
-                    
-                    // 各検索結果に対してリンクを設定
-                    $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')));
-                    $search_results_html .= "<li style=\'text-align:left;\'><a href=\'{$item_link_url}\' style=\'text-align:left;\'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
-                }
-
-                // HTMLを閉じる
-                $search_results_html .= "</ul></div></div>";
-
-                // JavaScriptに渡すために、検索結果のHTMLをエスケープ
-                $search_results_html_js = json_encode($search_results_html);
-
-                // JavaScriptでポップアップを表示
-                $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')));
-                echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var searchResultsHtml = $search_results_html_js;
-                    var popup = document.createElement('div');
-                    popup.innerHTML = searchResultsHtml;
-                    popup.style.position = 'fixed';
-                    popup.style.top = '50%';
-                    popup.style.left = '50%';
-                    popup.style.transform = 'translate(-50%, -50%)';
-                    popup.style.backgroundColor = '#fff';
-                    popup.style.padding = '20px';
-                    popup.style.zIndex = '1000';
-                    popup.style.width = '80%';
-                    popup.style.maxWidth = '600px';
-                    popup.style.border = '1px solid #ccc';
-                    popup.style.borderRadius = '5px';
-                    popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                    document.body.appendChild(popup);
-                    // ポップアップを閉じるためのボタンを追加
-                    var closeButton = document.createElement('button');
-                    closeButton.textContent = '閉じる';
-                    closeButton.style.fontSize = '0.8em';
-                    closeButton.style.color = 'black'; // 文字をもう少し黒く
-                    closeButton.style.display = 'block';
-                    closeButton.style.margin = '10px auto 0';
-                    closeButton.style.padding = '10px';
-                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
-                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
-                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
-                    closeButton.onclick = function() {
-                        document.body.removeChild(popup);
-                        // 元の検索モードに戻るために特定のURLにリダイレクト
-                        // location.href = '?tab_name={$tab_name}&query_post=search';
-                        location.href = '{$close_redirect_url}';
-                    };
-                    popup.appendChild(closeButton);
-                });
-                </script>";
-            }
-
-            // 検索結果が0件の場合の処理
-            else {                // JavaScriptを使用してポップアップ警告を表示
-                echo "<script>
-                alert('検索結果がありません！');
-                </script>";
-                // リダイレクトの代わりにクエリパラメータを設定
-                $_GET['tab_name'] = $tab_name;
-                $_GET['query_post'] = 'search';
-            }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
+        // 検索結果が1つある場合の処理
+        if (count($results) == 1) {
+            // 検索結果のIDを取得
+            $id = $results[0]->id;
+            // 頻度の値を+1する
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
+                    $id
+                )
+            );
+            // 検索後に更新モードにする
+            $action = 'update';
+            $data_id = $id;
+            // 現在のURLを取得
+            $current_url = add_query_arg(NULL, NULL);
+            // tab_name, data_id, query_postパラメータを除去
+            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+            // 新しいパラメータを追加
+            $redirect_url = esc_url(add_query_arg([
+                'tab_name' => $tab_name,
+                'data_id' => $data_id,
+                'query_post' => $action
+            ], $base_url));
+            header("Location: {$redirect_url}");
             exit;
+        }
+        // 検索結果が複数ある場合の処理
+        elseif (count($results) > 1) {
+            // 検索結果を表示するHTMLを初期化
+            $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
+            // 検索結果のリストを生成
+            foreach ($results as $row) {
+                $id = esc_html($row->id);
+                $email = esc_html($row->email);
+                $company_name = esc_html($row->company_name);
+                $category = esc_html($row->category);
+                // 各検索結果に対してリンクを設定
+                $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')));
+                $search_results_html .= "<li style=\'text-align:left;\'><a href=\'{$item_link_url}\' style=\'text-align:left;\'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+            }
+            // HTMLを閉じる
+            $search_results_html .= "</ul></div></div>";
+            // JavaScriptに渡すために、検索結果のHTMLをエスケープ
+            $search_results_html_js = json_encode($search_results_html);
+            // JavaScriptでポップアップを表示
+            $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')));
+            echo "<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var searchResultsHtml = $search_results_html_js;
+                var popup = document.createElement('div');
+                popup.innerHTML = searchResultsHtml;
+                popup.style.position = 'fixed';
+                popup.style.top = '50%';
+                popup.style.left = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+                popup.style.backgroundColor = '#fff';
+                popup.style.padding = '20px';
+                popup.style.zIndex = '1000';
+                popup.style.width = '80%';
+                popup.style.maxWidth = '600px';
+                popup.style.border = '1px solid #ccc';
+                popup.style.borderRadius = '5px';
+                popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                document.body.appendChild(popup);
+                // ポップアップを閉じるためのボタンを追加
+                var closeButton = document.createElement('button');
+                closeButton.textContent = '閉じる';
+                closeButton.style.fontSize = '0.8em';
+                closeButton.style.color = 'black'; // 文字をもう少し黒く
+                closeButton.style.display = 'block';
+                closeButton.style.margin = '10px auto 0';
+                closeButton.style.padding = '10px';
+                closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
+                closeButton.style.borderRadius = '5px'; // 角を少し丸く
+                closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
+                closeButton.onclick = function() {
+                    document.body.removeChild(popup);
+                    // 元の検索モードに戻るために特定のURLにリダイレクト
+                    location.href = '{$close_redirect_url}';
+                };
+                popup.appendChild(closeButton);
+            });
+            </script>";
+        }
+        // 検索結果が0件の場合の処理
+        else {
+            // サプライヤも得意先タブと同じくセッションメッセージ＋リダイレクト方式に統一
+            if (!session_id()) {
+                session_start();
+            }
+            $_SESSION['ktp_search_message'] = '検索結果がありませんでした。';
+            // 検索語とno_results=1を付与してsrcmodeにリダイレクト
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+            $search_query_encoded = urlencode($_POST['search_query']);
+            $redirect_url_base = strtok($base_page_url, '?');
+            $query_string = "?page_id=" . $current_page_id . "&tab_name=" . $tab_name . "&query_post=srcmode&search_query=" . $search_query_encoded . "&no_results=1";
+            $redirect_url = $redirect_url_base . $query_string;
+            header("Location: " . $redirect_url);
+            exit;
+        }
+
+        // ロックを解除する
+        $wpdb->query("UNLOCK TABLES;");
+        // exit; を削除し、通常の画面描画を続行
         }
         
         // 追加
@@ -805,7 +803,8 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             ],
         ];
         
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
+        // アクションを取得（POST優先、なければGET、なければ'update'）
+        $action = isset($_POST['query_post']) ? $_POST['query_post'] : (isset($_GET['query_post']) ? $_GET['query_post'] : 'update');
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
         $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
 
@@ -817,147 +816,67 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
 
-                $data_id = $wpdb->insert_id;
-
-                // 詳細表示部分の開始
-                $data_title = <<<END
-                    <div class="data_detail_box">
-                    <h3>■ 協力会社の詳細</h3>
-                END;
-
-                // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-                $data_forms = <<<END
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var postalCode = document.querySelector('input[name="postal_code"]');
-                    var prefecture = document.querySelector('input[name="prefecture"]');
-                    var city = document.querySelector('input[name="city"]');
-                    var address = document.querySelector('input[name="address"]');
-                    postalCode.addEventListener('blur', function() {
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                        xhr.addEventListener('load', function() {
-                            var response = JSON.parse(xhr.responseText);
-                            if (response.results) {
-                                var data = response.results[0];
-                                prefecture.value = data.address1;
-                                city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                                address.value = ''; // 番地は空欄に
-                            }
-                        });
-                        xhr.send();
-                    });
-                });
-                </script>
-                END;
-
-                // 空のフォームフィールドを生成
-                $data_forms .= '<form method="post" action="">';
-                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-                foreach ($fields as $label => $field) {
-                    $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                    $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                    $fieldName = $field['name'];
-                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
-                    if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
-                    } elseif ($field['type'] === 'select') {
-                        $options = '';
-
-                        foreach ($field['options'] as $option) {
-                            $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
-                        }
-
-                        $default = isset($field['default']) ? $field['default'] : ''; // デフォルト値を取得
-
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
-                    } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
-                    }
-                }
-
-                $data_forms .= "<div class='button'>";
-
-                if( $action === 'istmode'){
-                    // 追加実行ボタン
-                    $action = 'insert';
-                    $data_id = $data_id + 1;
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    END;
-                    if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-                    $data_forms .= "<input type='hidden' name='query_post' value='$action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title='追加実行'>
-                    <span class='material-symbols-outlined'>select_check_box</span>
-                    </button>
-                    </form>";
-                }
-                
-                elseif( $action === 'srcmode'){
-
-                    // 検索実行ボタン
-                    $action = 'search';
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    END;
-                    if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-                    $data_forms .= "<input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title='検索実行'>
-                    <span class='material-symbols-outlined'>select_check_box</span>
-                    </button>
-                    </form>";
-                }
-    
-                // キャンセルボタン
-                $action = 'update';
-                $data_id = $data_id - 1;
-                $data_forms .= <<<END
-                <form method='post' action=''>
-                END;
-                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-                $data_forms .= "<input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title='キャンセル'>
-                <span class='material-symbols-outlined'>disabled_by_default</span>
-                </button>
-                </form>";
-
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= '</div>';
-        }
-
-        // 空のフォームを表示(検索モードの場合)
-
-        elseif ($action === 'srcmode') {
-            // 表題
+            $data_id = $wpdb->insert_id;
+            // 詳細表示部分の開始
             $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ 検索モード ）</h3>
+                <div class="data_detail_box">
+                <h3>■ 協力会社の詳細</h3>
             END;
-
-            // 検索フォームを生成（1フォームにまとめる）
-            $data_forms = '<form method="post" action="">';
+            // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
+            $data_forms = <<<END
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var postalCode = document.querySelector('input[name="postal_code"]');
+                var prefecture = document.querySelector('input[name="prefecture"]');
+                var city = document.querySelector('input[name="city"]');
+                var address = document.querySelector('input[name="address"]');
+                postalCode.addEventListener('blur', function() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
+                    xhr.addEventListener('load', function() {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.results) {
+                            var data = response.results[0];
+                            prefecture.value = data.address1;
+                            city.value = data.address2 + data.address3; // 市区町村と町名を結合
+                            address.value = ''; // 番地は空欄に
+                        }
+                    });
+                    xhr.send();
+                });
+            });
+            </script>
+            END;
+            // 空のフォームフィールドを生成
+            $data_forms .= '<form method="post" action="">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-            $search_query_val = isset($_POST['search_query']) ? esc_attr($_POST['search_query']) : '';
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" value=\"{$search_query_val}\" required></div>";
-            // 検索リストを生成
-            $data_forms .= $search_results_list;
-            // ボタン<div>タグを追加
+            foreach ($fields as $label => $field) {
+                $value = $action === 'update' ? ${$field['name']} : '';
+                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $fieldName = $field['name'];
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : '';
+                if ($field['type'] === 'textarea') {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>";
+                } elseif ($field['type'] === 'select') {
+                    $options = '';
+                    foreach ($field['options'] as $option) {
+                        $selected = $value === $option ? ' selected' : '';
+                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>";
+                    }
+                    $default = isset($field['default']) ? $field['default'] : '';
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+                } else {
+                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
+                }
+            }
             $data_forms .= "<div class='button'>";
-            // 検索実行ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="search" title="検索実行">';
-            $data_forms .= '<span class="material-symbols-outlined">select_check_box</span>';
-            $data_forms .= '</button>';
+            // 追加実行ボタン
+            $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
+            $data_forms .= "<input type='hidden' name='data_id' value='" . esc_attr($data_id + 1) . "'>";
+            $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
             // キャンセルボタン
-            $data_id_val = isset($data_id) ? esc_attr($data_id - 1) : '';
-            $data_forms .= '<button type="submit" name="query_post" value="update" title="キャンセル">';
-            $data_forms .= '<input type="hidden" name="data_id" value="' . $data_id_val . '">';
-            $data_forms .= '<span class="material-symbols-outlined">disabled_by_default</span>';
-            $data_forms .= '</button>';
+            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><input type='hidden' name='data_id' value='" . esc_attr($data_id) . "'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
             $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
             $data_forms .= '</form>';
@@ -965,58 +884,97 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
         // 空のフォームを表示(検索モードの場合)
         elseif ($action === 'srcmode') {
-
             // 表題
             $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 協力会社の詳細（ 検索モード ）</h3>
+            <div class="data_detail_box search-mode">
+                <h3>■ 協力会社の詳細（検索モード）</h3>
             END;
 
-            // 検索フォームを生成
-            $data_forms = '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
-               
-            // 検索リストを生成
-            $data_forms .= $search_results_list;
-
-            // ボタン<div>タグを追加
-            $data_forms .= "<div class='button'>";
-            
-            // 検索実行ボタン
-            $action = 'search';
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <button type='submit' name='send_post' title="検索実行">
-            <span class="material-symbols-outlined">
-            select_check_box
-            </span>
-            </button>
-            </form>
-            END;
-
-            // キャンセルボタン
-            $action = 'update';
-            $data_id = $data_id - 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="キャンセル">
-            <span class="material-symbols-outlined">
-            disabled_by_default
-            </span>            
-            </button>
-            </form>
-            END;
-
-            $data_forms .= "<div class=\"add\">";
+            // 検索モード用のフォーム（得意先タブと同じ構造・装飾に）
+            $data_forms = '<div class="search-mode-form ktpwp-search-form" style="background-color: #f8f9fa !important; border: 2px solid #0073aa !important; border-radius: 8px !important; padding: 20px !important; margin: 10px 0 !important; box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;">';
+            $data_forms .= '<form method="post" action="">';
+            $data_forms .= function_exists('wp_nonce_field') ? wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false) : '';
+            // 検索クエリの値を取得（POSTが優先、次にGET）
+            $search_query_value = '';
+            if (isset($_POST['search_query'])) {
+                $search_query_value = esc_attr($_POST['search_query']);
+            } elseif (isset($_GET['search_query'])) {
+                $search_query_value = esc_attr(urldecode($_GET['search_query']));
+            }
+            $data_forms .= '<div class="form-group" style="margin-bottom: 15px !important;">';
+            $data_forms .= '<input type="text" name="search_query" placeholder="フリーワード検索" value="' . $search_query_value . '" style="width: 100% !important; padding: 12px !important; font-size: 16px !important; border: 2px solid #ddd !important; border-radius: 5px !important; box-sizing: border-box !important; transition: border-color 0.3s ease !important;">';
             $data_forms .= '</div>';
-        }            
+
+            // 検索結果がない場合のメッセージ表示
+            if ((isset($_POST['query_post']) && $_POST['query_post'] === 'search' && empty($search_results_list)) || 
+                (isset($_GET['no_results']) && $_GET['no_results'] === '1')) {
+                $no_results_id = 'no-results-' . uniqid();
+                $data_forms .= '<div id="' . $no_results_id . '" class="no-results" style="
+                    padding: 15px 20px !important;
+                    background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%) !important;
+                    border-radius: 6px !important;
+                    margin: 15px 0 !important;
+                    color: #333333 !important;
+                    font-weight: 500 !important;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.08) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    font-size: 14px !important;
+                    opacity: 1;
+                    transition: opacity 0.3s ease-in-out !important;
+                ">
+                <span style="
+                    margin-right: 10px !important;
+                    color: #ff6b8b !important;
+                    font-size: 18px !important;
+                " class="material-symbols-outlined">search_off</span>
+                検索結果が見つかりませんでした。別のキーワードをお試しください。
+                </div>
+                <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var noResultsEl = document.getElementById("' . $no_results_id . '");
+                    if (noResultsEl) {
+                        // 4秒後に非表示にする
+                        setTimeout(function() {
+                            noResultsEl.style.opacity = "0";
+                            setTimeout(function() {
+                                if (noResultsEl.parentNode) {
+                                    noResultsEl.style.display = "none";
+                                }
+                            }, 300);
+                        }, 4000);
+                    }
+                });
+                </script>';
+            }
+
+            // ボタンを横並びにするためのラップクラスを追加
+            $data_forms .= '<div class="button-group" style="display: flex !important; gap: 10px !important; margin-top: 15px !important; align-items: center !important;">';
+
+            // 検索実行ボタン
+            $data_forms .= '<input type="hidden" name="query_post" value="search">';
+            $data_forms .= '<button type="submit" name="send_post" title="検索実行" style="background-color: #0073aa !important; color: white !important; border: none !important; padding: 10px 20px !important; cursor: pointer !important; border-radius: 5px !important; display: flex !important; align-items: center !important; gap: 5px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.3s ease !important;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px !important;">search</span>';
+            $data_forms .= '検索実行';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
+
+            // 検索モードのキャンセルボタン（独立したフォーム）
+            $data_forms .= '<form method="post" action="" style="margin: 0 !important;">';
+            $data_forms .= function_exists('wp_nonce_field') ? wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false) : '';
+            $data_forms .= '<input type="hidden" name="query_post" value="update">';
+            $data_forms .= '<button type="submit" name="send_post" title="キャンセル" style="background-color: #666 !important; color: white !important; border: none !important; padding: 10px 20px !important; cursor: pointer !important; border-radius: 5px !important; display: flex !important; align-items: center !important; gap: 5px !important; font-size: 14px !important; font-weight: 500 !important; transition: all 0.3s ease !important;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px !important;">disabled_by_default</span>';
+            $data_forms .= 'キャンセル';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
+
+            $data_forms .= '</div>'; // ボタンラップクラスの閉じタグ
+            $data_forms .= '</div>'; // search-mode-formの閉じタグ
+        }
 
         // 追加・検索 以外なら更新フォームを表示
-        elseif ($action !== 'srcmode' || $action !== 'istmode') {
+        elseif ($action !== 'srcmode' && $action !== 'istmode') {
 
             // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
             $data_forms .= <<<END
@@ -1045,8 +1003,10 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             END;
                         
             $data_forms .= "<div class=\"add\">";
-            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
-            
+            // 1つのフォームで全ての操作ボタンをラップ
+            $data_forms .= "<form method=\"post\" action=\"\">";
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+
             // cookieに保存されたIDを取得
             $cookie_name = 'ktp_'. $name . '_id';
             if (isset($_GET['data_id'])) {
@@ -1085,81 +1045,25 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 }
             }
 
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
-            
+            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
+
             // 検索リストを生成
             $data_forms .= $search_results_list;
             $data_forms .= "<div class='button'>";
-
-            // 更新ボタンを追加
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <button type="submit" name="send_post" title="更新する">
-                    <span class="material-symbols-outlined">
-                    cached
-                    </span>
-                </button>
-            </form>
-            END;
-
+            // 更新ボタン
+            $data_forms .= '<button type="submit" name="query_post" value="update" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
             // 削除ボタン
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="delete">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
-                    <span class="material-symbols-outlined">
-                        delete
-                    </span>
-                </button>
-            </form>
-            END;
-
+            $data_forms .= '<button type="submit" name="query_post" value="delete" title="削除する" onclick="return confirm(\'本当に削除しますか？\')"><span class="material-symbols-outlined">delete</span></button>';
             // 複製ボタン
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="duplication">
-                <button type="submit" name="send_post" title="複製する">
-                    <span class="material-symbols-outlined">
-                    content_copy
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 追加モードボタン
-            $action = 'istmode';
-            $data_id = $data_id + 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="追加する">
-                    <span class="material-symbols-outlined">
-                    add
-                    </span>
-                </button>
-            </form>
-            END;
-
+            $data_forms .= '<button type="submit" name="query_post" value="duplication" title="複製する"><span class="material-symbols-outlined">content_copy</span></button>';
+            // 追加モードボタン（data_idをhiddenで渡す）
+            $next_data_id = $data_id + 1;
+            $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative;"><span class="material-symbols-outlined">add</span><input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '"></button>';
             // 検索モードボタン
-            $action = 'srcmode';
-            // $data_id = $data_id;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <button type='submit' name='send_post' title="検索する">
-                    <span class="material-symbols-outlined">
-                    search
-                    </span>
-                </button>
-            </form>
-            END;
-
+            $data_forms .= '<button type="submit" name="query_post" value="srcmode" title="検索する"><span class="material-symbols-outlined">search</span></button>';
+            $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
+            $data_forms .= '</form>';
         }
                             
         $data_forms .= '</div>'; // フォームを囲む<div>タグの終了タグを追加
