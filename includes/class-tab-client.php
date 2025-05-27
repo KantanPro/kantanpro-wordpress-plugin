@@ -665,7 +665,7 @@ class Kntan_Client_Class {
                $results_h = <<<END
                <div class="data_contents">
                    <div class="data_list_box">
-                   <div class="data_list_title">■ {$client_name} の注文履歴（担当者：{$client_user_name}）</div>
+                   <div class="data_list_title">■ {$client_name} の注文履歴</div>
                END;
                
                $results = array(); // 結果を格納する配列を初期化
