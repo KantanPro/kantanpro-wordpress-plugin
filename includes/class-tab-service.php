@@ -431,13 +431,13 @@ class Kntan_Service_Class {
                     'data_id' => $data_id,
                     'query_post' => $action
                 ], $base_page_url);
-                
-                echo '<script>
+                  echo '<script>
                     // 現在のURLを更新（リダイレクトなし）
                     window.history.pushState({}, "", "' . esc_js($url) . '");
                     
-                    // 成功メッセージを表示して、画面をリフレッシュ
-                    document.addEventListener("DOMContentLoaded", function() {
+                    // Ajaxで商品・サービスタブの内容を取得・表示する関数
+                    function refreshServiceTab() {
+                        // 成功メッセージを表示
                         var message = document.createElement("div");
                         message.className = "notice notice-success";
                         message.innerHTML = "<p>' . esc_js(__('商品が追加されました', 'ktpwp')) . '</p>";
@@ -446,18 +446,42 @@ class Kntan_Service_Class {
                         message.style.color = "#155724";
                         message.style.marginBottom = "15px";
                         message.style.borderRadius = "3px";
-                        var firstElement = document.querySelector(".data_contents");
-                        if (firstElement) {
-                            firstElement.parentNode.insertBefore(message, firstElement);
-                            // 3秒後にメッセージを消す
-                            setTimeout(function() {
-                                message.style.display = "none";
-                            }, 3000);
-                        }
-                    });
+                        
+                        // Ajax自体は行わず、商品・サービスタブのコンテンツを直接取得して表示
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", "' . esc_js($url) . '", true);
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4 && xhr.status === 200) {
+                                // HTMLレスポンスから必要な部分を抽出
+                                var parser = new DOMParser();
+                                var doc = parser.parseFromString(xhr.responseText, "text/html");
+                                
+                                // タブコンテンツ要素を取得
+                                var tabContent = doc.querySelector(".tabs");
+                                if (tabContent) {
+                                    // 現在のタブコンテンツを更新
+                                    var currentTab = document.querySelector(".tabs");
+                                    if (currentTab) {
+                                        currentTab.innerHTML = tabContent.innerHTML;
+                                        
+                                        // メッセージを表示
+                                        var firstElement = document.querySelector(".data_contents");
+                                        if (firstElement) {
+                                            firstElement.parentNode.insertBefore(message, firstElement);
+                                            // 3秒後にメッセージを消す
+                                            setTimeout(function() {
+                                                message.style.display = "none";
+                                            }, 3000);
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        xhr.send();
+                    }
                     
-                    // 画面をリフレッシュ（ページ遷移なし）
-                    location.reload();
+                    // 実行
+                    refreshServiceTab();
                 </script>';
                 exit;
             }
@@ -866,8 +890,7 @@ class Kntan_Service_Class {
         
         $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
-        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始
-
+        
         // データー量を取得
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $data_num = $wpdb->get_results($query);
@@ -881,12 +904,12 @@ class Kntan_Service_Class {
             $memo = '';
             $category = '';
 
-            // 詳細表示部分の開始
+            // 詳細表示部分の開始とフォームを詳細ボックス内に含める
             $data_title = '<div class="data_detail_box">' .
-                          '<div class="data_detail_title">■ ' . esc_html__('商品追加中', 'ktpwp') . '</div>' .
-                          '</div>';
-            // 郵便番号自動入力JS
-            $data_forms .= <<<END
+                          '<div class="data_detail_title">■ ' . esc_html__('商品追加中', 'ktpwp') . '</div>';
+            
+            // 郵便番号自動入力JSをdata_titleに追加
+            $data_title .= <<<END
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var postalCode = document.querySelector('input[name="postal_code"]');
@@ -912,9 +935,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 END;
-            // 1フォームでまとめる
-            $data_forms .= '<form method="post" action="">';
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            // 1フォームでまとめる - これもdata_titleに追加
+            $data_title .= '<form method="post" action="">';
+            if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : '';
                 $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
@@ -923,7 +946,7 @@ END;
                 $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
                 $label_i18n = esc_html__($label, 'ktpwp');
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
+                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
                 } elseif ($field['type'] === 'select') {
                     $options = '';
                     foreach ((array)$field['options'] as $option) {
@@ -931,17 +954,20 @@ END;
                         $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
                     }
                     $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
+                    $data_title .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
                 }
             }
-            $data_forms .= '<div class="button">';
+            $data_title .= '<div class="button">';
             // 追加実行ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
+            $data_title .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
             // キャンセルボタン
-            $data_forms .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
-            $data_forms .= '</div></form><div class="add"></div>';
+            $data_title .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
+            $data_title .= '</div></form><div class="add"></div>';
+            
+            // data_detail_boxの閉じタグを追加
+            $data_title .= '</div>';
         }
 
         // 空のフォームを表示(検索モードの場合)
