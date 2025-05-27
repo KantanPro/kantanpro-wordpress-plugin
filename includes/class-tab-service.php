@@ -193,44 +193,69 @@ class Kntan_Service_Class {
         
         // 更新
         elseif( $query_post == 'update' ){
-
-            $wpdb->update( 
-                $table_name, 
-                array( 
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'search_field' => $search_field_value,
-                ),
-                    array( 'id' => $data_id ), 
-                    array( 
-                        '%s',  // service_name
-                        '%s',  // memo
-                        '%s',  // category
-                        '%s',  // search_field
-                    ),
-                    array( '%d' ) 
-            );
-
-            // $data_idの取得方法を確認
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-            if($data_id > 0){
-                // 頻度の値を+1する
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE $table_name SET frequency = frequency + 1 WHERE id = %d",
-                        $data_id
-                    )
-                );
-            } else {
-                // $data_idが不正な場合のエラーハンドリング
-                // 例: IDが指定されていない、または不正な値の場合
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Invalid or missing data_id in Update_Table function'); }
+            // nonceを検証
+            if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for update.'); }
+                wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
             }
 
-            // ロックを解除する
+            // データのIDを取得
+            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+
+            // 更新するデータを準備
+            $data = array(
+                'service_name' => sanitize_text_field($_POST['service_name']),
+                'memo' => sanitize_textarea_field($_POST['memo']),
+                'category' => sanitize_text_field($_POST['category']),
+                // 'time' は更新しないので含めない
+            );
+
+            // search_fieldの値を更新
+            $data['search_field'] = implode(', ', [
+                $data['service_name'],
+                $data['category']
+            ]);
+
+            // データを更新
+            $update_result = $wpdb->update(
+                $table_name,
+                $data,
+                array('id' => $data_id), // WHERE句
+                array('%s', '%s', '%s', '%s'), // dataのフォーマット
+                array('%d') // whereのフォーマット
+            );
+
+            if($update_result === false) {
+                // エラーログに更新エラーを記録
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Update error: ' . $wpdb->last_error . ' for ID: ' . $data_id); }
+                // JavaScriptを使用してポップアップエラーメッセージを表示
+                echo "<script>alert('" . esc_js(esc_html__('更新に失敗しました。エラーログを確認してください。', 'ktpwp')) . "');</script>";
+            } else {
+                // 更新成功時の処理
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $data_id,
+                    'message' => 'updated' // 更新成功のメッセージパラメータ
+                ], $base_page_url);
+
+                echo '<script>
+                    alert("' . esc_js(esc_html__('更新しました。', 'ktpwp')) . '");
+                    if (window.history.pushState) {
+                        var newUrl = "' . esc_js($url) . '";
+                        window.history.pushState({path: newUrl}, "", newUrl);
+                        location.reload();
+                    } else {
+                        window.location.href = "' . esc_js($url) . '"; // フォールバック
+                    }
+                </script>';
+            }
+
+            // ロックを解除し、処理を終了
             $wpdb->query("UNLOCK TABLES;");
-            
+            exit;
         }
 
         // 検索
@@ -851,14 +876,17 @@ class Kntan_Service_Class {
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
 
-            $data_id = $wpdb->insert_id;
+            $data_id = 0; // 新規追加なのでIDは0
+            $service_name = '';
+            $memo = '';
+            $category = '';
+
             // 詳細表示部分の開始
-            $data_title = <<<END
-<div class="data_detail_box">
-<div class="data_detail_title">■ " . esc_html__('商品の詳細', 'ktpwp') . "</div>
-END;
+            $data_title = '<div class="data_detail_box">' .
+                          '<div class="data_detail_title">■ ' . esc_html__('商品追加中', 'ktpwp') . '</div>' .
+                          '</div>';
             // 郵便番号自動入力JS
-            $data_forms = <<<END
+            $data_forms .= <<<END
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var postalCode = document.querySelector('input[name="postal_code"]');
@@ -911,8 +939,6 @@ END;
             $data_forms .= '<div class="button">';
             // 追加実行ボタン
             $data_forms .= '<button type="submit" name="query_post" value="insert" title="' . esc_attr__('追加実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
-            // 検索実行ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="search" title="' . esc_attr__('検索実行', 'ktpwp') . '"><span class="material-symbols-outlined">select_check_box</span></button>';
             // キャンセルボタン
             $data_forms .= '<button type="submit" name="query_post" value="update" title="' . esc_attr__('キャンセル', 'ktpwp') . '"><span class="material-symbols-outlined">disabled_by_default</span></button>';
             $data_forms .= '</div></form><div class="add"></div>';
