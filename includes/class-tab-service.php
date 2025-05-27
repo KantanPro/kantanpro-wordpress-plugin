@@ -528,29 +528,85 @@ class Kntan_Service_Class {
         // -----------------------------
         
         // テーブル名
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
-            // -----------------------------
+        $table_name = $wpdb->prefix . 'ktp_' . $name;        // -----------------------------
         // ページネーションリンク
-        // -----------------------------        // 表示範囲（1ページあたりの表示件数）
+        // -----------------------------
+          // ソート順の取得（デフォルトはIDの降順 - 新しい順）
+        $sort_by = 'id';
+        $sort_order = 'DESC';
+        
+        if (isset($_GET['sort_by'])) {
+            $sort_by = sanitize_text_field($_GET['sort_by']);
+            // 安全なカラム名のみ許可（SQLインジェクション対策）
+            $allowed_columns = array('id', 'service_name', 'frequency', 'time', 'category');
+            if (!in_array($sort_by, $allowed_columns)) {
+                $sort_by = 'id'; // 不正な値の場合はデフォルトに戻す
+            }
+        }
+        
+        if (isset($_GET['sort_order'])) {
+            $sort_order_param = strtoupper(sanitize_text_field($_GET['sort_order']));
+            // ASCかDESCのみ許可
+            $sort_order = ($sort_order_param === 'ASC') ? 'ASC' : 'DESC';
+        }
+        
+        // 現在のページのURLを生成
+        global $wp;
+        $current_page_id = get_queried_object_id();
+        // home_url() と $wp->request を使用して、現在のURLを取得し、page_idを追加
+        $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+        
+        // 表示範囲（1ページあたりの表示件数）
         $query_limit = 20; // 明示的に20件に設定
         if (!is_numeric($query_limit) || $query_limit <= 0) {
             $query_limit = 20; // 不正な値の場合はデフォルト値に
         }
+        
+        // ソートプルダウンを追加
+        $sort_url = add_query_arg(array('tab_name' => $name), $base_page_url);
+        
+        // ソート用プルダウンのHTMLを構築
+        $sort_dropdown = '<div class="sort-dropdown" style="float:right;margin-left:10px;">' .
+            '<form method="get" action="' . esc_url($sort_url) . '" style="display:flex;align-items:center;">';
+        
+        // 現在のGETパラメータを維持するための隠しフィールド
+        foreach ($_GET as $key => $value) {
+            if ($key !== 'sort_by' && $key !== 'sort_order') {
+                $sort_dropdown .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+            }
+        }
+        
+        $sort_dropdown .= 
+            '<select id="sort-select" name="sort_by" style="margin-right:5px;">' .
+            '<option value="id" ' . selected($sort_by, 'id', false) . '>' . esc_html__('ID', 'ktpwp') . '</option>' .
+            '<option value="service_name" ' . selected($sort_by, 'service_name', false) . '>' . esc_html__('商品名', 'ktpwp') . '</option>' .
+            '<option value="category" ' . selected($sort_by, 'category', false) . '>' . esc_html__('カテゴリー', 'ktpwp') . '</option>' .
+            '<option value="frequency" ' . selected($sort_by, 'frequency', false) . '>' . esc_html__('頻度', 'ktpwp') . '</option>' .
+            '<option value="time" ' . selected($sort_by, 'time', false) . '>' . esc_html__('登録日', 'ktpwp') . '</option>' .
+            '</select>' .
+            '<select id="sort-order" name="sort_order">' .
+            '<option value="ASC" ' . selected($sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
+            '<option value="DESC" ' . selected($sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
+            '</select>' .
+            '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
+            '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
+            '</button>' .
+            '</form></div>';
+
         // リスト表示部分の開始
         $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <div class="data_list_title">■ 商品リスト</div>
+            <div class="data_list_title">■ 商品リスト {$sort_dropdown}</div>
         END;// スタート位置を決める
         $page_stage = $_GET['page_stage'] ?? '';
         $page_start = $_GET['page_start'] ?? 0;
         $flg = $_GET['flg'] ?? '';
         if ($page_stage == '') {
             $page_start = 0;
-        }
-        $query_range = $page_start . ',' . $query_limit;
+        }        $query_range = $page_start . ',' . $query_limit;
 
-        $query_order_by = 'frequency';        // 全データ数を取得
+        // 全データ数を取得
         $total_query = "SELECT COUNT(*) FROM {$table_name}";
         $total_rows = $wpdb->get_var($total_query);
         
@@ -564,8 +620,8 @@ class Kntan_Service_Class {
         // 現在のページ番号を計算
         $current_page = floor($page_start / $query_limit) + 1;
 
-        // データを取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+        // データを取得（ソート順を適用）
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$sort_by} {$sort_order} LIMIT %d, %d", $page_start, $query_limit);
         $post_row = $wpdb->get_results($query);
         $results = []; // ← 追加：未定義エラー防止
         if( $post_row ){
