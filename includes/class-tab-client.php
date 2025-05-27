@@ -788,22 +788,48 @@ class Kntan_Client_Class {
         // 詳細表示(GET)
         // -----------------------------
 
-        // 現在表示中の詳細
+
+        // --- 詳細表示ID決定ロジック（協力会社タブと同様に修正） ---
         $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_GET['data_id'])) {
+        $query_id = null;
+        if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
+            $cookie_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+            // クッキーIDがDBに存在するかチェック
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $cookie_id));
+            if ($exists) {
+                $query_id = $cookie_id;
+            } else {
+                // 存在しなければ最大ID
+                $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                $query_id = $max_id_row ? $max_id_row->id : '';
+            }
         } else {
-            // 最後のIDを取得して表示
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : 1;
+            // data_id未指定時は必ずID最大の得意先を表示
+            $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+            $query_id = $max_id_row ? $max_id_row->id : '';
         }
 
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
+        if (!$post_row || count($post_row) === 0) {
+            // 存在しないIDの場合は最大IDを取得して再表示
+            $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+            if ($max_id_row && isset($max_id_row->id)) {
+                $query_id = $max_id_row->id;
+                $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+                $post_row = $wpdb->get_results($query);
+            }
+            // それでもデータがなければ「データがありません」
+            if (!$post_row || count($post_row) === 0) {
+                echo '<div class="data_detail_box"><h3>■ 顧客の詳細</h3><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
+                return;
+            }
+        }
+        // 表示したIDをクッキーに保存
+        setcookie($cookie_name, $query_id, time() + (86400 * 30), "/"); // 30日間有効
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
             $time = esc_html($row->time);
