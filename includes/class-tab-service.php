@@ -432,12 +432,81 @@ class Kntan_Service_Class {
                     'query_post' => $action
                 ], $base_page_url);
                   echo '<script>
+                    window.history.pushState({}, "", "' . $url . '"); // ← ここのクォーテーションを修正
+                    location.reload();
+                </script>';
+                exit;
+            }
+
+        }
+        
+        // 複製
+        elseif( $query_post == 'duplication' ) {
+            // データのIDを取得
+            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+
+            // データを取得（SQLインジェクション対策でprepareを使用）
+            $data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id), ARRAY_A);
+    
+            // 商品名の末尾に連番（#2, #3, ...）を付与
+            $original_name = $data['service_name'];
+            // すでに #数字 が付いていれば元の名前を抽出
+            if (preg_match('/^(.*)#(\\d+)$/', $original_name, $matches)) {
+                $base_name = $matches[1];
+            } else {
+                $base_name = $original_name;
+            }
+            // 同じベース名の件数をカウント
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $table_name WHERE service_name REGEXP %s",
+                '^' . preg_quote($base_name, '/') . '#[0-9]+$'
+            ));
+            $next_num = $count ? ((int)$count + 2) : 2; // 2から開始
+            $data['service_name'] = $base_name . '#' . $next_num;
+    
+            // IDを削除
+            unset($data['id']);
+    
+            // 頻度を0に設定
+            $data['frequency'] = 0;
+    
+            // search_fieldの値を更新
+            $data['search_field'] = implode(', ', [
+                $data['time'],
+                $data['service_name'],
+                $data['memo'],
+                $data['category']
+            ]);
+    
+            // データを挿入
+            $insert_result = $wpdb->insert($table_name, $data);
+            if($insert_result === false) {
+                // エラーログに挿入エラーを記録
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplication error: ' . $wpdb->last_error); }
+            } else {
+                // 挿入成功後の処理
+                $new_data_id = $wpdb->insert_id;
+                // ロックを解除する
+                $wpdb->query("UNLOCK TABLES;");
+                // 追加後に更新モードにする
+                $action = 'update';
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+                $url = add_query_arg([
+                    'tab_name' => $tab_name,
+                    'data_id' => $new_data_id,
+                    'query_post' => $action
+                ], $base_page_url);
+                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
+                
+                echo '<script>
                     // 現在のURLを更新（リダイレクトなし）
                     window.history.pushState({}, "", "' . esc_js($url) . '");
                     
-                    // Ajaxで商品・サービスタブの内容を取得・表示する関数
-                    function refreshServiceTab() {
-                        // 成功メッセージを表示
+                    // 成功メッセージを表示して、画面をリフレッシュ
+                    document.addEventListener("DOMContentLoaded", function() {
                         var message = document.createElement("div");
                         message.className = "notice notice-success";
                         message.innerHTML = "<p>' . esc_js(__('商品が追加されました', 'ktpwp')) . '</p>";
@@ -485,7 +554,6 @@ class Kntan_Service_Class {
                 </script>';
                 exit;
             }
-
         }
         
         // 複製
@@ -563,18 +631,42 @@ class Kntan_Service_Class {
                         message.style.color = "#155724";
                         message.style.marginBottom = "15px";
                         message.style.borderRadius = "3px";
-                        var firstElement = document.querySelector(".data_contents");
-                        if (firstElement) {
-                            firstElement.parentNode.insertBefore(message, firstElement);
-                            // 3秒後にメッセージを消す
-                            setTimeout(function() {
-                                message.style.display = "none";
-                            }, 3000);
-                        }
-                    });
+                        
+                        // Ajax自体は行わず、商品・サービスタブのコンテンツを直接取得して表示
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", "' . esc_js($url) . '", true);
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4 && xhr.status === 200) {
+                                // HTMLレスポンスから必要な部分を抽出
+                                var parser = new DOMParser();
+                                var doc = parser.parseFromString(xhr.responseText, "text/html");
+                                
+                                // タブコンテンツ要素を取得
+                                var tabContent = doc.querySelector(".tabs");
+                                if (tabContent) {
+                                    // 現在のタブコンテンツを更新
+                                    var currentTab = document.querySelector(".tabs");
+                                    if (currentTab) {
+                                        currentTab.innerHTML = tabContent.innerHTML;
+                                        
+                                        // メッセージを表示
+                                        var firstElement = document.querySelector(".data_contents");
+                                        if (firstElement) {
+                                            firstElement.parentNode.insertBefore(message, firstElement);
+                                            // 3秒後にメッセージを消す
+                                            setTimeout(function() {
+                                                message.style.display = "none";
+                                            }, 3000);
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        xhr.send();
+                    }
                     
-                    // 画面をリフレッシュ（ページ遷移なし）
-                    location.reload();
+                    // 実行
+                    refreshServiceTab();
                 </script>';
                 exit;
             }

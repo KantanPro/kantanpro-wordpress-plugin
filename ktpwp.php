@@ -62,6 +62,12 @@ if (!defined('MY_PLUGIN_URL')) {
 // プラグインのアクティベーション時の処理を登録
 register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate'));
 
+// 翻訳ファイルの読み込み
+function ktpwp_load_textdomain() {
+    load_plugin_textdomain( 'ktpwp', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+}
+add_action( 'init', 'ktpwp_load_textdomain' );
+
 // リダイレクト処理クラス
 class KTPWP_Redirect {
     
