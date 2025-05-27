@@ -191,46 +191,66 @@ class Kantan_Supplier_Class{
 
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
-            $wpdb->delete(
+            // デバッグ用: 削除直前のIDとテーブル名を表示
+            echo '<div style="color:blue;font-weight:bold;">DEBUG: 削除対象ID: ' . esc_html($data_id) . ' / テーブル: ' . esc_html($table_name) . '</div>';
+
+            // 削除対象レコードの存在確認
+            $debug_row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $data_id), ARRAY_A);
+            if ($debug_row) {
+                echo '<div style="color:green;">DEBUG: レコード存在: '; var_dump($debug_row); echo '</div>';
+            } else {
+                echo '<div style="color:red;">DEBUG: id=' . esc_html($data_id) . ' のレコードは存在しません</div>';
+            }
+
+            // 実際の削除処理（型指定を外す）
+            $deleted = $wpdb->delete(
                 $table_name,
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%d'
-                )
+                array('id' => $data_id)
             );
+
+            // DELETE直後のクエリを退避
+            $delete_query = $wpdb->last_query;
 
             // ロックを解除する
             $wpdb->query("UNLOCK TABLES;");
 
-            // リダイレクト
-            // データ削除後に表示するデータIDを適切に設定
-            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
-            $next_id_result = $wpdb->get_row($next_id_query);
-            if ($next_id_result) {
-                $next_data_id = $next_id_result->id;
+            if ($deleted === false || $deleted === 0) {
+                // 削除失敗時はエラーを表示・ログ出力
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Supplier delete error: ' . $wpdb->last_error . ' | SQL: ' . $delete_query);
+                }
+                echo '<div style="color:red;font-weight:bold;">削除に失敗しました。管理者にご連絡ください。<br>DBエラー: ' . esc_html($wpdb->last_error) . '<br>SQL: ' . esc_html($delete_query) . '</div>';
+                // 画面描画を継続
             } else {
-                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
-                $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+                // データ削除後に表示するデータIDを適切に設定
+                $next_id_query = "SELECT id FROM {$table_name} WHERE id > %d ORDER BY id ASC LIMIT 1";
+                $next_id_result = $wpdb->get_row($wpdb->prepare($next_id_query, $data_id));
+                if ($next_id_result) {
+                    $next_data_id = $next_id_result->id;
+                } else {
+                    $prev_id_query = "SELECT id FROM {$table_name} WHERE id < %d ORDER BY id DESC LIMIT 1";
+                    $prev_id_result = $wpdb->get_row($wpdb->prepare($prev_id_query, $data_id));
+                    $next_data_id = $prev_id_result ? $prev_id_result->id : '';
+                }
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                $action = 'update';
+                // 現在のURLを取得
+                $current_url = add_query_arg(NULL, NULL);
+                // tab_name, data_id, query_postパラメータを除去
+                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
+                // 新しいパラメータを追加
+                $redirect_args = [
+                    'tab_name' => $tab_name,
+                    'query_post' => $action
+                ];
+                if ($next_data_id !== '') {
+                    $redirect_args['data_id'] = $next_data_id;
+                }
+                $redirect_url = esc_url(add_query_arg($redirect_args, $base_url));
+                setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
+                header("Location: {$redirect_url}");
+                exit;
             }
-            $cookie_name = 'ktp_' . $name . '_id';
-            $action = 'update';
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_id, query_postパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-            // 新しいパラメータを追加
-            $redirect_url = esc_url(add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $next_data_id,
-                'query_post' => $action
-            ], $base_url));
-$cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$redirect_url}");
-            exit;
         }    
         
         // 更新
@@ -482,35 +502,35 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
 
             // 会社名の最後に#を追加
-            $data['company_name'] .= '#';
+            $data->company_name .= '#';
 
             // IDを削除
-            unset($data['id']);
+            unset($data->id);
 
             // 頻度を0に設定
-            $data['frequency'] = 0;
+            $data->frequency = 0;
 
             // search_fieldの値を更新
-            $data['search_field'] = implode(', ', [
-                $data['time'],
-                $data['company_name'],
-                $data['name'],
-                $data['email'],
-                $data['url'],
-                $data['representative_name'],
-                $data['phone'],
-                $data['postal_code'],
-                $data['prefecture'],
-                $data['city'],
-                $data['address'],
-                $data['building'],
-                $data['closing_day'],
-                $data['payment_month'],
-                $data['payment_day'],
-                $data['payment_method'],
-                $data['tax_category'],
-                $data['memo'],
-                $data['category']
+            $data->search_field = implode(', ', [
+                $data->time,
+                $data->company_name,
+                $data->name,
+                $data->email,
+                $data->url,
+                $data->representative_name,
+                $data->phone,
+                $data->postal_code,
+                $data->prefecture,
+                $data->city,
+                $data->address,
+                $data->building,
+                $data->closing_day,
+                $data->payment_month,
+                $data->payment_day,
+                $data->payment_method,
+                $data->tax_category,
+                $data->memo,
+                $data->category
             ]);
 
             // データを挿入
@@ -735,20 +755,42 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
         // 現在表示中の詳細
         $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_GET['data_id'])) {
+        if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
             $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
+            $cookie_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+            // クッキーIDがDBに存在するかチェック
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $cookie_id));
+            if ($exists) {
+                $query_id = $cookie_id;
+            } else {
+                // 存在しなければ最大ID
+                $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                $query_id = $max_id_row ? $max_id_row->id : '';
+            }
         } else {
-            // 最後のIDを取得して表示
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : 1;
+            // data_id未指定時は必ずID最大の協力会社を表示
+            $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+            $query_id = $max_id_row ? $max_id_row->id : '';
         }
         
         // データを取得し変数に格納
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
         $post_row = $wpdb->get_results($query);
+        if (!$post_row || count($post_row) === 0) {
+            // 存在しないIDの場合は最大IDを取得して再表示
+            $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+            if ($max_id_row && isset($max_id_row->id)) {
+                $query_id = $max_id_row->id;
+                $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+                $post_row = $wpdb->get_results($query);
+            }
+            // それでもデータがなければ「データがありません」
+            if (!$post_row || count($post_row) === 0) {
+                echo '<div class="data_detail_box"><h3>■ 協力会社の詳細</h3><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
+                return;
+            }
+        }
         foreach ($post_row as $row){
             $data_id = esc_html($row->id);
             $time = esc_html($row->time);
@@ -1051,8 +1093,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             $data_forms .= '<button type="submit" name="query_post" value="update" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
             // 削除ボタン
             $data_forms .= '<button type="submit" name="query_post" value="delete" title="削除する" onclick="return confirm(\'本当に削除しますか？\')"><span class="material-symbols-outlined">delete</span></button>';
-            // 複製ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="duplication" title="複製する"><span class="material-symbols-outlined">content_copy</span></button>';
+            // 複製ボタンは削除
             // 追加モードボタン（data_idをhiddenで渡す）
             $next_data_id = $data_id + 1;
             $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative;"><span class="material-symbols-outlined">add</span><input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '"></button>';
