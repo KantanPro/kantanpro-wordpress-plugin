@@ -931,46 +931,37 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         }
 
         // 空のフォームを表示(検索モードの場合)
-        elseif ($action === 'srcmode') {
 
+        elseif ($action === 'srcmode') {
             // 表題
             $data_title = <<<END
             <div class="data_detail_box">
                 <h3>■ 協力会社の詳細（ 検索モード ）</h3>
             END;
 
-            // 検索フォームを生成
+            // 検索フォームを生成（1フォームにまとめる）
             $data_forms = '<form method="post" action="">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
+            $search_query_val = isset($_POST['search_query']) ? esc_attr($_POST['search_query']) : '';
+            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" value=\"{$search_query_val}\" required></div>";
             // 検索リストを生成
             $data_forms .= $search_results_list;
             // ボタン<div>タグを追加
             $data_forms .= "<div class='button'>";
             // 検索実行ボタン
-            $action = 'search';
-            $data_forms .= '<form method="post" action="">';
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-            $data_forms .= "<input type='hidden' name='query_post' value='$action'>
-            <button type='submit' name='send_post' title='検索実行'>
-            <span class='material-symbols-outlined'>select_check_box</span>
-            </button>
-            </form>";
+            $data_forms .= '<button type="submit" name="query_post" value="search" title="検索実行">';
+            $data_forms .= '<span class="material-symbols-outlined">select_check_box</span>';
+            $data_forms .= '</button>';
             // キャンセルボタン
-            $action = 'update';
-            $data_id = $data_id - 1;
-            $data_forms .= '<form method="post" action="">';
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
-            $data_forms .= "<input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title='キャンセル'>
-            <span class='material-symbols-outlined'>disabled_by_default</span>
-            </button>
-            </form>";
-            $data_forms .= "<div class=\"add\">";
+            $data_id_val = isset($data_id) ? esc_attr($data_id - 1) : '';
+            $data_forms .= '<button type="submit" name="query_post" value="update" title="キャンセル">';
+            $data_forms .= '<input type="hidden" name="data_id" value="' . $data_id_val . '">';
+            $data_forms .= '<span class="material-symbols-outlined">disabled_by_default</span>';
+            $data_forms .= '</button>';
+            $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
-        }            
+            $data_forms .= '</form>';
+        }
 
         // 空のフォームを表示(検索モードの場合)
         elseif ($action === 'srcmode') {
