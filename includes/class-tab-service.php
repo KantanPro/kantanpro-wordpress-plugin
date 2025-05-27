@@ -435,17 +435,15 @@ class Kntan_Service_Class {
             );            // echo $image_url;
             // exit;
 
-            // リダイレクト
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_idパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
-            // 新しいパラメータを追加
+            // リダイレクト（class-tab-client.phpの方針に準拠）
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
             $url = add_query_arg([
                 'tab_name' => $tab_name,
                 'data_id' => $data_id
-            ], $base_url);
-            header("Location: {$url}");
+            ], $base_page_url);
+            header('Location: ' . esc_url_raw($url));
             exit;
         }        // 画像削除：デフォルト画像に戻す
         elseif ($query_post == 'delete_image') {
@@ -476,17 +474,16 @@ class Kntan_Service_Class {
                 array(
                     '%d'
                 )
-            );            // リダイレクト
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_idパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
-            // 新しいパラメータを追加
+            );
+            // リダイレクト（class-tab-client.phpの方針に準拠）
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
             $url = add_query_arg([
                 'tab_name' => $tab_name,
                 'data_id' => $data_id
-            ], $base_url);
-            header("Location: {$url}");
+            ], $base_page_url);
+            header('Location: ' . esc_url_raw($url));
             exit;
         }
 
