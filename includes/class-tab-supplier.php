@@ -341,24 +341,21 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
         }
         // 検索結果が複数ある場合の処理
         elseif (count($results) > 1) {
-            // 検索結果を表示するHTMLを初期化
+            // 得意先タブと同じく、base_page_urlを使い絶対パスでリンク生成
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = add_query_arg(array('page_id' => $current_page_id), home_url($wp->request));
             $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
-            // 検索結果のリストを生成
             foreach ($results as $row) {
                 $id = esc_html($row->id);
-                $email = esc_html($row->email);
                 $company_name = esc_html($row->company_name);
                 $category = esc_html($row->category);
-                // 各検索結果に対してリンクを設定
-                $item_link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')));
-                $search_results_html .= "<li style=\'text-align:left;\'><a href=\'{$item_link_url}\' style=\'text-align:left;\'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
+                $link_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update'), $base_page_url));
+                $search_results_html .= "<li style='text-align:left;'><a href='{$link_url}' style='text-align:left;'>ID：{$id} 会社名：{$company_name} カテゴリー：{$category}</a></li>";
             }
-            // HTMLを閉じる
             $search_results_html .= "</ul></div></div>";
-            // JavaScriptに渡すために、検索結果のHTMLをエスケープ
             $search_results_html_js = json_encode($search_results_html);
-            // JavaScriptでポップアップを表示
-            $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')));
+            $close_redirect_url = esc_url(add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'srcmode'), $base_page_url));
             echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 var searchResultsHtml = $search_results_html_js;
@@ -381,17 +378,17 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 var closeButton = document.createElement('button');
                 closeButton.textContent = '閉じる';
                 closeButton.style.fontSize = '0.8em';
-                closeButton.style.color = 'black'; // 文字をもう少し黒く
+                closeButton.style.color = 'black';
                 closeButton.style.display = 'block';
                 closeButton.style.margin = '10px auto 0';
                 closeButton.style.padding = '10px';
-                closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
-                closeButton.style.borderRadius = '5px'; // 角を少し丸く
-                closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
+                closeButton.style.backgroundColor = '#cdcccc';
+                closeButton.style.borderRadius = '5px';
+                closeButton.style.borderColor = '#999';
                 closeButton.onclick = function() {
                     document.body.removeChild(popup);
-                    // 元の検索モードに戻るために特定のURLにリダイレクト
-                    location.href = '{$close_redirect_url}';
+                    // 元の検索モードに戻るために特定のURLにリダイレクト（srcmodeに戻す）
+                    location.href = '" . $close_redirect_url . "';
                 };
                 popup.appendChild(closeButton);
             });
