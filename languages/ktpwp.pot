@@ -1,0 +1,403 @@
+# Copyright (C) 2025 Aiojiipg
+# This file is distributed under the GPL2.
+msgid ""
+msgstr ""
+"Project-Id-Version: KTPWP 0.0.0beta\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/KTPWP\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-05-27T20:39:17+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: ktpwp\n"
+
+#. Plugin Name of the plugin
+#: ktpwp.php
+msgid "KTPWP"
+msgstr ""
+
+#. Description of the plugin
+#: ktpwp.php
+msgid "ショートコード[ktpwp_all_tab]を固定ページに入れてください。仕事のワークフローを管理するためのプラグインです。"
+msgstr ""
+
+#. Author of the plugin
+#: ktpwp.php
+msgid "Aiojiipg"
+msgstr ""
+
+#. Author URI of the plugin
+#: ktpwp.php
+msgid "https://ktpwp.com/blog/"
+msgstr ""
+
+#: includes/class-login-error.php:19
+msgid "KTPWPを利用するにはログインしてください。"
+msgstr ""
+
+#: includes/class-login-error.php:21
+msgid "ログイン"
+msgstr ""
+
+#: includes/class-login-error.php:22
+msgid "ホームへ"
+msgstr ""
+
+#: includes/class-tab-client.php:137
+msgid "Security check failed. Please try again."
+msgstr ""
+
+#: includes/class-tab-client.php:251
+msgid "検索結果はありませんでした。"
+msgstr ""
+
+#: includes/class-tab-client.php:339
+msgid "Security check failed for view state change. Please try again."
+msgstr ""
+
+#. translators: Pagination: Previous page link.
+#: includes/class-tab-client.php:466
+msgid "&laquo; 前へ"
+msgstr ""
+
+#. translators: Pagination: Next page link.
+#: includes/class-tab-client.php:468
+msgid "次へ &raquo;"
+msgstr ""
+
+#. translators: Message shown when no client data is registered.
+#: includes/class-tab-client.php:474
+msgid "顧客データは登録されていません。"
+msgstr ""
+
+#. translators: 1: Client ID, 2: Client company name. Message explaining order history is viewed elsewhere.
+#: includes/class-tab-client.php:480
+#, php-format
+msgid "顧客 ID %1$s (%2$s) の注文履歴は、注文管理機能を通じて表示されます。この画面では現在表示されません。"
+msgstr ""
+
+#. translators: Instruction for users on how to return to client details or navigate to order management.
+#: includes/class-tab-client.php:485
+msgid "「顧客詳細に戻る」ボタンを使用して顧客情報表示に戻るか、上部ナビゲーションから注文管理タブに移動してください。"
+msgstr ""
+
+#. translators: Message shown when no client is selected to view order history.
+#: includes/class-tab-client.php:488
+msgid "注文履歴を表示する顧客が選択されていません。まず顧客リストから顧客を選択し、「この顧客の注文履歴を見る」ボタンを使用してください。"
+msgstr ""
+
+#. translators: Placeholder text for company name input. Indicates it is a required field for corporate name or trade name.
+#: includes/class-tab-client.php:499
+msgid "必須 法人名または屋号"
+msgstr ""
+
+#. translators: Placeholder text for user name input (contact person).
+#: includes/class-tab-client.php:501
+msgid "担当者名"
+msgstr ""
+
+#. translators: Placeholder text for representative name input.
+#: includes/class-tab-client.php:507
+msgid "代表者名"
+msgstr ""
+
+#. translators: Placeholder text for phone number input. Instructs to use half-width numbers without hyphens.
+#. translators: Placeholder text for postal code input. Instructs to use half-width numbers without hyphens. Note: This string is shared with phone number.
+#: includes/class-tab-client.php:509
+#: includes/class-tab-client.php:511
+msgid "半角数字 ハイフン不要"
+msgstr ""
+
+#. translators: Button text: Add.
+#: includes/class-tab-client.php:578
+msgid "追加"
+msgstr ""
+
+#. translators: Button text: Update.
+#: includes/class-tab-client.php:581
+#: ktpwp.php:520
+msgid "更新"
+msgstr ""
+
+#. translators: Confirmation message when deleting a client. Warns that related order information might also be deleted.
+#: includes/class-tab-client.php:597
+msgid "この顧客情報を削除してもよろしいですか？関連する受注情報も削除される可能性があります。"
+msgstr ""
+
+#. translators: Button text: Delete.
+#: includes/class-tab-client.php:597
+msgid "削除"
+msgstr ""
+
+#. translators: Title for client search section.
+#: includes/class-tab-client.php:607
+msgid "顧客検索"
+msgstr ""
+
+#. translators: Error message shown when data insertion fails.
+#: includes/class-tab-client.php:620
+msgid "データの追加に失敗しました。"
+msgstr ""
+
+#. translators: Placeholder text for search keyword input.
+#: includes/class-tab-client.php:624
+msgid "検索キーワード"
+msgstr ""
+
+#. translators: Button text: Execute search.
+#: includes/class-tab-client.php:626
+#: includes/class-tab-service.php:923
+msgid "検索実行"
+msgstr ""
+
+#. translators: %s: Search query. Title for search results.
+#: includes/class-tab-client.php:634
+#, php-format
+msgid "%s の検索結果:"
+msgstr ""
+
+#. translators: Message shown when no search results are found.
+#: includes/class-tab-client.php:645
+msgid "該当する結果は見つかりませんでした。"
+msgstr ""
+
+#. translators: Button text: Cancel search.
+#: includes/class-tab-client.php:659
+msgid "検索解除"
+msgstr ""
+
+#. translators: Button text: Add mode. Switches the form to client creation mode.
+#: includes/class-tab-client.php:673
+msgid "追加モード"
+msgstr ""
+
+#. translators: Button text: Search mode. Switches the view to client search mode.
+#: includes/class-tab-client.php:683
+msgid "検索モード"
+msgstr ""
+
+#. translators: Page title for client management. %s is the tab name (e.g., client).
+#: includes/class-tab-client.php:690
+msgid "顧客管理"
+msgstr ""
+
+#. translators: Section title for adding a new client.
+#: includes/class-tab-client.php:698
+msgid "■ 顧客情報追加"
+msgstr ""
+
+#. translators: Section title for client details when data is available. Followed by (ID: %s).
+#. translators: Section title for client details when no data is available to display.
+#: includes/class-tab-client.php:701
+#: includes/class-tab-client.php:707
+msgid "■ 顧客詳細"
+msgstr ""
+
+#. translators: Section title for client search.
+#: includes/class-tab-client.php:704
+msgid "■ 顧客検索"
+msgstr ""
+
+#. translators: Error message shown when data insertion fails, advising to check required fields.
+#: includes/class-tab-client.php:722
+msgid "データの追加に失敗しました。必須項目を確認してください。"
+msgstr ""
+
+#. translators: Message shown when there is no client data to display, prompting to add a new client.
+#: includes/class-tab-client.php:731
+msgid "表示する顧客データがありません。追加モードで新しい顧客を登録してください。"
+msgstr ""
+
+#. translators: Button text: View this client's order history.
+#: includes/class-tab-client.php:741
+msgid "この顧客の注文履歴を見る"
+msgstr ""
+
+#. translators: Button text: Return to client details.
+#: includes/class-tab-client.php:751
+msgid "顧客詳細に戻る"
+msgstr ""
+
+#: includes/class-tab-order.php:388
+#: includes/class-tab-order.php:389
+#: includes/class-tab-order.php:567
+#: includes/class-tab-order.php:568
+msgid "プレビュー"
+msgstr ""
+
+#: includes/class-tab-order.php:391
+#: includes/class-tab-order.php:570
+msgid "印刷する"
+msgstr ""
+
+#: includes/class-tab-order.php:392
+#: includes/class-tab-order.php:571
+msgid "印刷"
+msgstr ""
+
+#: includes/class-tab-order.php:398
+#: includes/class-tab-order.php:399
+msgid "メール"
+msgstr ""
+
+#: includes/class-tab-order.php:550
+msgid "メモ項目"
+msgstr ""
+
+#: includes/class-tab-order.php:552
+msgid "後日指示"
+msgstr ""
+
+#: includes/class-tab-order.php:560
+msgid "指定された受注書は見つかりませんでした。"
+msgstr ""
+
+#: includes/class-tab-order.php:575
+msgid "表示する受注書がありません。"
+msgstr ""
+
+#: includes/class-tab-service.php:134
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(delete)"
+msgstr ""
+
+#: includes/class-tab-service.php:144
+msgid "データの削除に失敗しました。"
+msgstr ""
+
+#: includes/class-tab-service.php:154
+msgid "商品が削除されました。"
+msgstr ""
+
+#: includes/class-tab-service.php:169
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(update)"
+msgstr ""
+
+#: includes/class-tab-service.php:176
+msgid "指定されたデータが見つかりません。"
+msgstr ""
+
+#: includes/class-tab-service.php:212
+msgid "更新しました。"
+msgstr ""
+
+#: includes/class-tab-service.php:232
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(search)"
+msgstr ""
+
+#: includes/class-tab-service.php:265
+msgid "検索結果が見つかり、フォームが更新されました。"
+msgstr ""
+
+#: includes/class-tab-service.php:332
+msgid "検索結果が複数あります！"
+msgstr ""
+
+#. translators: Search result item. 1: ID, 2: Service name, 3: Category.
+#: includes/class-tab-service.php:343
+#, php-format
+msgid "ID：%1$s 商品名：%2$s カテゴリー：%3$s"
+msgstr ""
+
+#: includes/class-tab-service.php:367
+msgid "閉じる"
+msgstr ""
+
+#: includes/class-tab-service.php:386
+msgid "検索条件に一致する商品が見つかりませんでした。"
+msgstr ""
+
+#: includes/class-tab-service.php:401
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(insert)"
+msgstr ""
+
+#: includes/class-tab-service.php:430
+msgid "データの追加に失敗しました。詳細: "
+msgstr ""
+
+#: includes/class-tab-service.php:484
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(duplication)"
+msgstr ""
+
+#: includes/class-tab-service.php:529
+msgid "複製に失敗しました。"
+msgstr ""
+
+#: includes/class-tab-service.php:570
+msgid "商品が複製され、フォームが更新されました。"
+msgstr ""
+
+#: includes/class-tab-service.php:647
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(upload_image)"
+msgstr ""
+
+#: includes/class-tab-service.php:705
+msgid "セキュリティチェックに失敗しました。操作を続行できません。(delete_image)"
+msgstr ""
+
+#: includes/class-tab-service.php:799
+msgid "Security check failed: Nonce field missing for view state change."
+msgstr ""
+
+#: includes/class-tab-service.php:803
+msgid "Security check failed: Invalid nonce for view state change."
+msgstr ""
+
+#: includes/class-tab-service.php:832
+msgid "商品追加中"
+msgstr ""
+
+#: includes/class-tab-service.php:888
+msgid "追加実行"
+msgstr ""
+
+#: includes/class-tab-service.php:890
+#: includes/class-tab-service.php:936
+msgid "キャンセル"
+msgstr ""
+
+#: includes/class-tab-service.php:997
+msgid "商品画像"
+msgstr ""
+
+#: includes/class-tab-supplier.php:136
+msgid "不正なリクエストです。ページを再読み込みしてください。"
+msgstr ""
+
+#: ktpwp.php:10
+msgid "REST APIはログインユーザーのみ利用可能です。"
+msgstr ""
+
+#: ktpwp.php:519
+msgid "ログアウト"
+msgstr ""
+
+#: ktpwp.php:612
+msgid "ページタイトル"
+msgstr ""
+
+#: ktpwp.php:613
+msgid "メニュータイトル"
+msgstr ""
+
+#: ktpwp.php:733
+msgid "No changelog provided."
+msgstr ""
+
+#: ktpwp.php:746
+msgid "権限がありません"
+msgstr ""
+
+#: ktpwp.php:750
+msgid "セキュリティ検証に失敗しました"
+msgstr ""
+
+#: ktpwp.php:766
+msgid "Invalid order_id"
+msgstr ""
+
+#: ktpwp.php:773
+msgid "ログインが必要です"
+msgstr ""

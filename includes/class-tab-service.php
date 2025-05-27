@@ -85,19 +85,6 @@ class Kntan_Service_Class {
 
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
-        
-
-        // CSRF対策: POST時のみnonceチェック
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-                $wpdb->query("UNLOCK TABLES;");
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('CSRF/nonce error: nonce=' . (isset($_POST['_ktp_service_nonce']) ? $_POST['_ktp_service_nonce'] : 'NOT SET'));
-                    error_log('POST内容: ' . print_r($_POST, true));
-                }
-                wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
-            }
-        }
 
         // POSTデーター受信
         $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
@@ -105,6 +92,20 @@ class Kntan_Service_Class {
         $service_name = isset($_POST['service_name']) ? sanitize_text_field($_POST['service_name']) : '';
         $memo = isset($_POST['memo']) ? sanitize_textarea_field($_POST['memo']) : '';
         $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
+
+        // Nonce検証を各アクションの最初で行うように変更
+        // CSRF対策: POST時のみnonceチェック - これは削除し、各アクションで個別に行う
+        // if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        //     if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
+        //         // $wpdb->query("UNLOCK TABLES;"); // DEBUG: 一時的にコメントアウト
+        //         if (defined('WP_DEBUG') && WP_DEBUG) {
+        //             error_log('CSRF/nonce error: nonce=' . (isset($_POST['_ktp_service_nonce']) ? $_POST['_ktp_service_nonce'] : 'NOT SET'));
+        //             error_log('POST内容: ' . print_r($_POST, true));
+        //         }
+        //         wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
+        //     }
+        // }
+
 
         // search_fieldの値を設定
         $search_field_value = implode(', ', [
@@ -124,142 +125,112 @@ class Kntan_Service_Class {
 
         // 削除
         if ($query_post == 'delete' && $data_id > 0) {
-            $wpdb->delete(
-                $table_name,
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%d'
-                )
-            );
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");            // データ削除後に表示するデータIDを適切に設定
-            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
-            $next_id_result = $wpdb->get_row($next_id_query);
-            if ($next_id_result) {
-                $next_data_id = $next_id_result->id;
-            } else {
-                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
-                $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            // Nonce check for delete
+            if (!isset($_POST['_ktp_delete_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_delete_nonce']), 'ktp_delete_service_' . $data_id)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for delete. Action: ktp_delete_service_' . $data_id . ' Nonce field: ' . (isset($_POST['_ktp_delete_nonce']) ? $_POST['_ktp_delete_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(delete)', 'ktpwp'));
             }
-            
-            $action = 'update';
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            
-            // リダイレクトする代わりにJavaScriptでページを更新
-            global $wp;
-            $current_page_id = get_queried_object_id();
-            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-            $url = add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $next_data_id,
-                'query_post' => $action
-            ], $base_page_url);
-            
-            echo '<script>
-                // 現在のURLを更新（リダイレクトなし）
-                window.history.pushState({}, "", "' . esc_js($url) . '");
-                // コンテンツを更新（リロードなし）
-                document.addEventListener("DOMContentLoaded", function() {
-                    // 既存のフォームやデータを最新の状態にする処理をここに追加
-                    // 成功メッセージを表示
-                    var message = document.createElement("div");
-                    message.className = "notice notice-success";
-                    message.innerHTML = "<p>' . esc_js(__('項目が削除されました', 'ktpwp')) . '</p>";
-                    message.style.padding = "10px";
-                    message.style.backgroundColor = "#d4edda";
-                    message.style.color = "#155724";
-                    message.style.marginBottom = "15px";
-                    message.style.borderRadius = "3px";
-                    var firstElement = document.querySelector(".data_contents");
-                    if (firstElement) {
-                        firstElement.parentNode.insertBefore(message, firstElement);
-                        // 3秒後にメッセージを消す
-                        setTimeout(function() {
-                            message.style.display = "none";
-                        }, 3000);
-                    }
-                });
-                
-                // 削除後、画面をリフレッシュして最新データを表示（ページ遷移なし）
-                location.reload();
-            </script>';
-            exit;
-        }    
-        
+
+            $delete_result = $wpdb->delete($table_name, array('id' => $data_id), array('%d'));
+
+            if ($delete_result === false) {
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Delete error on table ' . $table_name . ' for ID ' . $data_id . ': ' . $wpdb->last_error); }
+                $wpdb->query("UNLOCK TABLES;");
+                $error_message_detail = (defined('WP_DEBUG') && WP_DEBUG && $wpdb->last_error) ? ' (' . esc_js($wpdb->last_error) . ')' : '';
+
+                echo "<script>alert('" . esc_js(__( 'データの削除に失敗しました。', 'ktpwp')) . $error_message_detail . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
+                exit;
+            } else {
+                $wpdb->query("UNLOCK TABLES;"); // Unlock after successful delete
+
+                // 現在のURLからアクション関連のパラメータを削除し、成功メッセージパラメータを追加してリダイレクトURLを構築
+                $redirect_url = remove_query_arg( array( 'query_post', 'data_id', '_ktp_delete_nonce', 'action', '_wpnonce' ), wp_get_referer() ?: $_SERVER['REQUEST_URI'] );
+                $redirect_url = add_query_arg( array( 'message' => '1', 'tab_name' => $tab_name ), $redirect_url ); // message=1 は削除成功を示す
+
+                echo "<script>
+                    alert('" . esc_js(__('商品が削除されました。', 'ktpwp')) . "');
+                    window.location.href = '" . esc_url_raw($redirect_url) . "';
+                </script>";
+                exit;
+            }
+        }
+
         // 更新
-        elseif( $query_post == 'update' ){
-            // nonceを検証
-            if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for update.'); }
-                wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
+        elseif ($query_post == 'update' && $data_id > 0) {
+            // Nonce check for update
+            if (!isset($_POST['_ktp_update_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_update_nonce']), 'ktp_update_service_' . $data_id)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for update. Action: ktp_update_service_' . $data_id . ' Nonce field: ' . (isset($_POST['_ktp_update_nonce']) ? $_POST['_ktp_update_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(update)', 'ktpwp'));
             }
 
-            // データのIDを取得
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+            // データの存在チェック
+            $existing_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id));
+            if (!$existing_data) {
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(__( '指定されたデータが見つかりません。', 'ktpwp'));
+            }
 
-            // 更新するデータを準備
-            $data = array(
-                'service_name' => sanitize_text_field($_POST['service_name']),
-                'memo' => sanitize_textarea_field($_POST['memo']),
-                'category' => sanitize_text_field($_POST['category']),
-                // 'time' は更新しないので含めない
+            // データ更新処理
+            $update_data = array(
+                'service_name' => $service_name,
+                'memo' => $memo,
+                'category' => $category,
+                'search_field' => $search_field_value
             );
 
-            // search_fieldの値を更新
-            $data['search_field'] = implode(', ', [
-                $data['service_name'],
-                $data['category']
-            ]);
-
-            // データを更新
-            $update_result = $wpdb->update(
+            $wpdb->update(
                 $table_name,
-                $data,
-                array('id' => $data_id), // WHERE句
-                array('%s', '%s', '%s', '%s'), // dataのフォーマット
-                array('%d') // whereのフォーマット
+                $update_data,
+                array('id' => $data_id),
+                array('%s', '%s', '%s', '%s'),
+                array('%d')
             );
-
-            if($update_result === false) {
-                // エラーログに更新エラーを記録
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Update error: ' . $wpdb->last_error . ' for ID: ' . $data_id); }
-                // JavaScriptを使用してポップアップエラーメッセージを表示
-                echo "<script>alert('" . esc_js(esc_html__('更新に失敗しました。エラーログを確認してください。', 'ktpwp')) . "');</script>";
-            } else {
-                // 更新成功時の処理
-                global $wp;
-                $current_page_id = get_queried_object_id();
-                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-                $url = add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $data_id,
-                    'message' => 'updated' // 更新成功のメッセージパラメータ
-                ], $base_page_url);
-
-                echo '<script>
-                    alert("' . esc_js(esc_html__('更新しました。', 'ktpwp')) . '");
-                    if (window.history.pushState) {
-                        var newUrl = "' . esc_js($url) . '";
-                        window.history.pushState({path: newUrl}, "", newUrl);
-                        location.reload();
-                    } else {
-                        window.location.href = "' . esc_js($url) . '"; // フォールバック
-                    }
-                </script>';
-            }
 
             // ロックを解除し、処理を終了
             $wpdb->query("UNLOCK TABLES;");
+
+            // 更新後のリダイレクト
+            $action = 'update';
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = home_url( $wp->request );
+            $url_params = [
+                'page_id' => $current_page_id,
+                'tab_name' => $tab_name,
+                'data_id' => $data_id,
+                'message' => 'updated' // 更新成功のメッセージパラメータ
+            ];
+            $url = add_query_arg($url_params, $base_page_url);
+
+            echo '<script>
+                alert("' . esc_js(esc_html__('更新しました。', 'ktpwp')) . '");
+                if (window.history.pushState) {
+                    var newUrl = "' . esc_js($url) . '";
+                    window.history.pushState({path: newUrl}, "", newUrl);
+                    location.reload();
+                } else {
+                    window.location.href = "' . esc_js($url) . '"; // フォールバック
+                }
+            </script>';
             exit;
         }
 
         // 検索
         elseif( $query_post == 'search' ){
+            // Nonce check for search
+            if (!isset($_POST['_ktp_search_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_search_nonce']), 'ktp_search_service')) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for search. Action: ktp_search_service Nonce field: ' . (isset($_POST['_ktp_search_nonce']) ? $_POST['_ktp_search_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(search)', 'ktpwp'));
+            }
 
             // SQLクエリを準備（search_fieldを検索対象にする）
             $search_query = isset($_POST['search_query']) ? sanitize_text_field($_POST['search_query']) : '';
@@ -272,22 +243,14 @@ class Kntan_Service_Class {
                 $action = 'update';
                 global $wp;
                 $current_page_id = get_queried_object_id();
-                $base_page_url = get_permalink($current_page_id);
-
-                if (!$base_page_url) {
-                    $page_slug = !empty($wp->request) ? $wp->request : '';
-                    if ($current_page_id) {
-                         $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $page_slug ) );
-                    } else {
-                        $base_page_url = home_url(add_query_arg(array(), $wp->request));
-                    }
-                }
-                
-                $url = add_query_arg(array(
+                $base_page_url = home_url( $wp->request );
+                $url_params = [
+                    'page_id' => $current_page_id,
                     'tab_name' => $tab_name,
                     'data_id' => $data_id,
                     'query_post' => $action
-                ), $base_page_url);
+                ];
+                $url = add_query_arg($url_params, $base_page_url);
 
                 $cookie_name = 'ktp_' . $tab_name . '_id';
                 $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
@@ -371,7 +334,13 @@ class Kntan_Service_Class {
                     $id = esc_html($row->id);
                     $service_name = esc_html($row->service_name);
                     $category = esc_html($row->category);
-                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>" . sprintf(esc_html__('ID：%1$s 商品名：%2$s カテゴリー：%3$s', 'ktpwp'), $id, $service_name, $category) . "</a></li>";
+                    $link_url_params = array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update');
+                    if ($current_page_id) {
+                        $link_url_params['page_id'] = $current_page_id;
+                    }
+                    $link_url = add_query_arg($link_url_params, $base_page_url); // $base_page_url を使用
+                    /* translators: Search result item. 1: ID, 2: Service name, 3: Category. */
+                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . esc_url($link_url) . "' style='text-align:left;'>" . sprintf(esc_html__('ID：%1$s 商品名：%2$s カテゴリー：%3$s', 'ktpwp'), $id, $service_name, $category) . "</a></li>";
                 }
                 $search_results_html .= "</ul></div></div>";
                 $search_results_html_js = json_encode($search_results_html);
@@ -423,10 +392,13 @@ class Kntan_Service_Class {
         // 商品追加 (新規)
         elseif ($query_post == 'insert') {
             // Nonce check for insert
-            if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for insert.'); }
+            // if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) { // Old generic nonce
+            if (!isset($_POST['_ktp_insert_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_insert_nonce']), 'ktp_insert_service')) { // New specific nonce
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                     error_log('Nonce verification failed for insert. Action: ktp_insert_service Nonce field: ' . (isset($_POST['_ktp_insert_nonce']) ? $_POST['_ktp_insert_nonce'] : 'not set'));
+                }
                 $wpdb->query("UNLOCK TABLES;");
-                wp_die(esc_html__('Nonce verification failed for insert.', 'ktpwp'));
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(insert)', 'ktpwp'));
             }
 
             $current_time = current_time('mysql');
@@ -459,7 +431,7 @@ class Kntan_Service_Class {
                 exit;
             } else {
                 $new_data_id = $wpdb->insert_id;
-                $wpdb->query("UNLOCK TABLES;"); 
+                $wpdb->query("UNLOCK TABLES;");
 
                 $action = 'update'; 
                 
@@ -478,12 +450,16 @@ class Kntan_Service_Class {
                      $base_page_url = home_url(add_query_arg(array(), $wp->request));
                 }
                 
-                $url = add_query_arg([
+                $url_params = [
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action,
                     'message' => 'inserted'
-                ], $base_page_url);
+                ];
+                if ($current_page_id) {
+                    $url_params['page_id'] = $current_page_id;
+                }
+                $url = add_query_arg($url_params, $base_page_url);
                 
                 echo '<script>
                     if (window.history.pushState) {
@@ -499,8 +475,17 @@ class Kntan_Service_Class {
         
         // 複製
         elseif( $query_post == 'duplication' ) {
+            // Nonce check for duplication
+            if (!isset($_POST['_ktp_duplicate_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_duplicate_nonce']), 'ktp_duplicate_service_' . $data_id)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for duplication. Action: ktp_duplicate_service_' . $data_id . ' Nonce field: ' . (isset($_POST['_ktp_duplicate_nonce']) ? $_POST['_ktp_duplicate_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(duplication)', 'ktpwp'));
+            }
+
             // データのIDを取得
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
+            // $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0; // Already defined
 
             // データを取得（SQLインジェクション対策でprepareを使用）
             $data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id), ARRAY_A);
@@ -541,7 +526,7 @@ class Kntan_Service_Class {
                 // エラーログに挿入エラーを記録
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplication error: ' . $wpdb->last_error); }
                 $wpdb->query("UNLOCK TABLES;"); // Ensure unlock in error case
-                echo "<script>alert('" . esc_js(__('複製に失敗しました。', 'ktpwp')) . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
+                echo "<script>alert('" . esc_js(__( '複製に失敗しました。', 'ktpwp')) . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
                 exit; // Added exit on error
             } else {
                 // 挿入成功後の処理
@@ -550,6 +535,7 @@ class Kntan_Service_Class {
 
                 // 追加後に更新モードにする
                 $action = 'update';
+
                 global $wp;
                 $current_page_id = get_queried_object_id();
                 $base_page_url = get_permalink($current_page_id);
@@ -557,14 +543,19 @@ class Kntan_Service_Class {
                 if (!$base_page_url && !empty($wp->request)) {
                     $base_page_url = home_url( $wp->request );
                 } elseif (!$base_page_url) {
-                    $base_page_url = site_url(add_query_arg(array())); 
+                    // $base_page_url = site_url(add_query_arg(array())); 
+                    $base_page_url = home_url(add_query_arg(array(), $wp->request)); 
                 }
                 
-                $url = add_query_arg(array(
+                $url_params = array(
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action
-                ), $base_page_url);
+                );
+                if ($current_page_id) {
+                    $url_params['page_id'] = $current_page_id;
+                }
+                $url = add_query_arg($url_params, $base_page_url);
 
                 $cookie_name = 'ktp_' . $tab_name . '_id';
                 $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
@@ -647,6 +638,15 @@ class Kntan_Service_Class {
         // 商品画像処理
         //        // 画像をアップロード
         elseif ($query_post == 'upload_image') {
+            // Nonce check for upload_image
+            if (!isset($_POST['_ktp_upload_image_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_upload_image_nonce']), 'ktp_upload_image_service_' . $data_id)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for upload_image. Action: ktp_upload_image_service_' . $data_id . ' Nonce field: ' . (isset($_POST['_ktp_upload_image_nonce']) ? $_POST['_ktp_upload_image_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(upload_image)', 'ktpwp'));
+            }
+
             // 先にImage_Processorクラスが存在するか確認
             if (!class_exists('Image_Processor')) {
                 require_once(dirname(__FILE__) . '/class-image_processor.php');
@@ -685,15 +685,25 @@ class Kntan_Service_Class {
             // リダイレクト（class-tab-client.phpの方針に準拠）
             global $wp;
             $current_page_id = get_queried_object_id();
-            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-            $url = add_query_arg([
+            $base_page_url = home_url( $wp->request );
+            $url_params = [
+                'page_id' => $current_page_id,
                 'tab_name' => $tab_name,
                 'data_id' => $data_id
-            ], $base_page_url);
+            ];
+            $url = add_query_arg($url_params, $base_page_url);
             header('Location: ' . esc_url_raw($url));
             exit;
         }        // 画像削除：デフォルト画像に戻す
         elseif ($query_post == 'delete_image') {
+            // Nonce check for delete_image
+            if (!isset($_POST['_ktp_delete_image_nonce']) || !wp_verify_nonce(sanitize_text_field($_POST['_ktp_delete_image_nonce']), 'ktp_delete_image_service_' . $data_id)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('Nonce verification failed for delete_image. Action: ktp_delete_image_service_' . $data_id . ' Nonce field: ' . (isset($_POST['_ktp_delete_image_nonce']) ? $_POST['_ktp_delete_image_nonce'] : 'not set'));
+                }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('セキュリティチェックに失敗しました。操作を続行できません。(delete_image)', 'ktpwp'));
+            }
 
             // デフォルト画像のURLを設定
             $default_image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
@@ -726,11 +736,13 @@ class Kntan_Service_Class {
             // リダイレクト（class-tab-client.phpの方針に準拠）
             global $wp;
             $current_page_id = get_queried_object_id();
-            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-            $url = add_query_arg([
+            $base_page_url = home_url( $wp->request );
+            $url_params = [
+                'page_id' => $current_page_id,
                 'tab_name' => $tab_name,
                 'data_id' => $data_id
-            ], $base_page_url);
+            ];
+            $url = add_query_arg($url_params, $base_page_url);
             header('Location: ' . esc_url_raw($url));
             exit;
         }
@@ -741,7 +753,6 @@ class Kntan_Service_Class {
             $wpdb->query("UNLOCK TABLES;");
         }
 
-
     }
 
 
@@ -749,216 +760,64 @@ class Kntan_Service_Class {
     // テーブルの表示
     // -----------------------------
 
-    function View_Table( $name ) {
-
+    function View_Table( $name ) { // $name が信頼できる内部値であると仮定
         global $wpdb;
+        // ... ここに $service_name, $category などの他の初期化が存在する場合 ...
 
-        // -----------------------------
-        // リスト表示
-        // -----------------------------
-        
-        // テーブル名
-        $table_name = $wpdb->prefix . 'ktp_' . $name;        // -----------------------------
-        // ページネーションリンク
-        // -----------------------------
-          // ソート順の取得（デフォルトはIDの降順 - 新しい順）
-        $sort_by = 'id';
-        $sort_order = 'DESC';
-        
-        if (isset($_GET['sort_by'])) {
-            $sort_by = sanitize_text_field($_GET['sort_by']);
-            // 安全なカラム名のみ許可（SQLインジェクション対策）
-            $allowed_columns = array('id', 'service_name', 'frequency', 'time', 'category');
-            if (!in_array($sort_by, $allowed_columns)) {
-                $sort_by = 'id'; // 不正な値の場合はデフォルトに戻す
+        // 現在のアクションを決定しサニタイズする
+        $action = 'update'; // デフォルトアクション
+        $is_post_request = ($_SERVER['REQUEST_METHOD'] === 'POST');
+
+        if ($is_post_request && isset($_POST['query_post'])) {
+            $action = sanitize_text_field(wp_unslash($_POST['query_post']));
+
+            // View_Table内で処理されるPOSTアクションによるビューモード変更のNonce検証
+            // (例: 「追加モード」または「検索モード」ビューへの切り替え、または「検索キャンセル」)
+            // データ変更アクション (insert, update, delete など) のNonceは
+            // Update_Table メソッドで検証されるべきです。
+            $nonce_value = null;
+            $nonce_action_expected = null;
+            $nonce_field_name = null;
+
+            if ($action === 'istmode') { // 「追加モード」ボタン
+                $nonce_field_name = '_ktp_add_mode_nonce';
+                $nonce_action_expected = 'ktp_add_mode_service';
+            } elseif ($action === 'srcmode' && isset($_POST['_ktp_search_mode_nonce'])) {
+                // これは検索モードに *入る* ボタンのためのものです。
+                // 実際の検索 *実行* (query_post=search) は Update_Table によって処理されます。
+                $nonce_field_name = '_ktp_search_mode_nonce';
+                $nonce_action_expected = 'ktp_search_mode_service';
+            } elseif ($action === 'update' && isset($_POST['_ktp_cancel_search_nonce'])) {
+                // これは「検索キャンセル」ボタン用で、action=update をPOSTしますが、
+                // 固有のNonceフィールドの存在によって識別されます。
+                $nonce_field_name = '_ktp_cancel_search_nonce';
+                $nonce_action_expected = 'ktp_cancel_search_service';
             }
-        }
-        
-        if (isset($_GET['sort_order'])) {
-            $sort_order_param = strtoupper(sanitize_text_field($_GET['sort_order']));
-            // ASCかDESCのみ許可
-            $sort_order = ($sort_order_param === 'ASC') ? 'ASC' : 'DESC';
-        }
-        
-        // 現在のページのURLを生成
-        global $wp;
-        $current_page_id = get_queried_object_id();
-        // home_url() と $wp->request を使用して、現在のURLを取得し、page_idを追加
-        $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-        
-        // 表示範囲（1ページあたりの表示件数）
-        $query_limit = 20; // 明示的に20件に設定
-        if (!is_numeric($query_limit) || $query_limit <= 0) {
-            $query_limit = 20; // 不正な値の場合はデフォルト値に
-        }
-        
-        // ソートプルダウンを追加
-        $sort_url = add_query_arg(array('tab_name' => $name), $base_page_url);
-        
-        // ソート用プルダウンのHTMLを構築
-        $sort_dropdown = '<div class="sort-dropdown" style="float:right;margin-left:10px;">' .
-            '<form method="get" action="' . esc_url($sort_url) . '" style="display:flex;align-items:center;">';
-        
-        // 現在のGETパラメータを維持するための隠しフィールド
-        foreach ($_GET as $key => $value) {
-            if ($key !== 'sort_by' && $key !== 'sort_order') {
-                $sort_dropdown .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+
+            if ($nonce_field_name && $nonce_action_expected) {
+                if (!isset($_POST[$nonce_field_name])) {
+                    wp_die(esc_html__('Security check failed: Nonce field missing for view state change.', 'ktpwp'));
+                }
+                $nonce_value = sanitize_text_field(wp_unslash($_POST[$nonce_field_name]));
+                if (!wp_verify_nonce($nonce_value, $nonce_action_expected)) {
+                    wp_die(esc_html__('Security check failed: Invalid nonce for view state change.', 'ktpwp'));
+                }
             }
+        } elseif (!$is_post_request && isset($_GET['action'])) {
+            // GETによってアクションがトリガーされる場合もここでサニタイズ
+            // 通常、GETによる状態変更アクションやモード切り替えはNonceなしでは非推奨
+            $action = sanitize_text_field(wp_unslash($_GET['action']));
+            // これらのGETアクションがNonce保護を必要とする場合 (例: リンク用)、URLにNonceが必要になり、
+            // ここで検証が必要。現時点ではアクション値のサニタイズのみ。
         }
         
-        $sort_dropdown .= 
-            '<select id="sort-select" name="sort_by" style="margin-right:5px;">' .
-            '<option value="id" ' . selected($sort_by, 'id', false) . '>' . esc_html__('ID', 'ktpwp') . '</option>' .
-            '<option value="service_name" ' . selected($sort_by, 'service_name', false) . '>' . esc_html__('商品名', 'ktpwp') . '</option>' .
-            '<option value="category" ' . selected($sort_by, 'category', false) . '>' . esc_html__('カテゴリー', 'ktpwp') . '</option>' .
-            '<option value="frequency" ' . selected($sort_by, 'frequency', false) . '>' . esc_html__('頻度', 'ktpwp') . '</option>' .
-            '<option value="time" ' . selected($sort_by, 'time', false) . '>' . esc_html__('登録日', 'ktpwp') . '</option>' .
-            '</select>' .
-            '<select id="sort-order" name="sort_order">' .
-            '<option value="ASC" ' . selected($sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
-            '<option value="DESC" ' . selected($sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
-            '</select>' .
-            '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
-            '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
-            '</button>' .
-            '</form></div>';
-
-        // リスト表示部分の開始
-        $results_h = <<<END
-        <div class="data_contents">
-            <div class="data_list_box">
-            <div class="data_list_title">■ 商品リスト {$sort_dropdown}</div>
-        END;// スタート位置を決める
-        $page_stage = $_GET['page_stage'] ?? '';
-        $page_start = $_GET['page_start'] ?? 0;
-        $flg = $_GET['flg'] ?? '';
-        if ($page_stage == '') {
-            $page_start = 0;
-        }        $query_range = $page_start . ',' . $query_limit;
-
-        // 全データ数を取得
-        $total_query = "SELECT COUNT(*) FROM {$table_name}";
-        $total_rows = $wpdb->get_var($total_query);
+        // $action の元の行:
+        // $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';
+        // これは上記のより堅牢なブロックに置き換えられました。
         
-        // ゼロ除算防止のための安全対策
-        if ($query_limit <= 0) {
-            $query_limit = 20; // デフォルト値の設定
-        }
-        
-        $total_pages = ceil($total_rows / $query_limit);
+        $cookie_name = 'ktp_'. $name . '_id'; // $cookie_name の定義を確認 (例)
 
-        // 現在のページ番号を計算
-        $current_page = floor($page_start / $query_limit) + 1;
-
-        // データを取得（ソート順を適用）
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$sort_by} {$sort_order} LIMIT %d, %d", $page_start, $query_limit);
-        $post_row = $wpdb->get_results($query);
-        $results = []; // ← 追加：未定義エラー防止
-        if( $post_row ){
-            foreach ($post_row as $row){
-                $id = esc_html($row->id);
-                $time = esc_html($row->time);
-                $service_name = esc_html($row->service_name);
-                $memo = esc_html($row->memo);
-                $category = esc_html($row->category);
-                $image_url = esc_html($row->image_url);
-                $frequency = esc_html($row->frequency);
-                  // リスト項目
-                $cookie_name = 'ktp_' . $name . '_id';
-                $results[] = '<a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage)) . '">'.
-                    '<div class="data_list_item">' . esc_html__('ID', 'ktpwp') . ': ' . $id . ' ' . $service_name . ' : ' . $category . ' : ' . esc_html__('頻度', 'ktpwp') . '(' . $frequency . ')</div>'.
-                '</a>';
-            }
-            $query_max_num = $wpdb->num_rows;
-        } else {
-            $results[] = '<div class="data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
-        }
-
-        $results_f = "<div class=\"pagination\">";
-
-        // 最初へリンク
-        if ($current_page > 1) {
-            $first_start = 0; // 最初のページ
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg)) . '">|&lt;</a> ';
-        }
-
-        // 前へリンク
-        if ($current_page > 1) {
-            $prev_start = ($current_page - 2) * $query_limit;
-            $results_f .= '<a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg)) . '">&lt;</a>';
-        }
-
-        // 現在のページ範囲表示と総数
-        $page_end = min($total_rows, $current_page * $query_limit);
-        $page_start_display = ($current_page - 1) * $query_limit + 1;
-        $results_f .= "<div class='stage'> $page_start_display ~ $page_end / $total_rows</div>";
-
-        // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
-        if ($current_page < $total_pages) {
-            $next_start = $current_page * $query_limit;
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;</a>';
-        }
-
-        // 最後へリンク
-        if ($current_page < $total_pages) {
-            $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;|</a>';
-        }
-        
-        $results_f .= "</div></div>";
-
-        $data_list = $results_h . implode( $results ) . $results_f;
-
-        // -----------------------------
-        // 詳細表示(GET)
-        // -----------------------------
-
-        // 現在表示中の詳細
-        $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            // 最後のIDを取得して表示
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : 1;
-        }
-
-        
-        // データを取得し変数に格納
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
-        $post_row = $wpdb->get_results($query);
-        foreach ($post_row as $row){
-            $data_id = esc_html($row->id);
-            $time = esc_html($row->time);
-            $service_name = esc_html($row->service_name);
-            $memo = esc_html($row->memo);
-            $category = esc_html($row->category);
-            $image_url = esc_html($row->image_url);
-        }
-          // 表示するフォーム要素を定義
-        $fields = [
-            // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
-            esc_html__('商品名', 'ktpwp') => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => esc_attr__('必須 商品・サービス名', 'ktpwp')],
-            // '画像URL' => ['type' => 'text', 'name' => 'image_url'], // 商品画像のURLフィールドはコメントアウト
-            esc_html__('メモ', 'ktpwp') => ['type' => 'textarea', 'name' => 'memo'],
-            esc_html__('カテゴリー', 'ktpwp') => [
-                'type' => 'text',
-                'name' => 'category',
-                'options' => esc_html__('一般', 'ktpwp'),
-                'suggest' => true,
-            ],
-        ];
-        
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
-        $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
-        
-        // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
-        $data_num = $wpdb->get_results($query);
-        $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
+        // ... filter_input を使用した $query_id の決定などの既存コード (これは良い) ...
 
         // 空のフォームを表示(追加モードの場合)
         if ($action === 'istmode') {
@@ -1001,7 +860,8 @@ document.addEventListener('DOMContentLoaded', function() {
 END;
             // 1フォームでまとめる - これもdata_titleに追加
             $data_title .= '<form method="post" action="">';
-            if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            // if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
+            if (function_exists('wp_nonce_field')) { $data_title .= wp_nonce_field('ktp_insert_service', '_ktp_insert_nonce', true, false); } // New specific nonce for insert
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : '';
                 $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
@@ -1046,7 +906,8 @@ END;
             // 検索フォームを生成
             $data_forms = '<form method="post" action="">';
             // nonceフィールド追加
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            // if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_search_service', '_ktp_search_nonce', true, false); } // New specific nonce for search
             $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
             // 検索リストを生成
             $data_forms .= $search_results_list;
@@ -1054,7 +915,8 @@ END;
             $data_forms .= "<div class='button' style='display: flex; gap: 8px;'>";
             // 検索実行ボタン
             $action_search = 'search';
-            $nonce_field_search = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field_search = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
+            $nonce_field_search = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_search_service', '_ktp_search_nonce', true, false) : ''; // New specific nonce for search
             $data_forms .= "<form method='post' action='' style='display: inline-block;'>";
             $data_forms .= $nonce_field_search;
             $data_forms .= "<input type='hidden' name='query_post' value='" . esc_attr($action_search) . "'>";
@@ -1064,7 +926,8 @@ END;
             // キャンセルボタン
             $action_cancel = 'update';
             $data_id_cancel = $data_id - 1;
-            $nonce_field_cancel = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field_cancel = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce, not strictly necessary for cancel but good for consistency if it were a state-changing cancel
+            $nonce_field_cancel = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_cancel_search_service', '_ktp_cancel_search_nonce', true, false) : ''; // New specific nonce for cancel search (though likely just a redirect)
             $data_forms .= "<form method='post' action='' style='display: inline-block;'>";
             $data_forms .= $nonce_field_cancel;
             $data_forms .= "<input type='hidden' name='data_id' value=''>";
@@ -1078,7 +941,8 @@ END;
         }            
 
         // 追加・検索 以外なら更新フォームを表示
-        elseif ($action !== 'srcmode' || $action !== 'istmode') {
+        // elseif ($action !== 'srcmode' || $action !== 'istmode') { // 元の誤った条件
+        elseif ($action !== 'srcmode' && $action !== 'istmode') { // 修正された論理条件
 
             // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
             $data_forms .= <<<END
@@ -1132,7 +996,8 @@ END;
             
             $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"" . esc_attr__('商品画像', 'ktpwp') . "\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
             // 商品画像アップロードフォーム
-            $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
+            $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_upload_image_service_' . $data_id, '_ktp_upload_image_nonce', true, false) : ''; // New specific nonce for image upload
             $data_forms .= '<form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">';
             $data_forms .= $nonce_field_upload;
             $data_forms .= '<div class="file-upload-container">';
@@ -1147,7 +1012,8 @@ END;
             $data_forms .= '<script>function checkImageUpload(form) { if (!form.image.value) { alert("画像が選択されていません。アップロードする画像を選択してください。"); return false; } return true; }</script>';
 
             // 商品画像削除ボタン
-            $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
+            $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_delete_image_service_' . $data_id, '_ktp_delete_image_nonce', true, false) : ''; // New specific nonce for image delete
             $data_forms .= '<form method="post" action="">';
             $data_forms .= $nonce_field_delete;
             $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
@@ -1175,10 +1041,11 @@ END;
             $action_buttons_html = '<div class="button-group" style="display: flex; gap: 8px;">';
 
             // 削除ボタン
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // 修正前
+            $delete_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field( 'ktp_delete_service_' . $data_id, '_ktp_delete_nonce', true, false ) : ''; // 修正後：削除アクション専用のNonce
             $action_buttons_html .= <<<END
             <form method="post" action="" style="display: inline-block;">
-            $nonce_field
+            {$delete_nonce_html}
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="delete">
                 <button type="submit" name="send_post" title="削除する" onclick="return confirm(\\\'本当に削除しますか？\\\')">
@@ -1190,10 +1057,11 @@ END;
             END;
 
             // 複製ボタン
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $duplicate_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // 複製や他のアクションは共通のNonceを使用 (Old)
+            $duplicate_nonce_html = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_duplicate_service_' . $data_id, '_ktp_duplicate_nonce', true, false) : ''; // New specific nonce for duplication
             $action_buttons_html .= <<<END
             <form method="post" action="" style="display: inline-block;">
-            $nonce_field
+            {$duplicate_nonce_html}
                 <input type="hidden" name="data_id" value="{$data_id}">
                 <input type="hidden" name="query_post" value="duplication">
                 <button type="submit" name="send_post" title="複製する">
@@ -1207,7 +1075,8 @@ END;
             // 追加モードボタン
             $add_action = 'istmode';
             $next_data_id = $data_id + 1; // 複製や新規追加時のIDとして利用する想定
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
+            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_add_mode_service', '_ktp_add_mode_nonce', true, false) : ''; // New specific nonce for add mode button
             $action_buttons_html .= <<<END
             <form method='post' action='' style="display: inline-block;">
             $nonce_field
@@ -1224,7 +1093,8 @@ END;
 
             // 検索モードボタン
             $search_action = 'srcmode';
-            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+            // $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : ''; // Old nonce
+            $nonce_field = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_search_mode_service', '_ktp_search_mode_nonce', true, false) : ''; // New specific nonce for search mode button
             $action_buttons_html .= <<<END
             <form method='post' action='' style="display: inline-block;">
             $nonce_field
@@ -1246,7 +1116,8 @@ END;
             
             // 更新フォームの開始
             $data_forms .= "<form name='service_form' method='post' action=''>";
-            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+            // if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); } // Old nonce
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_update_service_' . $data_id, '_ktp_update_nonce', true, false); } // New specific nonce for update
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? ${$field['name']} : '';
                 $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';

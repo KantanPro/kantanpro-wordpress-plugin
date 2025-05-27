@@ -1,4 +1,3 @@
-
 <?php
 if (!defined('ABSPATH')) exit;
 
@@ -81,6 +80,10 @@ class Kntan_Order_Class{
         // メール送信処理（編集フォームのみ）
         $mail_form_html = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_order_mail_id'])) {
+            // Nonceの検証 (メール編集フォーム表示要求時)
+            if (!isset($_POST['_wpnonce_send_order_mail']) || !wp_verify_nonce($_POST['_wpnonce_send_order_mail'], 'ktp_send_order_mail_action_' . $_POST['send_order_mail_id'])) {
+                wp_die('Nonce verification failed for initiating mail sending.');
+            }
             $order_id = intval($_POST['send_order_mail_id']);
             $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $order_id));
             if ($order) {
@@ -158,6 +161,11 @@ class Kntan_Order_Class{
 
                     // 送信ボタンが押された場合
                     if (isset($_POST['do_send_mail']) && $_POST['do_send_mail'] == '1') {
+                        // Nonceの検証 (実際のメール送信時)
+                        // $order_id はこのスコープで定義済み (send_order_mail_id から)
+                        if (!isset($_POST['_wpnonce_send_order_mail']) || !wp_verify_nonce($_POST['_wpnonce_send_order_mail'], 'ktp_send_order_mail_action_' . $order_id)) {
+                            wp_die('Nonce verification failed for sending mail.');
+                        }
                         $headers = [];
                         if ($my_email) $headers[] = 'From: ' . $my_email;
                         $sent = wp_mail($to, $edit_subject, $edit_body, $headers);
@@ -171,6 +179,7 @@ class Kntan_Order_Class{
                         $mail_form_html = '<div id="order-mail-form" style="background:#fff;border:2px solid #2196f3;padding:24px;max-width:520px;margin:32px auto 16px auto;border-radius:8px;box-shadow:0 2px 12px #0002;z-index:9999;">';
                         $mail_form_html .= '<h3 style="margin-top:0;">メール送信内容の編集</h3>';
                         $mail_form_html .= '<form method="post" action="">';
+                        $mail_form_html .= wp_nonce_field('ktp_send_order_mail_action_' . $order_id, '_wpnonce_send_order_mail', true, false);
                         $mail_form_html .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_id) . '">';
                         $mail_form_html .= '<div style="margin-bottom:12px;"><label>宛先：</label><input type="email" value="' . esc_attr($to) . '" readonly style="width:320px;max-width:100%;background:#f5f5f5;"></div>';
                         $mail_form_html .= '<div style="margin-bottom:12px;"><label>件名：</label><input type="text" name="edit_subject" value="' . esc_attr($edit_subject) . '" style="width:320px;max-width:100%;"></div>';
@@ -185,25 +194,33 @@ class Kntan_Order_Class{
         }
         // 案件名の保存処理
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project_name_id'], $_POST['order_project_name'])) {
+            // Nonceの検証
+            if (!isset($_POST['_wpnonce_update_project_name']) || !wp_verify_nonce($_POST['_wpnonce_update_project_name'], 'ktp_update_project_name_action_' . $_POST['update_project_name_id'])) {
+                wp_die('Nonce verification failed for updating project name.');
+            }
             $update_id = intval($_POST['update_project_name_id']);
             $project_name = sanitize_text_field($_POST['order_project_name']);
             if ($update_id > 0) {
                 $wpdb->update($table_name, ['project_name' => $project_name], ['id' => $update_id]);
                 // POSTリダブミット防止のためリダイレクト
                 $redirect_url = $_SERVER['REQUEST_URI'];
-                header('Location: ' . $redirect_url);
+                wp_redirect(remove_query_arg(array('update_project_name_id', 'order_project_name', '_wpnonce_update_project_name'), $redirect_url));
                 exit;
             }
         }
         // 進捗更新処理（POST時）
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_progress_id'], $_POST['update_progress'])) {
+            // Nonceの検証
+            if (!isset($_POST['_wpnonce_update_progress']) || !wp_verify_nonce($_POST['_wpnonce_update_progress'], 'ktp_update_progress_action_' . $_POST['update_progress_id'])) {
+                wp_die('Nonce verification failed for updating progress.');
+            }
             $update_id = intval($_POST['update_progress_id']);
             $update_progress = intval($_POST['update_progress']);
             if ($update_id > 0 && $update_progress >= 1 && $update_progress <= 6) {
                 $wpdb->update($table_name, ['progress' => $update_progress], ['id' => $update_id]);
                 // リダイレクトで再読み込み（POSTリダブミット防止）
                 $redirect_url = $_SERVER['REQUEST_URI'];
-                header('Location: ' . $redirect_url);
+                wp_redirect(remove_query_arg(array('update_progress_id', 'update_progress', '_wpnonce_update_progress'), $redirect_url));
                 exit;
             }
         }
@@ -219,27 +236,32 @@ class Kntan_Order_Class{
 
         $content = ''; // 表示するHTMLコンテンツ
 
-        // 受注書削除処理
-        if (isset($_GET['delete_order']) && $_GET['delete_order'] == 1 && $order_id > 0) {
-            // 削除処理
-            $deleted = $wpdb->delete($table_name, array('id' => $order_id));
-            if ($deleted) {
-                // リダイレクト処理を無効化 - 代わりに最新の受注書IDを直接設定
-                $latest_order = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY time DESC LIMIT 1");
-                if ($latest_order) {
-                    $_GET['order_id'] = $latest_order->id;
-                    $order_id = $latest_order->id;
-                } else {
-                    $_GET['order_id'] = 0;
-                    $order_id = 0;
-                }
-                $_GET['delete_order'] = null; // delete_orderフラグをクリア
+        // 受注書削除処理 (POSTに変更)
+        if (isset($_POST['delete_order']) && $_POST['delete_order'] == '1' && isset($_POST['order_id'])) {
+            $order_id_to_delete = intval($_POST['order_id']);
+            // Nonceの検証
+            if (!isset($_POST['_wpnonce_delete_order']) || !wp_verify_nonce($_POST['_wpnonce_delete_order'], 'ktp_delete_order_action_' . $order_id_to_delete)) {
+                wp_die('Nonce verification failed for deleting order.');
+            }
+
+            if ($order_id_to_delete > 0) {
+                $deleted = $wpdb->delete($table_name, array('id' => $order_id_to_delete));
+                // 削除成否に関わらずリダイレクトしてPOSTリサブミットを防ぐ
+                // 表示する受注書を決定（最新の受注書など）
+                $latest_order_after_delete = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY time DESC LIMIT 1");
+                $current_page_url = remove_query_arg(array('delete_order', '_wpnonce_delete_order', 'order_id')); // 基本URL
                 
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log("KTPWP Debug: Order deleted, redirect disabled"); }
-            } else {
-                $content .= '<div class="error">受注書の削除に失敗しました。</div>';
+                if ($latest_order_after_delete) {
+                    $redirect_url = add_query_arg('order_id', $latest_order_after_delete->id, $current_page_url);
+                } else {
+                    $redirect_url = $current_page_url; // 注文がなくなれば order_id なしでリダイレクト
+                }
+                // 削除失敗メッセージはadmin_noticeなどで表示するのが望ましいが、ここでは省略
+                wp_redirect($redirect_url);
+                exit;
             }
         }
+
 
         // 得意先タブから遷移してきた場合（新規受注書作成）
         if ($from_client === 1 && $customer_name !== '') {
@@ -363,15 +385,23 @@ class Kntan_Order_Class{
 
                 $content .= '<div class="controller">';
                 $content .= '<div class="printer">';
+                /* translators: Button title: Preview. */
                 $content .= '<button id="orderPreviewButton" onclick="toggleOrderPreview()" title="' . esc_attr__('プレビュー', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                /* translators: Screen reader text for preview button icon. */
                 $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('プレビュー', 'ktpwp') . '">preview</span>';
                 $content .= '</button>';
+                /* translators: Button title: Print. */
                 $content .= '<button onclick="printOrderContent()" title="' . esc_attr__('印刷する', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                /* translators: Screen reader text for print button icon. */
                 $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('印刷', 'ktpwp') . '">print</span>';
                 $content .= '</button>';
                 $content .= '<form id="orderMailForm" method="post" action="" style="display:inline;margin-top:0px;">';
+                // Nonceフィールドをメールボタンフォームに追加
+                $content .= wp_nonce_field('ktp_send_order_mail_action_' . $order_data->id, '_wpnonce_send_order_mail', true, false);
                 $content .= '<input type="hidden" name="send_order_mail_id" value="' . esc_attr($order_data->id) . '">';
+                /* translators: Button title: Email. */
                 $content .= '<button type="submit" id="orderMailButton" title="' . esc_attr__('メール', 'ktpwp') . '" style="padding: 8px 12px; font-size: 14px;">';
+                /* translators: Screen reader text for email button icon. */
                 $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__('メール', 'ktpwp') . '">mail</span>';
                 $content .= '</button>';
                 $content .= '</form>';
@@ -382,7 +412,9 @@ class Kntan_Order_Class{
                 // workflowセクション追加（デザイン統一）
                 $content .= '<div class="workflow">';
                 // 削除ボタンをworkflow内に移動（フォーム送信ベース）
-                $content .= '<form method="post" action="" style="display:inline-block;margin-left:10px;" onsubmit="return confirm(\'本当にこの受注書を削除しますか？\\nこの操作は元に戻せません。\');">';
+                $content .= '<form method="post" action="" style="display:inline-block;margin-left:10px;" onsubmit="return confirm(\\\'本当にこの受注書を削除しますか？\\\\nこの操作は元に戻せません。\\\');">';
+                // Nonceフィールドを削除フォームに追加
+                $content .= wp_nonce_field('ktp_delete_order_action_' . $order_id, '_wpnonce_delete_order', true, false);
                 $content .= '<input type="hidden" name="order_id" value="' . esc_attr($order_id) . '">';
                 $content .= '<input type="hidden" name="delete_order" value="1">';
                 $content .= '<button type="submit" style="color:#fff;background:#d9534f;padding: 8px 12px;font-size:14px;border:none;border-radius:4px;cursor:pointer;">受注書を削除</button>';
@@ -413,9 +445,11 @@ class Kntan_Order_Class{
 // ■ 受注書概要（ID: *）案件名フィールドを同一div内で横並びに
 $content .= '<div class="order-header-flex order-header-inline-summary">';
 $content .= '<span class="order-header-title-id">■ 受注書概要（ID: ' . esc_html($order_data->id) . '）'
-    . '<input type="text" class="order_project_name_inline order-header-projectname" name="order_project_name_inline" value="' . (isset($order_data->project_name) ? esc_html($order_data->project_name) : '') . '" data-order-id="' . esc_html($order_data->id) . '" placeholder="案件名" autocomplete="off" />'
+    . '<input type="text" class="order_project_name_inline order-header-projectname" name="order_project_name_inline" value="' . (isset($order_data->project_name) ? esc_html($order_data->project_name) : '') . '" data-order-id="' . esc_html($order_data->id) . '" placeholder="案件名" autocomplete="off" />' // AJAX用inputはそのまま
     . '</span>';
 $content .= '<form method="post" action="" class="progress-filter order-header-progress-form" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-left:auto;">';
+// Nonceフィールドを進捗更新フォームに追加
+$content .= wp_nonce_field('ktp_update_progress_action_' . $order_data->id, '_wpnonce_update_progress', true, false);
 $content .= '<input type="hidden" name="update_progress_id" value="' . esc_html($order_data->id) . '" />';
 $content .= '<label for="order_progress_select" style="white-space:nowrap;margin-right:4px;font-weight:bold;">進捗：</label>';
 $content .= '<select id="order_progress_select" name="update_progress" onchange="this.form.submit()" style="min-width:120px;max-width:200px;width:auto;">';
@@ -519,8 +553,10 @@ $content .= '</div>';
                 $content .= '</div>'; // .order_cost_box 終了
 
                 $content .= '<div class="order_memo_box box">';
+                /* translators: Section title for memo items. */
                 $content .= '<h4>■ ' . esc_html__('メモ項目', 'ktpwp') . '</h4>';
                 // TODO: メモの表示・編集フォームを追加
+                /* translators: Placeholder text indicating memo content will be instructed later. */
                 $content .= '<div>（' . esc_html__('後日指示', 'ktpwp') . '）</div>';
                 $content .= '</div>'; // .order_memo_box 終了
 
@@ -529,6 +565,7 @@ $content .= '</div>';
                 // 削除ボタンはworkflow内に移動済み
 
             } else {
+                /* translators: Error message shown when a specified order is not found. */
                 $content .= '<div class="error">' . esc_html__('指定された受注書は見つかりませんでした。', 'ktpwp') . '</div>';
             }
 
@@ -536,14 +573,19 @@ $content .= '</div>';
             // 受注書データが存在しない場合でもレイアウトを維持
             $content .= "<div class=\"controller\">\n";
             $content .= "    <div class=\"printer\">\n";
+            /* translators: Button title: Preview (disabled). */
             $content .= "        <button id=\"orderPreviewButton\" disabled title=\"" . esc_attr__('プレビュー', 'ktpwp') . "\">\n";
+            /* translators: Screen reader text for preview button icon (disabled). */
             $content .= "            <span class=\"material-symbols-outlined\" aria-label=\"" . esc_attr__('プレビュー', 'ktpwp') . "\">preview</span>\n";
             $content .= "        </button>\n";
+            /* translators: Button title: Print (disabled). */
             $content .= "        <button disabled title=\"" . esc_attr__('印刷する', 'ktpwp') . "\">\n";
+            /* translators: Screen reader text for print button icon (disabled). */
             $content .= "            <span class=\"material-symbols-outlined\" aria-label=\"" . esc_attr__('印刷', 'ktpwp') . "\">print</span>\n";
             $content .= "        </button>\n";
             $content .= "    </div>\n";
             $content .= "</div>\n";
+            /* translators: Message shown when there are no orders to display. */
             $content .= "<p>" . esc_html__('表示する受注書がありません。', 'ktpwp') . "</p>";
         }
 
