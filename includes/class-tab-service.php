@@ -339,9 +339,9 @@ class Kntan_Service_Class {
         elseif( $query_post == 'duplication' ) {
             // データのIDを取得
             $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-    
-            // データを取得
-            $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
+
+            // データを取得（SQLインジェクション対策でprepareを使用）
+            $data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id), ARRAY_A);
     
             // 商品名の最後に#を追加
             $data['service_name'] .= '#';
