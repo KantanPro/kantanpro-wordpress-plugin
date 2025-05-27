@@ -135,10 +135,7 @@ class Kntan_Service_Class {
             );
 
             // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            // リダイレクト
-            // データ削除後に表示するデータIDを適切に設定
+            $wpdb->query("UNLOCK TABLES;");            // データ削除後に表示するデータIDを適切に設定
             $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
             $next_id_result = $wpdb->get_row($next_id_query);
             if ($next_id_result) {
@@ -146,8 +143,14 @@ class Kntan_Service_Class {
             } else {
                 $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
                 $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }            $action = 'update';
-            // リダイレクト（class-tab-client.phpの方針に準拠）
+                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;
+            }
+            
+            $action = 'update';
+            $cookie_name = 'ktp_' . $tab_name . '_id';
+            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
+            
+            // リダイレクトする代わりにJavaScriptでページを更新
             global $wp;
             $current_page_id = get_queried_object_id();
             $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
@@ -156,9 +159,35 @@ class Kntan_Service_Class {
                 'data_id' => $next_data_id,
                 'query_post' => $action
             ], $base_page_url);
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header('Location: ' . esc_url_raw($url));
+            
+            echo '<script>
+                // 現在のURLを更新（リダイレクトなし）
+                window.history.pushState({}, "", "' . esc_js($url) . '");
+                // コンテンツを更新（リロードなし）
+                document.addEventListener("DOMContentLoaded", function() {
+                    // 既存のフォームやデータを最新の状態にする処理をここに追加
+                    // 成功メッセージを表示
+                    var message = document.createElement("div");
+                    message.className = "notice notice-success";
+                    message.innerHTML = "<p>' . esc_js(__('項目が削除されました', 'ktpwp')) . '</p>";
+                    message.style.padding = "10px";
+                    message.style.backgroundColor = "#d4edda";
+                    message.style.color = "#155724";
+                    message.style.marginBottom = "15px";
+                    message.style.borderRadius = "3px";
+                    var firstElement = document.querySelector(".data_contents");
+                    if (firstElement) {
+                        firstElement.parentNode.insertBefore(message, firstElement);
+                        // 3秒後にメッセージを消す
+                        setTimeout(function() {
+                            message.style.display = "none";
+                        }, 3000);
+                    }
+                });
+                
+                // 削除後、画面をリフレッシュして最新データを表示（ページ遷移なし）
+                location.reload();
+            </script>';
             exit;
         }    
         
@@ -226,7 +255,11 @@ class Kntan_Service_Class {
                 );                 // 検索後に更新モードにする
                  $action = 'update';
                  $data_id = $id;
-                 // リダイレクト（class-tab-client.phpの方針に準拠）
+                 
+                 // クッキーを設定
+                 $cookie_name = 'ktp_' . $tab_name . '_id';
+                 setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+                 
                  global $wp;
                  $current_page_id = get_queried_object_id();
                  $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
@@ -235,7 +268,35 @@ class Kntan_Service_Class {
                      'data_id' => $data_id,
                      'query_post' => $action
                  ], $base_page_url);
-                 header('Location: ' . esc_url_raw($url));
+                 
+                 echo '<script>
+                    // 現在のURLを更新（リダイレクトなし）
+                    window.history.pushState({}, "", "' . esc_js($url) . '");
+                    
+                    // 成功メッセージを表示
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var message = document.createElement("div");
+                        message.className = "notice notice-success";
+                        message.innerHTML = "<p>' . esc_js(__('検索結果が見つかりました', 'ktpwp')) . '</p>";
+                        message.style.padding = "10px";
+                        message.style.backgroundColor = "#d4edda";
+                        message.style.color = "#155724";
+                        message.style.marginBottom = "15px";
+                        message.style.borderRadius = "3px";
+                        var firstElement = document.querySelector(".data_contents");
+                        if (firstElement) {
+                            firstElement.parentNode.insertBefore(message, firstElement);
+                            // 3秒後にメッセージを消す
+                            setTimeout(function() {
+                                message.style.display = "none";
+                            }, 3000);
+                        }
+                    });
+                    
+                    // 画面をリフレッシュ
+                    location.reload();
+                 </script>';
+                 exit; // 検索結果が1つの場合はここで処理を終了
 
             }
 
@@ -290,8 +351,8 @@ class Kntan_Service_Class {
                     closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
-                        // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')) . "';
+                        // 元の検索モードに戻るために画面をリロード
+                        location.reload();
                     };
                     popup.appendChild(closeButton);
                 });
@@ -327,13 +388,16 @@ class Kntan_Service_Class {
             );
             if($insert_result === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
-            } else {
-                // ロックを解除する
+            } else {                // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
                 // 追加後に更新モードにする
-                // リダイレクト（class-tab-client.phpの方針に準拠）
                 $action = 'update';
                 $data_id = $wpdb->insert_id;
+                
+                // クッキーを設定
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
+                
                 global $wp;
                 $current_page_id = get_queried_object_id();
                 $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
@@ -342,7 +406,34 @@ class Kntan_Service_Class {
                     'data_id' => $data_id,
                     'query_post' => $action
                 ], $base_page_url);
-                header('Location: ' . esc_url_raw($url));
+                
+                echo '<script>
+                    // 現在のURLを更新（リダイレクトなし）
+                    window.history.pushState({}, "", "' . esc_js($url) . '");
+                    
+                    // 成功メッセージを表示して、画面をリフレッシュ
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var message = document.createElement("div");
+                        message.className = "notice notice-success";
+                        message.innerHTML = "<p>' . esc_js(__('商品が追加されました', 'ktpwp')) . '</p>";
+                        message.style.padding = "10px";
+                        message.style.backgroundColor = "#d4edda";
+                        message.style.color = "#155724";
+                        message.style.marginBottom = "15px";
+                        message.style.borderRadius = "3px";
+                        var firstElement = document.querySelector(".data_contents");
+                        if (firstElement) {
+                            firstElement.parentNode.insertBefore(message, firstElement);
+                            // 3秒後にメッセージを消す
+                            setTimeout(function() {
+                                message.style.display = "none";
+                            }, 3000);
+                        }
+                    });
+                    
+                    // 画面をリフレッシュ（ページ遷移なし）
+                    location.reload();
+                </script>';
                 exit;
             }
 
@@ -397,7 +488,6 @@ class Kntan_Service_Class {
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
                 // 追加後に更新モードにする
-                // リダイレクト（class-tab-client.phpの方針に準拠）
                 $action = 'update';
                 global $wp;
                 $current_page_id = get_queried_object_id();
@@ -409,7 +499,34 @@ class Kntan_Service_Class {
                 ], $base_page_url);
                 $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
                 setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header('Location: ' . esc_url_raw($url));
+                
+                echo '<script>
+                    // 現在のURLを更新（リダイレクトなし）
+                    window.history.pushState({}, "", "' . esc_js($url) . '");
+                    
+                    // 成功メッセージを表示して、画面をリフレッシュ
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var message = document.createElement("div");
+                        message.className = "notice notice-success";
+                        message.innerHTML = "<p>' . esc_js(__('商品が複製されました', 'ktpwp')) . '</p>";
+                        message.style.padding = "10px";
+                        message.style.backgroundColor = "#d4edda";
+                        message.style.color = "#155724";
+                        message.style.marginBottom = "15px";
+                        message.style.borderRadius = "3px";
+                        var firstElement = document.querySelector(".data_contents");
+                        if (firstElement) {
+                            firstElement.parentNode.insertBefore(message, firstElement);
+                            // 3秒後にメッセージを消す
+                            setTimeout(function() {
+                                message.style.display = "none";
+                            }, 3000);
+                        }
+                    });
+                    
+                    // 画面をリフレッシュ（ページ遷移なし）
+                    location.reload();
+                </script>';
                 exit;
             }
         }
@@ -724,7 +841,7 @@ class Kntan_Service_Class {
         
         $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
         $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
-        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
+        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始
 
         // データー量を取得
         $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
