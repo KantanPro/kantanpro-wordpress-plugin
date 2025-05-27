@@ -134,19 +134,18 @@ class Kntan_Service_Class {
                 $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
                 $prev_id_result = $wpdb->get_row($prev_id_query);
                 $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }            $action = 'update';
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_id, query_postパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-            // 新しいパラメータを追加
+            // リダイレクト（class-tab-client.phpの方針に準拠）
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
             $url = add_query_arg([
                 'tab_name' => $tab_name,
                 'data_id' => $next_data_id,
                 'query_post' => $action
-            ], $base_url);
+            ], $base_page_url);
             $cookie_name = 'ktp_' . $tab_name . '_id';
             setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$url}");
+            header('Location: ' . esc_url_raw($url));
             exit;
         }    
         
@@ -214,17 +213,16 @@ class Kntan_Service_Class {
                 );                 // 検索後に更新モードにする
                  $action = 'update';
                  $data_id = $id;
-                 // 現在のURLを取得
-                 $current_url = add_query_arg(NULL, NULL);
-                 // tab_name, data_id, query_postパラメータを除去
-                 $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                 // 新しいパラメータを追加
+                 // リダイレクト（class-tab-client.phpの方針に準拠）
+                 global $wp;
+                 $current_page_id = get_queried_object_id();
+                 $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
                  $url = add_query_arg([
                      'tab_name' => $tab_name,
                      'data_id' => $data_id,
                      'query_post' => $action
-                 ], $base_url);
-                 header("Location: {$url}");
+                 ], $base_page_url);
+                 header('Location: ' . esc_url_raw($url));
 
             }
 
@@ -317,24 +315,21 @@ class Kntan_Service_Class {
             if($insert_result === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
             } else {
-
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
-
                 // 追加後に更新モードにする
-                // リダイレクト                $action = 'update';
+                // リダイレクト（class-tab-client.phpの方針に準拠）
+                $action = 'update';
                 $data_id = $wpdb->insert_id;
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
                 $url = add_query_arg([
                     'tab_name' => $tab_name,
                     'data_id' => $data_id,
                     'query_post' => $action
-                ], $base_url);
-                header("Location: {$url}");
+                ], $base_page_url);
+                header('Location: ' . esc_url_raw($url));
                 exit;
             }
 
@@ -373,25 +368,22 @@ class Kntan_Service_Class {
             } else {
                 // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
-
                 // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
-                
                 // 追加後に更新モードにする
-                // リダイレクト                $action = 'update';
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
+                // リダイレクト（class-tab-client.phpの方針に準拠）
+                $action = 'update';
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
                 $url = add_query_arg([
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action
-                ], $base_url);
+                ], $base_page_url);
                 $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
                 setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header("Location: {$url}");
+                header('Location: ' . esc_url_raw($url));
                 exit;
             }
         }
