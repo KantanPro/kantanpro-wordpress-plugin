@@ -1333,7 +1333,7 @@ class Kntan_Client_Class {
             }
 
             // ボタンを横並びにするためのラップクラスを追加
-            $data_forms .= '<div class="button-group" style="display: flex !important; gap: 10px !important; margin-top: 15px !important; align-items: center !important;">';
+            $data_forms .= '<div class="button-group" style="display: flex; gap: 10px; margin-top: 15px !important; justify-content: flex-end !important;">';
 
             // 検索実行ボタン
             $data_forms .= '<input type="hidden" name="query_post" value="search">';

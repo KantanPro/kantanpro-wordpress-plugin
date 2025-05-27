@@ -1032,7 +1032,7 @@ if ($deleted === false || $deleted === 0) {
             }
 
             // ボタンを横並びにするためのラップクラスを追加
-            $data_forms .= '<div class="button-group" style="display: flex !important; gap: 10px !important; margin-top: 15px !important; align-items: center !important;">';
+            $data_forms .= '<div class="button-group" style="display: flex !important; justify-content: space-between !important; margin-top: 20px !important;">';
 
             // 検索実行ボタン
             $data_forms .= '<input type="hidden" name="query_post" value="search">';
@@ -1123,11 +1123,11 @@ if ($deleted === false || $deleted === 0) {
             $data_forms .= $search_results_list;
             $data_forms .= "<div class='button'>";
             // 更新ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="update" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
+            $data_forms .= '<button type="submit" name="query_post" value="update" title="更新する" style="margin-right: 8px;"><span class="material-symbols-outlined">cached</span></button>';
             // 削除ボタン
-            $data_forms .= '<button type="submit" name="query_post" value="delete" title="削除する" onclick="return confirm(\'本当に削除しますか？\')"><span class="material-symbols-outlined">delete</span></button>';
+            $data_forms .= '<button type="submit" name="query_post" value="delete" title="削除する" onclick="return confirm(\'本当に削除しますか？\')" style="margin-right: 8px;"><span class="material-symbols-outlined">delete</span></button>';
             // 追加モードボタン（data_idは空で渡す）
-            $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative;"><span class="material-symbols-outlined">add</span></button>';
+            $data_forms .= '<button type="submit" name="query_post" value="istmode" title="追加する" style="position:relative; margin-right: 8px;"><span class="material-symbols-outlined">add</span></button>';
             // 検索モードボタン
             $data_forms .= '<button type="submit" name="query_post" value="srcmode" title="検索する"><span class="material-symbols-outlined">search</span></button>';
             $data_forms .= "<div class=\"add\"></div>";
@@ -1156,7 +1156,7 @@ if ($deleted === false || $deleted === 0) {
             'company_name' => $company_name,
             'name' => $user_name,
             'representative_name' => $representative_name,
-            'postal_code' => $postal_code,
+            'postal_code' => $data_src['postal_code'],
             'prefecture' => $data_src['prefecture'],
             'city' => $city,
             'address' => $address,
