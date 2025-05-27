@@ -943,31 +943,23 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             $data_forms = '<form method="post" action="">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
             $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
-               
             // 検索リストを生成
             $data_forms .= $search_results_list;
-
             // ボタン<div>タグを追加
             $data_forms .= "<div class='button'>";
-            
             // 検索実行ボタン
             $action = 'search';
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            END;
+            $data_forms .= '<form method="post" action="">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
             $data_forms .= "<input type='hidden' name='query_post' value='$action'>
             <button type='submit' name='send_post' title='検索実行'>
             <span class='material-symbols-outlined'>select_check_box</span>
             </button>
             </form>";
-
             // キャンセルボタン
             $action = 'update';
             $data_id = $data_id - 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            END;
+            $data_forms .= '<form method="post" action="">';
             if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
             $data_forms .= "<input type='hidden' name='data_id' value=''>
             <input type='hidden' name='query_post' value='$action'>
@@ -976,7 +968,6 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             <span class='material-symbols-outlined'>disabled_by_default</span>
             </button>
             </form>";
-
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
         }            
