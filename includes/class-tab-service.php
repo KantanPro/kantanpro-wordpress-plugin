@@ -261,90 +261,121 @@ class Kntan_Service_Class {
         // 検索
         elseif( $query_post == 'search' ){
 
-        // SQLクエリを準備（search_fieldを検索対象にする）
-        $search_query = isset($_POST['search_query']) ? sanitize_text_field($_POST['search_query']) : '';
-        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
+            // SQLクエリを準備（search_fieldを検索対象にする）
+            $search_query = isset($_POST['search_query']) ? sanitize_text_field($_POST['search_query']) : '';
+            $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
 
-            // 検索結果が1つある場合の処理
+            // 検索結果が1件の場合
             if (count($results) == 1) {
+                $result = $results[0];
+                $data_id = $result->id;
+                $action = 'update';
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                $base_page_url = get_permalink($current_page_id);
 
-                // 検索結果のIDを取得
-                $id = $results[0]->id;
+                if (!$base_page_url) {
+                    $page_slug = !empty($wp->request) ? $wp->request : '';
+                    if ($current_page_id) {
+                         $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $page_slug ) );
+                    } else {
+                        $base_page_url = home_url(add_query_arg(array(), $wp->request));
+                    }
+                }
                 
-                // 頻度の値を+1する
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
-                        $id
-                    )
-                );                 // 検索後に更新モードにする
-                 $action = 'update';
-                 $data_id = $id;
-                 
-                 // クッキーを設定
-                 $cookie_name = 'ktp_' . $tab_name . '_id';
-                 setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
-                 
-                 global $wp;
-                 $current_page_id = get_queried_object_id();
-                 $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-                 $url = add_query_arg([
-                     'tab_name' => $tab_name,
-                     'data_id' => $data_id,
-                     'query_post' => $action
-                 ], $base_page_url);
-                 
-                 echo '<script>
-                    // 現在のURLを更新（リダイレクトなし）
-                    window.history.pushState({}, "", "' . esc_js($url) . '");
-                    
-                    // 成功メッセージを表示
-                    document.addEventListener("DOMContentLoaded", function() {
-                        var message = document.createElement("div");
-                        message.className = "notice notice-success";
-                        message.innerHTML = "<p>' . esc_js(__('検索結果が見つかりました', 'ktpwp')) . '</p>";
-                        message.style.padding = "10px";
-                        message.style.backgroundColor = "#d4edda";
-                        message.style.color = "#155724";
-                        message.style.marginBottom = "15px";
-                        message.style.borderRadius = "3px";
-                        var firstElement = document.querySelector(".data_contents");
-                        if (firstElement) {
-                            firstElement.parentNode.insertBefore(message, firstElement);
-                            // 3秒後にメッセージを消す
-                            setTimeout(function() {
-                                message.style.display = "none";
-                            }, 3000);
-                        }
-                    });
-                    
-                    // 画面をリフレッシュ
-                    location.reload();
-                 </script>';
-                 exit; // 検索結果が1つの場合はここで処理を終了
+                $url = add_query_arg(array(
+                    'tab_name' => $tab_name,
+                    'data_id' => $data_id,
+                    'query_post' => $action
+                ), $base_page_url);
 
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
+                $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+                setcookie($cookie_name, $data_id, time() + (86400 * 30), $cookie_path, $cookie_domain);
+
+                echo '<script>
+                    (function() {
+                        var targetUrl = \\\'' . esc_js($url) . '\\\';
+                        window.history.pushState({}, "", targetUrl);
+                        
+                        var successMessageText = \\\'' . esc_js(__('検索結果が見つかり、フォームが更新されました。', 'ktpwp')) . '\\\';
+
+                        var xhr = new XMLHttpRequest();
+                        var requestUrl = targetUrl;
+                        requestUrl += (requestUrl.includes("?") ? "&" : "?") + "cache_bust=" + new Date().getTime() + "&action=get_tab_content";
+
+                        xhr.open("GET", requestUrl, true);
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    var parser = new DOMParser();
+                                    var doc = parser.parseFromString(xhr.responseText, "text/html");
+                                    var newTabContent = doc.querySelector(".tabs");
+                                    var currentTabContainer = document.querySelector(".tabs");
+
+                                    if (newTabContent && currentTabContainer) {
+                                        var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                                        
+                                        currentTabContainer.innerHTML = newTabContent.innerHTML;
+                                        window.scrollTo(0, scrollTop); // スクロール位置を復元
+                                        
+                                        var messageDiv = document.createElement("div");
+                                        messageDiv.className = "notice notice-success is-dismissible ktpwp-notice";
+                                        messageDiv.style.cssText = "padding:10px; background-color:#d4edda; color:#155724; margin-bottom:15px; border-radius:3px; border:1px solid #c3e6cb;";
+                                        messageDiv.innerHTML = "<p>" + successMessageText + "</p>";
+                                        
+                                        var formElement = currentTabContainer.querySelector("form[name=\'service_form\']");
+                                        var insertTarget = formElement ? formElement : (currentTabContainer.querySelector(".data_contents") || currentTabContainer);
+                                        
+                                        if (insertTarget.parentNode) {
+                                            insertTarget.parentNode.insertBefore(messageDiv, insertTarget);
+                                        } else {
+                                            currentTabContainer.insertBefore(messageDiv, currentTabContainer.firstChild);
+                                        }
+
+                                        setTimeout(function() {
+                                            if (messageDiv.parentNode) {
+                                                messageDiv.parentNode.removeChild(messageDiv);
+                                            }
+                                        }, 3000);
+                                        
+                                        var firstInput = currentTabContainer.querySelector(\'input:not([type="hidden"]):not([type="submit"]):not([disabled]), select:not([disabled]), textarea:not([disabled])\');
+                                        if (firstInput && typeof firstInput.focus === "function") {
+                                            firstInput.focus();
+                                        }
+                                        if (typeof refreshServiceTab === "function") {
+                                            // refreshServiceTab(); 
+                                        }
+
+                                    } else {
+                                        // console.error("Could not find .tabs element for duplication update. Fallback to reload.");
+                                        location.reload(); // 安全策としてリロード
+                                    }
+                                } else {
+                                    // console.error("XHR request failed for duplication update. Status: " + xhr.status + ". Fallback to reload.");
+                                    location.reload(); // 安全策としてリロード
+                                }
+                            }
+                        };
+                        xhr.send();
+                    })();
+                </script>';
+                $wpdb->query("UNLOCK TABLES;"); // Unlock before exiting
+                exit;
             }
-
-            // 検索結果が複数ある場合の処理
+            // 検索結果が複数件の場合
             elseif (count($results) > 1) {
-                // 検索結果を表示するHTMLを初期化
                 $search_results_html = "<div class='data_contents'><div class='search_list_box'><div class='data_list_title'>■ " . esc_html__('検索結果が複数あります！', 'ktpwp') . "</div><ul>";
-
-                // 検索結果のリストを生成
                 foreach ($results as $row) {
                     $id = esc_html($row->id);
-                    $service_name = esc_html($row->service_name); // 商品名を取得
-                    $category = esc_html($row->category); // カテゴリーを取得
-                    // 各検索結果に対してリンクを設定
+                    $service_name = esc_html($row->service_name);
+                    $category = esc_html($row->category);
                     $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>" . sprintf(esc_html__('ID：%1$s 商品名：%2$s カテゴリー：%3$s', 'ktpwp'), $id, $service_name, $category) . "</a></li>";
                 }
-                // HTMLを閉じる
                 $search_results_html .= "</ul></div></div>";
-
-                // JavaScriptに渡すために、検索結果のHTMLをエスケープ
                 $search_results_html_js = json_encode($search_results_html);
 
-                // JavaScriptでポップアップを表示
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var searchResultsHtml = $search_results_html_js;
@@ -362,83 +393,109 @@ class Kntan_Service_Class {
                     popup.style.border = '1px solid #ccc';
                     popup.style.borderRadius = '5px';
                     popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                    document.body.appendChild(popup);
-                    // ポップアップを閉じるためのボタンを追加
+                    
                     var closeButton = document.createElement('button');
                     closeButton.textContent = '" . esc_js(__('閉じる', 'ktpwp')) . "';
                     closeButton.style.fontSize = '0.8em';
-                    closeButton.style.color = 'black'; // 文字をもう少し黒く
+                    closeButton.style.color = 'black';
                     closeButton.style.display = 'block';
                     closeButton.style.margin = '10px auto 0';
                     closeButton.style.padding = '10px';
-                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
-                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
-                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
+                    closeButton.style.backgroundColor = '#cdcccc';
+                    closeButton.style.borderRadius = '5px';
+                    closeButton.style.borderColor = '#999';
                     closeButton.onclick = function() {
                         document.body.removeChild(popup);
-                        // 元の検索モードに戻るために画面をリロード
-                        location.reload();
                     };
                     popup.appendChild(closeButton);
+                    document.body.appendChild(popup);
                 });
                 </script>";
+                $wpdb->query("UNLOCK TABLES;"); // Unlock before exiting
+                exit;
+            } else { // 検索結果が0件の場合
+                echo "<script>alert('" . esc_js(__('検索条件に一致する商品が見つかりませんでした。', 'ktpwp')) . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
+                $wpdb->query("UNLOCK TABLES;");
+                exit;
+            }
+        } // End of elseif( $query_post == 'search' )
+
+        // 商品追加 (新規)
+        elseif ($query_post == 'insert') {
+            // Nonce check for insert
+            if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for insert.'); }
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(esc_html__('Nonce verification failed for insert.', 'ktpwp'));
             }
 
-            // 検索結果が0件の場合の処理
-            else {                // JavaScriptを使用してポップアップ警告を表示
-                echo "<script>
-                alert('" . esc_js(__('検索結果がありません！', 'ktpwp')) . "');
-                </script>";
-                // リダイレクトの代わりにクエリパラメータを設定
-                $_GET['tab_name'] = $tab_name;
-                $_GET['query_post'] = 'search';
-            }
+            $current_time = current_time('mysql');
+            // $service_name, $memo, $category are already sanitized from the top of the function.
+            $search_field_content = implode(', ', [
+                $current_time,
+                $service_name,
+                $memo,
+                $category
+            ]);
 
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            exit;
-        }
-        // 追加
-        elseif( $query_post == 'insert' ) {
+            $default_image_url = plugin_dir_url(dirname(dirname(__FILE__))) . 'images/default/no-image-icon.jpg';
 
-            $insert_result = $wpdb->insert( 
-                $table_name, 
-                array( 
-                    'time' => current_time( 'mysql' ),
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'search_field' => $search_field_value
-                ) 
+            $insert_data = array(
+                'time' => $current_time,
+                'service_name' => $service_name,
+                'memo' => $memo,
+                'category' => $category,
+                'search_field' => $search_field_content,
+                'frequency' => 0,
+                'image_url' => $default_image_url 
             );
+
+            $insert_result = $wpdb->insert($table_name, $insert_data);
+
             if($insert_result === false) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
-            } else {                // ロックを解除する
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error . ' Data: ' . print_r($insert_data, true)); }
                 $wpdb->query("UNLOCK TABLES;");
-                // 追加後に更新モードにする
-                $action = 'update';
-                $data_id = $wpdb->insert_id;
+                echo "<script>alert('" . esc_js(__('データの追加に失敗しました。詳細: ', 'ktpwp') . $wpdb->last_error) . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
+                exit;
+            } else {
+                $new_data_id = $wpdb->insert_id;
+                $wpdb->query("UNLOCK TABLES;"); 
+
+                $action = 'update'; 
                 
-                // クッキーを設定
                 $cookie_name = 'ktp_' . $tab_name . '_id';
-                setcookie($cookie_name, $data_id, time() + (86400 * 30), "/"); // 30日間有効
-                
+                $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
+                $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), $cookie_path, $cookie_domain);
+
                 global $wp;
                 $current_page_id = get_queried_object_id();
-                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+                $base_page_url = '';
+                if ($current_page_id) {
+                    $base_page_url = get_permalink($current_page_id);
+                }
+                if (!$base_page_url) { // Fallback if get_permalink fails or no page_id
+                     $base_page_url = home_url(add_query_arg(array(), $wp->request));
+                }
+                
                 $url = add_query_arg([
                     'tab_name' => $tab_name,
-                    'data_id' => $data_id,
-                    'query_post' => $action
+                    'data_id' => $new_data_id,
+                    'query_post' => $action,
+                    'message' => 'inserted'
                 ], $base_page_url);
-                  echo '<script>
-                    window.history.pushState({}, "", "' . $url . '"); // ← ここのクォーテーションを修正
-                    location.reload();
+                
+                echo '<script>
+                    if (window.history.pushState) {
+                        window.history.pushState({}, "", "' . esc_js($url) . '");
+                        location.reload();
+                    } else {
+                        window.location.href = "' . esc_js($url) . '";
+                    }
                 </script>';
                 exit;
             }
-
-        }
+        } // End of elseif ($query_post == 'insert')
         
         // 複製
         elseif( $query_post == 'duplication' ) {
@@ -483,190 +540,104 @@ class Kntan_Service_Class {
             if($insert_result === false) {
                 // エラーログに挿入エラーを記録
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplication error: ' . $wpdb->last_error); }
+                $wpdb->query("UNLOCK TABLES;"); // Ensure unlock in error case
+                echo "<script>alert('" . esc_js(__('複製に失敗しました。', 'ktpwp')) . "'); if (window.history.length > 1) { window.history.back(); } else { window.location.href = document.referrer || window.location.pathname; }</script>";
+                exit; // Added exit on error
             } else {
                 // 挿入成功後の処理
                 $new_data_id = $wpdb->insert_id;
-                // ロックを解除する
                 $wpdb->query("UNLOCK TABLES;");
-                // 追加後に更新モードにする
-                $action = 'update';
-                global $wp;
-                $current_page_id = get_queried_object_id();
-                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-                $url = add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $new_data_id,
-                    'query_post' => $action
-                ], $base_page_url);
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                
-                echo '<script>
-                    // 現在のURLを更新（リダイレクトなし）
-                    window.history.pushState({}, "", "' . esc_js($url) . '");
-                    
-                    // 成功メッセージを表示して、画面をリフレッシュ
-                    document.addEventListener("DOMContentLoaded", function() {
-                        var message = document.createElement("div");
-                        message.className = "notice notice-success";
-                        message.innerHTML = "<p>' . esc_js(__('商品が追加されました', 'ktpwp')) . '</p>";
-                        message.style.padding = "10px";
-                        message.style.backgroundColor = "#d4edda";
-                        message.style.color = "#155724";
-                        message.style.marginBottom = "15px";
-                        message.style.borderRadius = "3px";
-                        
-                        // Ajax自体は行わず、商品・サービスタブのコンテンツを直接取得して表示
-                        var xhr = new XMLHttpRequest();
-                        xhr.open("GET", "' . esc_js($url) . '", true);
-                        xhr.onreadystatechange = function() {
-                            if (xhr.readyState === 4 && xhr.status === 200) {
-                                // HTMLレスポンスから必要な部分を抽出
-                                var parser = new DOMParser();
-                                var doc = parser.parseFromString(xhr.responseText, "text/html");
-                                
-                                // タブコンテンツ要素を取得
-                                var tabContent = doc.querySelector(".tabs");
-                                if (tabContent) {
-                                    // 現在のタブコンテンツを更新
-                                    var currentTab = document.querySelector(".tabs");
-                                    if (currentTab) {
-                                        currentTab.innerHTML = tabContent.innerHTML;
-                                        
-                                        // メッセージを表示
-                                        var firstElement = document.querySelector(".data_contents");
-                                        if (firstElement) {
-                                            firstElement.parentNode.insertBefore(message, firstElement);
-                                            // 3秒後にメッセージを消す
-                                            setTimeout(function() {
-                                                message.style.display = "none";
-                                            }, 3000);
-                                        }
-                                    }
-                                }
-                            }
-                        };
-                        xhr.send();
-                    }
-                    
-                    // 実行
-                    refreshServiceTab();
-                </script>';
-                exit;
-            }
-        }
-        
-        // 複製
-        elseif( $query_post == 'duplication' ) {
-            // データのIDを取得
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
 
-            // データを取得（SQLインジェクション対策でprepareを使用）
-            $data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $data_id), ARRAY_A);
-    
-            // 商品名の末尾に連番（#2, #3, ...）を付与
-            $original_name = $data['service_name'];
-            // すでに #数字 が付いていれば元の名前を抽出
-            if (preg_match('/^(.*)#(\\d+)$/', $original_name, $matches)) {
-                $base_name = $matches[1];
-            } else {
-                $base_name = $original_name;
-            }
-            // 同じベース名の件数をカウント
-            $count = $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM $table_name WHERE service_name REGEXP %s",
-                '^' . preg_quote($base_name, '/') . '#[0-9]+$'
-            ));
-            $next_num = $count ? ((int)$count + 2) : 2; // 2から開始
-            $data['service_name'] = $base_name . '#' . $next_num;
-    
-            // IDを削除
-            unset($data['id']);
-    
-            // 頻度を0に設定
-            $data['frequency'] = 0;
-    
-            // search_fieldの値を更新
-            $data['search_field'] = implode(', ', [
-                $data['time'],
-                $data['service_name'],
-                $data['memo'],
-                $data['category']
-            ]);
-    
-            // データを挿入
-            $insert_result = $wpdb->insert($table_name, $data);
-            if($insert_result === false) {
-                // エラーログに挿入エラーを記録
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplication error: ' . $wpdb->last_error); }
-            } else {
-                // 挿入成功後の処理
-                $new_data_id = $wpdb->insert_id;
-                // ロックを解除する
-                $wpdb->query("UNLOCK TABLES;");
                 // 追加後に更新モードにする
                 $action = 'update';
                 global $wp;
                 $current_page_id = get_queried_object_id();
-                $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-                $url = add_query_arg([
+                $base_page_url = get_permalink($current_page_id);
+
+                if (!$base_page_url && !empty($wp->request)) {
+                    $base_page_url = home_url( $wp->request );
+                } elseif (!$base_page_url) {
+                    $base_page_url = site_url(add_query_arg(array())); 
+                }
+                
+                $url = add_query_arg(array(
                     'tab_name' => $tab_name,
                     'data_id' => $new_data_id,
                     'query_post' => $action
-                ], $base_page_url);
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
+                ), $base_page_url);
+
+                $cookie_name = 'ktp_' . $tab_name . '_id';
+                $cookie_path = defined('COOKIEPATH') ? COOKIEPATH : '/';
+                $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), $cookie_path, $cookie_domain);
                 
                 echo '<script>
-                    // 現在のURLを更新（リダイレクトなし）
-                    window.history.pushState({}, "", "' . esc_js($url) . '");
-                    
-                    // 成功メッセージを表示して、画面をリフレッシュ
-                    document.addEventListener("DOMContentLoaded", function() {
-                        var message = document.createElement("div");
-                        message.className = "notice notice-success";
-                        message.innerHTML = "<p>' . esc_js(__('商品が複製されました', 'ktpwp')) . '</p>";
-                        message.style.padding = "10px";
-                        message.style.backgroundColor = "#d4edda";
-                        message.style.color = "#155724";
-                        message.style.marginBottom = "15px";
-                        message.style.borderRadius = "3px";
+                    (function() {
+                        var targetUrl = \'' . esc_js($url) . '\';
+                        window.history.pushState({}, "", targetUrl);
                         
-                        // Ajax自体は行わず、商品・サービスタブのコンテンツを直接取得して表示
+                        var successMessageText = \'' . esc_js(__('商品が複製され、フォームが更新されました。', 'ktpwp')) . '\';
+                        
                         var xhr = new XMLHttpRequest();
-                        xhr.open("GET", "' . esc_js($url) . '", true);
+                        var requestUrl = targetUrl;
+                        requestUrl += (requestUrl.includes("?") ? "&" : "?") + "cache_bust=" + new Date().getTime() + "&action=get_tab_content";
+
+                        xhr.open("GET", requestUrl, true);
                         xhr.onreadystatechange = function() {
-                            if (xhr.readyState === 4 && xhr.status === 200) {
-                                // HTMLレスポンスから必要な部分を抽出
-                                var parser = new DOMParser();
-                                var doc = parser.parseFromString(xhr.responseText, "text/html");
-                                
-                                // タブコンテンツ要素を取得
-                                var tabContent = doc.querySelector(".tabs");
-                                if (tabContent) {
-                                    // 現在のタブコンテンツを更新
-                                    var currentTab = document.querySelector(".tabs");
-                                    if (currentTab) {
-                                        currentTab.innerHTML = tabContent.innerHTML;
+                            if (xhr.readyState === 4) {
+                                if (xhr.status === 200) {
+                                    var parser = new DOMParser();
+                                    var doc = parser.parseFromString(xhr.responseText, "text/html");
+                                    var newTabContent = doc.querySelector(".tabs");
+                                    var currentTabContainer = document.querySelector(".tabs");
+
+                                    if (newTabContent && currentTabContainer) {
+                                        var scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
                                         
-                                        // メッセージを表示
-                                        var firstElement = document.querySelector(".data_contents");
-                                        if (firstElement) {
-                                            firstElement.parentNode.insertBefore(message, firstElement);
-                                            // 3秒後にメッセージを消す
-                                            setTimeout(function() {
-                                                message.style.display = "none";
-                                            }, 3000);
+                                        currentTabContainer.innerHTML = newTabContent.innerHTML;
+                                        window.scrollTo(0, scrollTop); 
+                                        
+                                        var messageDiv = document.createElement("div");
+                                        messageDiv.className = "notice notice-success is-dismissible ktpwp-notice";
+                                        messageDiv.style.cssText = "padding:10px; background-color:#d4edda; color:#155724; margin-bottom:15px; border-radius:3px; border:1px solid #c3e6cb;";
+                                        messageDiv.innerHTML = "<p>" + successMessageText + "</p>";
+                                        
+                                        var formElement = currentTabContainer.querySelector("form[name=\'service_form\']");
+                                        var insertTarget = formElement ? formElement : (currentTabContainer.querySelector(".data_contents") || currentTabContainer);
+                                        
+                                        if (insertTarget.parentNode) {
+                                            insertTarget.parentNode.insertBefore(messageDiv, insertTarget);
+                                        } else {
+                                            currentTabContainer.insertBefore(messageDiv, currentTabContainer.firstChild);
                                         }
+
+                                        setTimeout(function() {
+                                            if (messageDiv.parentNode) {
+                                                messageDiv.parentNode.removeChild(messageDiv);
+                                            }
+                                        }, 3000);
+                                        
+                                        var firstInput = currentTabContainer.querySelector(\'input:not([type="hidden"]):not([type="submit"]):not([disabled]), select:not([disabled]), textarea:not([disabled])\');
+                                        if (firstInput && typeof firstInput.focus === "function") {
+                                            firstInput.focus();
+                                        }
+                                        // リスト更新のトリガー (もしあれば)
+                                        if (typeof refreshServiceTab === "function") {
+                                            // refreshServiceTab(); // これはリスト部分のみを更新する関数であるべき
+                                        }
+
+                                    } else {
+                                        // console.error("Could not find .tabs element for duplication update. Fallback to reload.");
+                                        location.reload(); // 安全策としてリロード
                                     }
+                                } else {
+                                    // console.error("XHR request failed for duplication update. Status: " + xhr.status + ". Fallback to reload.");
+                                    location.reload(); // 安全策としてリロード
                                 }
                             }
                         };
                         xhr.send();
-                    }
-                    
-                    // 実行
-                    refreshServiceTab();
+                    })();
                 </script>';
                 exit;
             }
@@ -710,7 +681,7 @@ class Kntan_Service_Class {
                 )
             );            // echo $image_url;
             // exit;
-
+            $wpdb->query("UNLOCK TABLES;"); // Unlock before redirect
             // リダイレクト（class-tab-client.phpの方針に準拠）
             global $wp;
             $current_page_id = get_queried_object_id();
@@ -751,6 +722,7 @@ class Kntan_Service_Class {
                     '%d'
                 )
             );
+            $wpdb->query("UNLOCK TABLES;"); // Unlock before redirect
             // リダイレクト（class-tab-client.phpの方針に準拠）
             global $wp;
             $current_page_id = get_queried_object_id();
