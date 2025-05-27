@@ -679,7 +679,7 @@ class Kntan_Client_Class {
            $current_page = floor($page_start / $query_limit) + 1;
 
            // データを取得
-           $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+           $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY id DESC LIMIT %d, %d", $page_start, $query_limit);
            $post_row = $wpdb->get_results($query);
            
            $results = array(); // 結果を格納する配列を初期化
@@ -1365,6 +1365,12 @@ class Kntan_Client_Class {
         // -----------------------------
         // テンプレート印刷
         // -----------------------------
+
+       
+
+
+
+       
 
         // Print_Classのパスを指定
         require_once( dirname( __FILE__ ) . '/class-print.php' );
