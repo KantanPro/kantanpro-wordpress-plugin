@@ -1,5 +1,4 @@
 <?php
-if (!defined('ABSPATH')) exit;
 
 class KTP_Settings {
     private static $instance = null;
@@ -571,7 +570,7 @@ class KTP_Settings {
                 }
             }
         } catch (Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log($e->getMessage()); }
+            error_log($e->getMessage());
         }
     }
 
@@ -608,7 +607,7 @@ class KTP_Settings {
             $error_message = '';
             if (isset($phpmailer) && is_object($phpmailer)) {
                 $error_message = $phpmailer->ErrorInfo;
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP SMTPテストメール送信失敗: ' . $error_message); }
+                error_log('KTPWP SMTPテストメール送信失敗: ' . $error_message);
             } else {
                 $error_message = 'PHPMailerインスタンスが取得できませんでした';
                 error_log('KTPWP SMTPテストメール送信失敗: ' . $error_message);

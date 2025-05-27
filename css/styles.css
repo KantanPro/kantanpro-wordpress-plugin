@@ -61,48 +61,6 @@
   object-fit: cover;
 }
 
-/* データ詳細タイトル・リストタイトルのスタイル */
-.data_detail_title,
-.data_list_title {
-  font-weight: 700; /* より太い太字に */
-  background-color: rgba(173, 216, 230, 0.4); /* 少し濃い目の水色の背景色 */
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* ソートドロップダウンのスタイル */
-.sort-dropdown {
-  flex-shrink: 0;
-  margin-left: 10px;
-  font-weight: normal;
-  font-size: 0.9em;
-}
-
-.sort-dropdown select {
-  padding: 3px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  background-color: #ffffff;
-}
-
-@media (max-width: 767px) {
-  .data_list_title {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .sort-dropdown {
-    margin-top: 8px;
-    margin-left: 0;
-    width: 100%;
-  }
-}
-
 /* ログイン中ユーザーのアイコンを丸くする */
 .user_icon {
     border-radius: 50%;

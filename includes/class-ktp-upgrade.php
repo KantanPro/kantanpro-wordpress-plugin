@@ -1,5 +1,4 @@
 <?php
-if (!defined('ABSPATH')) exit;
 
 class KTP_Upgrade {
     public static function migrate_settings() {
@@ -35,10 +34,10 @@ class KTP_Upgrade {
                     DROP COLUMN smtp_secure,
                     DROP COLUMN smtp_from_name");
             } catch (Exception $e) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP: Error removing old columns: ' . $e->getMessage()); }
+                error_log('KTPWP: Error removing old columns: ' . $e->getMessage());
             }
 
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP: Settings successfully migrated to WordPress options'); }
+            error_log('KTPWP: Settings successfully migrated to WordPress options');
         }
     }
 }
