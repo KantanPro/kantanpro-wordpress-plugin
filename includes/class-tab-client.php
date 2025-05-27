@@ -516,8 +516,27 @@ class Kntan_Client_Class {
         $table_name = $wpdb->prefix . 'ktp_' . $name;
         
         // 表示モードの取得（デフォルトは顧客一覧）
-        $view_mode = isset($_GET['view_mode']) ? $_GET['view_mode'] : 'customer_list';
+        $view_mode = isset($_GET['view_mode']) ? sanitize_text_field($_GET['view_mode']) : 'customer_list';
 
+        // ソート順の取得（デフォルトはIDの降順）
+        $sort_by = 'id';
+        $sort_order = 'DESC';
+        
+        if (isset($_GET['sort_by'])) {
+            $sort_by = sanitize_text_field($_GET['sort_by']);
+            // 安全なカラム名のみ許可（SQLインジェクション対策）
+            $allowed_columns = array('id', 'company_name', 'frequency', 'time');
+            if (!in_array($sort_by, $allowed_columns)) {
+                $sort_by = 'id'; // 不正な値の場合はデフォルトに戻す
+            }
+        }
+        
+        if (isset($_GET['sort_order'])) {
+            $sort_order_param = strtoupper(sanitize_text_field($_GET['sort_order']));
+            // ASCかDESCのみ許可
+            $sort_order = ($sort_order_param === 'ASC') ? 'ASC' : 'DESC';
+        }
+        
         // 現在のページのURLを生成
         global $wp;
         $current_page_id = get_queried_object_id();
@@ -533,14 +552,48 @@ class Kntan_Client_Class {
         
         // 表示タイトルの設定（国際化対応）
         $list_title = ($view_mode === 'order_history')
-            ? sprintf(esc_html__('■ 注文履歴（レンジ： %d ）', 'ktpwp'), $query_limit)
-            : sprintf(esc_html__('■ 顧客リスト（レンジ： %d ）', 'ktpwp'), $query_limit);
+            ? esc_html__('■ 注文履歴', 'ktpwp')
+            : esc_html__('■ 顧客リスト', 'ktpwp');
+            
+        // ソートプルダウンを追加（顧客リストの場合のみ）
+        $sort_dropdown = '';
+        if ($view_mode !== 'order_history') {
+            // 現在のURLからソート用プルダウンのアクションURLを生成
+            $sort_url = add_query_arg(array('tab_name' => $name), $base_page_url);
+            
+            // ソート用プルダウンのHTMLを構築
+            $sort_dropdown = '<div class="sort-dropdown" style="float:right;margin-left:10px;">' .
+                '<form method="get" action="' . esc_url($sort_url) . '" style="display:flex;align-items:center;">';
+            
+            // 現在のGETパラメータを維持するための隠しフィールド
+            foreach ($_GET as $key => $value) {
+                if ($key !== 'sort_by' && $key !== 'sort_order') {
+                    $sort_dropdown .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+                }
+            }
+            
+            $sort_dropdown .= 
+                '<select id="sort-select" name="sort_by" style="margin-right:5px;">' .
+                '<option value="id" ' . selected($sort_by, 'id', false) . '>' . esc_html__('ID', 'ktpwp') . '</option>' .
+                '<option value="company_name" ' . selected($sort_by, 'company_name', false) . '>' . esc_html__('会社名', 'ktpwp') . '</option>' .
+                '<option value="frequency" ' . selected($sort_by, 'frequency', false) . '>' . esc_html__('頻度', 'ktpwp') . '</option>' .
+                '<option value="time" ' . selected($sort_by, 'time', false) . '>' . esc_html__('登録日', 'ktpwp') . '</option>' .
+                '</select>' .
+                '<select id="sort-order" name="sort_order">' .
+                '<option value="ASC" ' . selected($sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
+                '<option value="DESC" ' . selected($sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
+                '</select>' .
+                '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
+                '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
+                '</button>' .
+                '</form></div>';
+        }
         
         // リスト表示部分の開始
        $results_h = <<<END
         <div class="data_contents">
             <div class="data_list_box">
-            <div class="data_list_title">$list_title</div>
+            <div class="data_list_title">$list_title $sort_dropdown</div>
         END;
         
        // スタート位置を決める
@@ -678,8 +731,10 @@ class Kntan_Client_Class {
            // 現在のページ番号を計算
            $current_page = floor($page_start / $query_limit) + 1;
 
-           // データを取得
-           $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY id DESC LIMIT %d, %d", $page_start, $query_limit);
+           // データを取得（選択されたソート順で）
+           $sort_column = esc_sql($sort_by); // SQLインジェクション対策
+           $sort_direction = $sort_order === 'ASC' ? 'ASC' : 'DESC'; // SQLインジェクション対策
+           $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$sort_column} {$sort_direction} LIMIT %d, %d", $page_start, $query_limit);
            $post_row = $wpdb->get_results($query);
            
            $results = array(); // 結果を格納する配列を初期化

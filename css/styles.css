@@ -69,6 +69,38 @@
   padding: 10px;
   border-radius: 5px;
   margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ソートドロップダウンのスタイル */
+.sort-dropdown {
+  flex-shrink: 0;
+  margin-left: 10px;
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
+.sort-dropdown select {
+  padding: 3px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .data_list_title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sort-dropdown {
+    margin-top: 8px;
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 /* ログイン中ユーザーのアイコンを丸くする */
