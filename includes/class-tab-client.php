@@ -107,10 +107,12 @@ class Kntan_Client_Class {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
-        // CSRF対策: nonceチェック
-        if (!isset($_POST['ktp_client_nonce']) || !wp_verify_nonce($_POST['ktp_client_nonce'], 'ktp_client_action')) {
-            // nonceが不正な場合は処理を中断
-            wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
+        // CSRF対策: POST時のみnonceチェック
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!isset($_POST['ktp_client_nonce']) || !wp_verify_nonce($_POST['ktp_client_nonce'], 'ktp_client_action')) {
+                // nonceが不正な場合は処理を中断
+                wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
+            }
         }
 
         // テーブル名にロックをかける
@@ -1003,6 +1005,7 @@ class Kntan_Client_Class {
         
         $workflow_html .= '<div class="order-btn-box" style="margin-left:auto;">';
         $workflow_html .= '<form method="post" action="" id="create-order-form">';
+        $workflow_html .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
         $workflow_html .= '<input type="hidden" name="tab_name" value="order">';
         $workflow_html .= '<input type="hidden" name="from_client" value="1">';
         // 常に最新の顧客データを使用する（複製後のデータを反映）
@@ -1107,6 +1110,7 @@ class Kntan_Client_Class {
                 $cancel_action = 'update';
                 $data_id = $data_id - 1;
                 $data_forms .= '<form method="post" action="">'
+                    . wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false)
                     . '<input type="hidden" name="data_id" value="">'
                     . '<input type="hidden" name="query_post" value="' . esc_attr($cancel_action) . '">' 
                     . '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">' 
@@ -1133,6 +1137,7 @@ class Kntan_Client_Class {
             // 検索モード用のフォーム
             $data_forms = '<div class="search-mode-form ktpwp-search-form" style="background-color: #f8f9fa !important; border: 2px solid #0073aa !important; border-radius: 8px !important; padding: 20px !important; margin: 10px 0 !important; box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;">';
             $data_forms .= '<form method="post" action="">';
+            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
             
             // 検索クエリの値を取得（POSTが優先、次にGET）
             $search_query_value = '';
@@ -1244,11 +1249,8 @@ class Kntan_Client_Class {
             </script>
             END;
                         
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
-            
             // cookieに保存されたIDを取得
-            $cookie_name = 'ktp_'. $name . '_id';
+            $cookie_name = 'ktp_' . $name . '_id';
             if (isset($_GET['data_id'])) {
                 $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
             } elseif (isset($_COOKIE[$cookie_name])) {
@@ -1258,92 +1260,68 @@ class Kntan_Client_Class {
             }
 
             // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 顧客の詳細（ ID: $data_id ）</h3>
-            END;
+            $data_title = '<div class="data_detail_box"><h3>■ 顧客の詳細（ ID: ' . esc_html($data_id) . ' ）</h3>';
 
-            // nonceフィールド追加
+            // メイン更新フォーム
+            $data_forms .= '<form method="post" action="">';
             $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
             foreach ($fields as $label => $field) {
                 $value = $action === 'update' ? (isset(${$field['name']}) ? ${$field['name']} : '') : '';
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                $pattern = isset($field['pattern']) ? ' pattern="' . esc_attr($field['pattern']) . '"' : '';
                 $required = isset($field['required']) && $field['required'] ? ' required' : '';
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr($field['placeholder']) . "\"" : '';
+                $placeholder = isset($field['placeholder']) ? ' placeholder="' . esc_attr($field['placeholder']) . '"' : '';
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>" . esc_html($label) . "：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
+                    $data_forms .= '<div class="form-group"><label>' . esc_html($label) . '：</label> <textarea name="' . esc_attr($field['name']) . '"' . $pattern . $required . '>' . esc_textarea($value) . '</textarea></div>';
                 } elseif ($field['type'] === 'select') {
                     $options = '';
                     foreach ($field['options'] as $option) {
                         $selected = $value === $option ? ' selected' : '';
-                        $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html($option) . "</option>";
+                        $options .= '<option value="' . esc_attr($option) . '"' . $selected . '>' . esc_html($option) . '</option>';
                     }
-                    $data_forms .= "<div class=\"form-group\"><label>" . esc_html($label) . "：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>";
+                    $data_forms .= '<div class="form-group"><label>' . esc_html($label) . '：</label> <select name="' . esc_attr($field['name']) . '"' . $required . '>' . $options . '</select></div>';
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>" . esc_html($label) . "：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
+                    $data_forms .= '<div class="form-group"><label>' . esc_html($label) . '：</label> <input type="' . esc_attr($field['type']) . '" name="' . esc_attr($field['name']) . '" value="' . esc_attr($value) . '"' . $pattern . $required . $placeholder . '></div>';
                 }
             }
-
-            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"" . esc_attr($action) . "\">"; // フォームのアクションを指定する隠しフィールドを追加
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"" . esc_attr($data_id) . "\">"; // データIDを指定する隠しフィールドを追加
-            
-            // 検索リストを生成
-            if (!isset($search_results_list)) {
-                $search_results_list = '';
-            }
-            $data_forms .= $search_results_list;
-            $data_forms .= "<div class='button'>";
-
-            // 更新ボタンを追加
-            $data_forms .= <<<END
-            $data_forms .= '<form method="post" action="">'
-                . wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false)
-                . '<button type="submit" name="send_post" title="更新する">'
-                . '<span class="material-symbols-outlined">cached</span>'
-                . '</button>'
-                . '</form>';
-            END;
+            $data_forms .= '<input type="hidden" name="query_post" value="update">';
+            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+            $data_forms .= '<div class="button">';
+            $data_forms .= '<button type="submit" name="send_post" title="更新する"><span class="material-symbols-outlined">cached</span></button>';
+            $data_forms .= '</div>';
+            $data_forms .= '</form>';
 
             // 削除ボタン
-            $data_forms .= <<<END
-            $data_forms .= '<form method="post" action="">'
-                . wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false)
-                . '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">' 
-                . '<input type="hidden" name="query_post" value="delete">'
-                . '<button type="submit" name="send_post" title="削除する" onclick="return confirm(\'本当に削除しますか？\')">'
-                . '<span class="material-symbols-outlined">delete</span>'
-                . '</button>'
-                . '</form>';
-            END;
+            $data_forms .= '<form method="post" action="">';
+            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+            $data_forms .= '<input type="hidden" name="query_post" value="delete">';
+            $data_forms .= '<button type="submit" name="send_post" title="削除する" onclick="return confirm(\'本当に削除しますか？\')">';
+            $data_forms .= '<span class="material-symbols-outlined">delete</span>';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
 
             // 追加モードボタン
             $add_action = 'istmode';
-            $data_id = $data_id + 1;
-            $data_forms .= <<<END
-            $data_forms .= '<form method="post" action="">'
-                . wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false)
-                . '<input type="hidden" name="data_id" value="">'
-                . '<input type="hidden" name="query_post" value="' . esc_attr($add_action) . '">' 
-                . '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">' 
-                . '<button type="submit" name="send_post" title="追加する">'
-                . '<span class="material-symbols-outlined">add</span>'
-                . '</button>'
-                . '</form>';
-            END;
+            $next_data_id = $data_id + 1;
+            $data_forms .= '<form method="post" action="">';
+            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $data_forms .= '<input type="hidden" name="data_id" value="">';
+            $data_forms .= '<input type="hidden" name="query_post" value="' . esc_attr($add_action) . '">';
+            $data_forms .= '<input type="hidden" name="data_id" value="' . esc_attr($next_data_id) . '">';
+            $data_forms .= '<button type="submit" name="send_post" title="追加する">';
+            $data_forms .= '<span class="material-symbols-outlined">add</span>';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
 
             // 検索モードボタン
             $search_action = 'srcmode';
-            // $data_id = $data_id;
-            $data_forms .= <<<END
-            $data_forms .= '<form method="post" action="">'
-                . wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false)
-                . '<input type="hidden" name="query_post" value="' . esc_attr($search_action) . '">' 
-                . '<button type="submit" name="send_post" title="検索する">'
-                . '<span class="material-symbols-outlined">search</span>'
-                . '</button>'
-                . '</form>';
-            END;
+            $data_forms .= '<form method="post" action="">';
+            $data_forms .= wp_nonce_field('ktp_client_action', 'ktp_client_nonce', true, false);
+            $data_forms .= '<input type="hidden" name="query_post" value="' . esc_attr($search_action) . '">';
+            $data_forms .= '<button type="submit" name="send_post" title="検索する">';
+            $data_forms .= '<span class="material-symbols-outlined">search</span>';
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
 
             $data_forms .= '</div>';
         }
