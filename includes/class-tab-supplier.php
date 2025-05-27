@@ -122,37 +122,45 @@ class Kantan_Supplier_Class{
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
 
+        // CSRF対策: POST時のみnonceチェック
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!isset($_POST['ktp_supplier_nonce']) || !wp_verify_nonce($_POST['ktp_supplier_nonce'], 'ktp_supplier_action')) {
+                $wpdb->query("UNLOCK TABLES;");
+                wp_die(__('不正なリクエストです。ページを再読み込みしてください。', 'ktpwp'));
+            }
+        }
+
         // テーブル名にロックをかける
         $wpdb->query("LOCK TABLES {$table_name} WRITE;");
-        
-        // POSTデーター受信
-        $data_id = $_POST['data_id'] ?? '';
-        $query_post = $_POST['query_post'] ?? '';
-        $company_name = $_POST['company_name'] ?? '';
-        $user_name = $_POST['user_name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $url = $_POST['url'] ?? '';
-        $representative_name = $_POST['representative_name'] ?? '';
-        $phone = $_POST['phone'] ?? '';
-        $postal_code = $_POST['postal_code'] ?? '';
-        $prefecture = $_POST['prefecture'] ?? '';
-        $city = $_POST['city'] ?? '';
-        $address = $_POST['address'] ?? '';
-        $building = $_POST['building'] ?? '';
-        $closing_day = $_POST['closing_day'] ?? '';
-        $payment_month = $_POST['payment_month'] ?? '';
-        $payment_day = $_POST['payment_day'] ?? '';
-        $payment_method = $_POST['payment_method'] ?? '';
-        $tax_category = $_POST['tax_category'] ?? '';
-        $memo = $_POST['memo'] ?? '';
-        $category = $_POST['category'] ?? '';
-        $page_stage = $_POST['page_stage'] ?? '';
-        $page_start = $_POST['page_start'] ?? '';
-        $flg = $_POST['flg'] ?? '';
-        
+
+        // POSTデータ受信＆サニタイズ
+        $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : '';
+        $query_post = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : '';
+        $company_name = isset($_POST['company_name']) ? sanitize_text_field($_POST['company_name']) : '';
+        $user_name = isset($_POST['user_name']) ? sanitize_text_field($_POST['user_name']) : '';
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        $url = isset($_POST['url']) ? esc_url_raw($_POST['url']) : '';
+        $representative_name = isset($_POST['representative_name']) ? sanitize_text_field($_POST['representative_name']) : '';
+        $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
+        $postal_code = isset($_POST['postal_code']) ? sanitize_text_field($_POST['postal_code']) : '';
+        $prefecture = isset($_POST['prefecture']) ? sanitize_text_field($_POST['prefecture']) : '';
+        $city = isset($_POST['city']) ? sanitize_text_field($_POST['city']) : '';
+        $address = isset($_POST['address']) ? sanitize_text_field($_POST['address']) : '';
+        $building = isset($_POST['building']) ? sanitize_text_field($_POST['building']) : '';
+        $closing_day = isset($_POST['closing_day']) ? sanitize_text_field($_POST['closing_day']) : '';
+        $payment_month = isset($_POST['payment_month']) ? sanitize_text_field($_POST['payment_month']) : '';
+        $payment_day = isset($_POST['payment_day']) ? sanitize_text_field($_POST['payment_day']) : '';
+        $payment_method = isset($_POST['payment_method']) ? sanitize_text_field($_POST['payment_method']) : '';
+        $tax_category = isset($_POST['tax_category']) ? sanitize_text_field($_POST['tax_category']) : '';
+        $memo = isset($_POST['memo']) ? sanitize_textarea_field($_POST['memo']) : '';
+        $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
+        $page_stage = isset($_POST['page_stage']) ? sanitize_text_field($_POST['page_stage']) : '';
+        $page_start = isset($_POST['page_start']) ? intval($_POST['page_start']) : '';
+        $flg = isset($_POST['flg']) ? sanitize_text_field($_POST['flg']) : '';
+
         $search_field_value = implode(', ', [
             $data_id,
-            current_time( 'mysql' ),
+            current_time('mysql'),
             $company_name,
             $user_name,
             $email,
@@ -845,6 +853,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
                 // 空のフォームフィールドを生成
                 $data_forms .= '<form method="post" action="">';
+                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
                 foreach ($fields as $label => $field) {
                     $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
                     $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
@@ -877,15 +886,14 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $data_id = $data_id + 1;
                     $data_forms .= <<<END
                     <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title="追加実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
                     END;
+                    if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+                    $data_forms .= "<input type='hidden' name='query_post' value='$action'>
+                    <input type='hidden' name='data_id' value='$data_id'>
+                    <button type='submit' name='send_post' title='追加実行'>
+                    <span class='material-symbols-outlined'>select_check_box</span>
+                    </button>
+                    </form>";
                 }
                 
                 elseif( $action === 'srcmode'){
@@ -894,14 +902,13 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                     $action = 'search';
                     $data_forms .= <<<END
                     <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title="検索実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
                     END;
+                    if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+                    $data_forms .= "<input type='hidden' name='query_post' value='$action'>
+                    <button type='submit' name='send_post' title='検索実行'>
+                    <span class='material-symbols-outlined'>select_check_box</span>
+                    </button>
+                    </form>";
                 }
     
                 // キャンセルボタン
@@ -909,16 +916,15 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
                 $data_id = $data_id - 1;
                 $data_forms .= <<<END
                 <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
+                END;
+                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+                $data_forms .= "<input type='hidden' name='data_id' value=''>
                 <input type='hidden' name='query_post' value='$action'>
                 <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="キャンセル">
-                <span class="material-symbols-outlined">
-                disabled_by_default
-                </span>            
+                <button type='submit' name='send_post' title='キャンセル'>
+                <span class='material-symbols-outlined'>disabled_by_default</span>
                 </button>
-                </form>
-                END;
+                </form>";
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
@@ -935,6 +941,7 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
 
             // 検索フォームを生成
             $data_forms = '<form method="post" action="">';
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
             $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
                
             // 検索リストを生成
@@ -947,30 +954,28 @@ $cookie_name = 'ktp_' . $tab_name . '_id';
             $action = 'search';
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <button type='submit' name='send_post' title="検索実行">
-            <span class="material-symbols-outlined">
-            select_check_box
-            </span>
-            </button>
-            </form>
             END;
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+            $data_forms .= "<input type='hidden' name='query_post' value='$action'>
+            <button type='submit' name='send_post' title='検索実行'>
+            <span class='material-symbols-outlined'>select_check_box</span>
+            </button>
+            </form>";
 
             // キャンセルボタン
             $action = 'update';
             $data_id = $data_id - 1;
             $data_forms .= <<<END
             <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
+            END;
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+            $data_forms .= "<input type='hidden' name='data_id' value=''>
             <input type='hidden' name='query_post' value='$action'>
             <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="キャンセル">
-            <span class="material-symbols-outlined">
-            disabled_by_default
-            </span>            
+            <button type='submit' name='send_post' title='キャンセル'>
+            <span class='material-symbols-outlined'>disabled_by_default</span>
             </button>
-            </form>
-            END;
+            </form>";
 
             $data_forms .= "<div class=\"add\">";
             $data_forms .= '</div>';
