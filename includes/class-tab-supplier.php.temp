@@ -690,13 +690,19 @@ class KTPWP_Supplier_Class {
            }
            $query_max_num = $wpdb->num_rows;
        } else {
-           $results[] = '<div class="ktp_data_list_item" style="padding: 15px 20px; background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%); border-radius: 6px; margin: 15px 0; color: #333333; font-weight: 500; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); display: flex; align-items: center; font-size: 14px;">'
-               . '<span style="margin-right: 10px; color: #ff6b8b; font-size: 18px;" class="material-symbols-outlined">search_off</span>'
-               . esc_html__('データーがありません。', 'ktpwp')
-               . '<span style="margin-left: 16px; font-size: 13px; color: #888;">'
-               . esc_html__('フォームに入力して更新してください。', 'ktpwp')
-               . '</span>'
-               . '</div>';
+           // データがない場合の表示を改善
+           $results[] = <<<END
+           <div class="ktp_data_list_item" style="padding: 20px; text-align: center; color: #666; background-color: #f9f9f9; border: 1px dashed #ccc; margin: 10px 0;">
+               <span class="material-symbols-outlined" style="font-size: 48px; color: #ddd; display: block; margin-bottom: 10px;">folder_open</span>
+               <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">協力会社データがありません</div>
+               <div style="font-size: 12px; color: #999;">新しい協力会社を追加してください</div>
+           </div>
+           END;
+           // データがない場合でも必要な変数を初期化
+           $query_max_num = 0;
+           $total_rows = 0;
+           $total_pages = 0;
+           $current_page = 1;
        }
 
        $results_f = "<div class=\"pagination\">";
@@ -826,57 +832,69 @@ class KTPWP_Supplier_Class {
             $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
             $post_row = $wpdb->get_results($query);
             if (!$post_row || count($post_row) === 0) {
-                // データが0件でもフォーム・レイアウトを必ず出す
-                $data_id = '';
-                $time = '';
-                $company_name = '';
-                $user_name = '';
-                $email = '';
-                $url = '';
-                $representative_name = '';
-                $phone = '';
-                $postal_code = '';
-                $prefecture = '';
-                $city = '';
-                $address = '';
-                $building = '';
-                $closing_day = '';
-                $payment_month = '';
-                $payment_day = '';
-                $payment_method = '';
-                $tax_category = '';
-                $memo = '';
-                $category = '';
-                // $post_row を空配列にして以降のフォーム生成処理を通す
-                $post_row = [];
-                // リスト部分にだけ「データがありません」メッセージを出す（デザインは既に統一済み）
-                $results[] = '<div class="ktp_data_list_item" style="padding: 15px 20px; background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%); border-radius: 6px; margin: 15px 0; color: #333333; font-weight: 500; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); display: flex; align-items: center; font-size: 14px;">'
-                    . '<span style="margin-right: 10px; color: #ff6b8b; font-size: 18px;" class="material-symbols-outlined">search_off</span>'
-                    . esc_html__('データーがありません。', 'ktpwp')
-                    . '</div>';
-            }
-            foreach ($post_row as $row){
-                $data_id = esc_html($row->id);
-                $time = esc_html($row->time);
-                $company_name = esc_html($row->company_name);
-                $user_name = esc_html($row->name);
-                $email = esc_html($row->email);
-                $url = esc_html($row->url);
-                $representative_name = esc_html($row->representative_name);
-                $phone = esc_html($row->phone);
-                $postal_code = esc_html($row->postal_code);
-                $prefecture = esc_html($row->prefecture);
-                $city = esc_html($row->city);
-                $address = esc_html($row->address);
-                $building = esc_html($row->building);
-                $closing_day = esc_html($row->closing_day);
-                $payment_month = esc_html($row->payment_month);
-                $payment_day = esc_html($row->payment_day);
-                $payment_method = esc_html($row->payment_method);
-                $tax_category = esc_html($row->tax_category);
-                $memo = esc_html($row->memo);
-                $category = esc_html($row->category);
-            }
+                // data_idがURLで指定されている場合は、最大IDにフォールバックせずエラー表示
+                if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
+                    // echo '<div class="data_detail_box"><div class="data_detail_title">■ 協力会社の詳細</div><div style="color:red;font-weight:bold;">追加直後のデータが見つかりません（ID: ' . esc_html($query_id) . '）</div></div>';
+                    // return; // return を有効にすると、データがない場合にここで処理が終了します。
+                }
+                // それ以外は最大IDで再取得
+                $max_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                if ($max_id_row && isset($max_id_row->id)) {
+                    $query_id = $max_id_row->id;
+                    $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+                    $post_row = $wpdb->get_results($query);
+                }
+                if (!$post_row || count($post_row) === 0) {
+                    // データがない場合は新規追加フォームを表示するために変数を初期化
+                    $data_id = '';
+                    $time = '';
+                    $company_name = '';
+                    $user_name = '';
+                    $email = '';
+                    $url = '';
+                    $representative_name = '';
+                    $phone = '';
+                    $postal_code = '';
+                    $prefecture = '';
+                    $city = '';
+                    $address = '';
+                    $building = '';
+                    $closing_day = '';
+                    $payment_month = '';
+                    $payment_day = '';
+                    $payment_method = '';
+                    $tax_category = '';
+                    $memo = '';
+                    $category = '';
+                    
+                    // データがない場合は追加モードとして扱う
+                    $show_empty_form = true;
+                } else {
+                    // データが存在する場合の処理
+                    $show_empty_form = false;
+                    foreach ($post_row as $row){
+                        $data_id = esc_html($row->id);
+                        $time = esc_html($row->time);
+                        $company_name = esc_html($row->company_name);
+                        $user_name = esc_html($row->name);
+                        $email = esc_html($row->email);
+                        $url = esc_html($row->url);
+                        $representative_name = esc_html($row->representative_name);
+                        $phone = esc_html($row->phone);
+                        $postal_code = esc_html($row->postal_code);
+                        $prefecture = esc_html($row->prefecture);
+                        $city = esc_html($row->city);
+                        $address = esc_html($row->address);
+                        $building = esc_html($row->building);
+                        $closing_day = esc_html($row->closing_day);
+                        $payment_month = esc_html($row->payment_month);
+                        $payment_day = esc_html($row->payment_day);
+                        $payment_method = esc_html($row->payment_method);
+                        $tax_category = esc_html($row->tax_category);
+                        $memo = esc_html($row->memo);
+                        $category = esc_html($row->category);
+                    }
+                }
         } else {
             // 追加モードの場合は全ての変数を空で初期化
             $data_id = '';
@@ -1122,6 +1140,45 @@ class KTPWP_Supplier_Class {
             </script>
             END;
 
+            // データがない場合は追加フォームとして表示
+            if (isset($show_empty_form) && $show_empty_form === true) {
+                // データなし時の追加フォーム表示
+                $data_title = '<div class="data_detail_box">' .
+                              '<div class="data_detail_title">■ ' . esc_html__('協力会社データなし - 新規追加してください', 'ktpwp') . '</div>';
+                
+                // 空のフォームフィールドを生成
+                $data_forms .= '<form method="post" action="' . esc_url($form_action_base_url) . '">';
+                if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_supplier_action', 'ktp_supplier_nonce', true, false); }
+                foreach ($fields as $label => $field) {
+                    $value = '';
+                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : '';
+                    $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                    $fieldName = $field['name'];
+                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : '';
+                    if ($field['type'] === 'textarea') {
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>";
+                    } elseif ($field['type'] === 'select') {
+                        $options = '';
+                        foreach ($field['options'] as $option) {
+                            $selected = $value === $option ? ' selected' : '';
+                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>";
+                        }
+                        $default = isset($field['default']) ? $field['default'] : '';
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+                    } else {
+                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>";
+                    }
+                }
+                $data_forms .= "<div class='button'>";
+                // 追加実行ボタン
+                $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
+                $data_forms .= "<input type='hidden' name='data_id' value=''>";
+                $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
+                $data_forms .= "<div class=\"add\"></div>";
+                $data_forms .= '</div>';
+                $data_forms .= '</form>';
+            } else {
+
             // ボタングループHTML生成
             $button_group_html = '<div class="button-group" style="display: flex; gap: 10px; margin-left: auto;">';
             
@@ -1201,6 +1258,7 @@ class KTPWP_Supplier_Class {
             $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
             $data_forms .= '</form>';
+            }
         }
                             
         $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
@@ -1219,35 +1277,34 @@ class KTPWP_Supplier_Class {
         require_once( dirname( __FILE__ ) . '/class-print.php' );
 
         // データを指定
-
         $data_src = [
-            'company_name'        => $company_name,
-            'name'                => $user_name,
+            'company_name' => $company_name,
+            'name' => $user_name,
             'representative_name' => $representative_name,
-            'postal_code'         => $postal_code,
-            'prefecture'          => $prefecture,
-            'city'                => $city,
-            'address'             => $address,
-            'building'            => $building,
+            'postal_code' => $postal_code,
+            'prefecture' => $prefecture,
+            'city' => $city,
+            'address' => $address,
+            'building' => $building,
         ];
 
         $customer = $data_src['company_name'];
-        $user_name = $data_src['name'];
-        $representative_name = $data_src['representative_name'];
-        $postal_code = $data_src['postal_code'];
-        $prefecture = $data_src['prefecture'];
-        $city = $data_src['city'];
-        $address = $data_src['address'];
-        $building = $data_src['building'];
+        $user_name_for_print = $data_src['name'];
+        $representative_name_for_print = $data_src['representative_name'];
+        $postal_code_for_print = $data_src['postal_code'];
+        $prefecture_for_print = $data_src['prefecture'];
+        $city_for_print = $data_src['city'];
+        $address_for_print = $data_src['address'];
+        $building_for_print = $data_src['building'];
 
         $data = [
-            'postal_code' => "$postal_code",
-            'prefecture' => "$prefecture",
-            'city' => "$city",
-            'address' => "$address",
-            'building' => "$building",
+            'postal_code' => "$postal_code_for_print",
+            'prefecture' => "$prefecture_for_print",
+            'city' => "$city_for_print",
+            'address' => "$address_for_print",
+            'building' => "$building_for_print",
             'customer' => "$customer",
-            'user_name' => "$user_name",
+            'user_name' => "$user_name_for_print",
         ];
 
         $print_html = new Print_Class($data);
@@ -1274,7 +1331,7 @@ class KTPWP_Supplier_Class {
                 if (isPreviewOpen) {
                     togglePreview();
                 }
-            }
+            } // end printContent function
 
             function togglePreview() {
                 var previewWindow = document.getElementById('previewWindow');
@@ -1317,5 +1374,6 @@ class KTPWP_Supplier_Class {
         
     }
 
-}
-} // class_exists
+} // end class KTPWP_Supplier_Class
+
+} // end if class_exists

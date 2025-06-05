@@ -491,7 +491,13 @@ class Kntan_Client_Class {
                . '</a>';
                }
            } else {
-           $results[] = '<div class="ktp_data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
+           $results[] = '<div class="ktp_data_list_item" style="padding: 15px 20px; background: linear-gradient(135deg, #ffeef1 0%, #ffeff2 100%); border-radius: 6px; margin: 15px 0; color: #333333; font-weight: 500; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); display: flex; align-items: center; font-size: 14px;">'
+               . '<span style="margin-right: 10px; color: #ff6b8b; font-size: 18px;" class="material-symbols-outlined">search_off</span>'
+               . esc_html__('データーがありません。', 'ktpwp')
+               . '<span style="margin-left: 16px; font-size: 13px; color: #888;">'
+               . esc_html__('フォームに入力して更新してください。', 'ktpwp')
+               . '</span>'
+               . '</div>';
            }
        }
 
@@ -645,8 +651,33 @@ class Kntan_Client_Class {
                 }
                 // それでもデータがなければ「データがありません」
                 if (!$post_row || count($post_row) === 0) {
-                    echo '<div class="data_detail_box"><div class="data_detail_title">■ 顧客の詳細</div><div style="color:red;font-weight:bold;">データがありません（ID: ' . esc_html($query_id) . '）</div></div>';
-                    return;
+                    // データが0件でもフォーム・レイアウトを必ず出す
+                    $data_id = '';
+                    $time = '';
+                    $company_name = '';
+                    $user_name = '';
+                    $email = '';
+                    $url = '';
+                    $representative_name = '';
+                    $phone = '';
+                    $postal_code = '';
+                    $prefecture = '';
+                    $city = '';
+                    $address = '';
+                    $building = '';
+                    $closing_day = '';
+                    $payment_month = '';
+                    $payment_day = '';
+                    $payment_method = '';
+                    $tax_category = '';
+                    $memo = '';
+                    $client_status = '対象';
+                    $order_customer_name = '';
+                    $order_user_name = '';
+                    // $post_row を空配列にして以降のフォーム生成処理を通す
+                    $post_row = [];
+                    // リスト部分にだけ「データがありません」メッセージを出す
+                    $results[] = '<div class="ktp_data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
                 }
             }
             // 表示したIDをクッキーに保存
@@ -704,6 +735,8 @@ class Kntan_Client_Class {
             $order_user_name = '';
         }
         
+        // カテゴリーフィールド用の値を初期化（未定義警告対策）
+        $category_value = '';
         // 表示するフォーム要素を定義
         $fields = [
             // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true],
@@ -866,7 +899,13 @@ class Kntan_Client_Class {
         $workflow_html .= '<input type="hidden" name="customer_name" value="' . esc_attr($customer_name_to_use) . '">';
         $workflow_html .= '<input type="hidden" name="user_name" value="' . esc_attr($user_name_to_use) . '">';
         $workflow_html .= '<input type="hidden" id="client-id-input" name="client_id" value="' . esc_attr($current_client_id) . '">';
-        $workflow_html .= '<button type="submit" class="create-order-btn" style="padding: 8px 12px; font-size: 14px;">受注書作成</button>';
+        $is_data_empty = empty($post_row) && empty($data_id);
+        $disabled_attr = $is_data_empty ? 'disabled style="background:#ccc;color:#888;cursor:not-allowed;"' : '';
+        $button_style = 'font-size: 14px;';
+        if (!$is_data_empty) {
+            $button_style = 'padding: 8px 12px; font-size: 14px;';
+        }
+        $workflow_html .= '<button type="submit" class="create-order-btn" ' . $disabled_attr . ' style="' . $button_style . '">受注書作成</button>';
         $workflow_html .= '</form>';
         
         $workflow_html .= '</div>';
@@ -1301,15 +1340,10 @@ class Kntan_Client_Class {
         if (!isset($div_end)) {
             $div_end = '';
         }
-        
         // 検索モードでも顧客リストを表示する
-
-        $final_data_list = $data_list;
-        
-        $content = $print . $session_message . $controller_html . $workflow_html . $final_data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        $content = $print . $session_message . $controller_html . $workflow_html . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
         return $content;
-        
     }
-
 }
-} // class_exists
+// class_exists
+}
