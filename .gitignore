@@ -1,7 +1,55 @@
+# WordPressプラグイン開発に特化した .gitignore ファイル
+
+# OS・エディタの不要ファイル
 .DS_Store
-template/template.txt
-images/service
-images/default/upload/
-images/upload/
-prompt.txt
+Thumbs.db
+*.log
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# コンパイル・ビルド関連
+node_modules/
+dist/
+build/
+tmp/
+.cache/
+
+# PHP依存管理
+vendor/
+composer.lock
+
+# 画像除外
 images/upload/*
+
+# 機密情報（環境設定）
+.env
+.env.*
+*.local.php
+
+# テストやCI/CD関連
+phpunit.xml
+phpunit.xml.dist
+coverage/
+.nyc_output/
+tests/_output/
+test-results/
+
+# OSごとの一時ファイル
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# バックアップファイル
+*.bak
+*.orig
+*.tmp
+*.old
+
+# その他
+*.zip
+*.tar.gz
