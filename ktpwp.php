@@ -1,17 +1,17 @@
 <?php
 /**
- * Plugin Name: KTPWP
+ * Plugin Name: KantanPro
  * Plugin URI: https://ktpwp.com/
- * Description: ショートコード[ktpwp_all_tab]を固定ページに入れてください。商品・顧客・案件・仕入れ先・各種設定・レポートのタブが使えます。
- * Version: beta
- * Author: Kantan Pro
+ * Description: 包括的なビジネス管理プラグイン。ショートコード[ktpwp_all_tab]で7つのタブ（仕事リスト・伝票処理・得意先・サービス・協力会社・レポート・設定）による完全なワークフロー管理を実現。
+ * Version: beta 1.0.0
+ * Author: KantanPro
  * Author URI: https://ktpwp.com/blog/
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ktpwp
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.4
+ * Tested up to: 6.5
  * Requires PHP: 7.4
  *
  * @package KTPWP
@@ -24,14 +24,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // プラグイン定数定義
 if ( ! defined( 'KTPWP_PLUGIN_VERSION' ) ) {
-    define( 'KTPWP_PLUGIN_VERSION', 'beta' );
+    define( 'KTPWP_PLUGIN_VERSION', 'beta 1.0.0' );
 }
 if ( ! defined( 'KTPWP_PLUGIN_NAME' ) ) {
-    define( 'KTPWP_PLUGIN_NAME', 'KTPWP' );
+    define( 'KTPWP_PLUGIN_NAME', 'KantanPro' );
 }
 if ( ! defined( 'KTPWP_PLUGIN_DESCRIPTION' ) ) {
     // 翻訳読み込み警告を回避するため、initアクションで設定
-    define( 'KTPWP_PLUGIN_DESCRIPTION', 'ショートコード[ktpwp_all_tab]を固定ページに入れてください。商品・顧客・案件・仕入れ先・各種設定・レポートのタブが使えます。' );
+    define( 'KTPWP_PLUGIN_DESCRIPTION', '包括的なビジネス管理プラグイン。ショートコード[ktpwp_all_tab]で7つのタブ（仕事リスト・伝票処理・得意先・サービス・協力会社・レポート・設定）による完全なワークフロー管理を実現。' );
 }
 if ( ! defined( 'KTPWP_PLUGIN_FILE' ) ) {
     define( 'KTPWP_PLUGIN_FILE', __FILE__ );
@@ -410,7 +410,7 @@ if (file_exists(MY_PLUGIN_PATH . 'includes/class-ktp-settings.php')) {
 add_action( 'plugins_loaded', 'KTPWP_Index' );
 
 function ktpwp_scripts_and_styles() {
-    wp_enqueue_script( 'ktp-js', plugins_url( 'js/ktp-js.js', __FILE__ ), array( 'jquery' ), '1.0.0', true );
+    wp_enqueue_script( 'ktp-js', plugins_url( 'js/ktp-js.js', __FILE__ ), array( 'jquery' ), KTPWP_PLUGIN_VERSION, true );
 
     // デバッグモードの設定（WP_DEBUGまたは開発環境でのみ有効）
     $debug_mode = (defined('WP_DEBUG') && WP_DEBUG) || (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG);
@@ -422,12 +422,12 @@ function ktpwp_scripts_and_styles() {
     wp_add_inline_script('ktp-js', 'var ktpwpStaffChatShowLabel = ' . json_encode(esc_html__('表示', 'ktpwp')) . ';');
     wp_add_inline_script('ktp-js', 'var ktpwpStaffChatHideLabel = ' . json_encode(esc_html__('非表示', 'ktpwp')) . ';');
 
-    wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), '1.0.3', 'all');
+    wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), KTPWP_PLUGIN_VERSION, 'all');
     wp_enqueue_style('ktp-css');
     // 進捗プルダウン用のスタイルシートを追加
-    wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__), array('ktp-css'), '1.0.0', 'all');
+    wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
     // 設定タブ用のスタイルシートを追加
-    wp_enqueue_style('ktp-setting-tab', plugins_url('css/ktp-setting-tab.css', __FILE__), array('ktp-css'), '1.0.0', 'all');
+    wp_enqueue_style('ktp-setting-tab', plugins_url('css/ktp-setting-tab.css', __FILE__), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
     
     // Material Symbols アイコンフォントをプリロードとして読み込み
     wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0', array(), '1.0.0', 'all');
@@ -439,7 +439,7 @@ function ktpwp_scripts_and_styles() {
         echo '<link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" as="style" onload="this.onload=null;this.rel=\'stylesheet\'">' . "\n";
     }, 1);
     wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js', array(), '3.5.1', true);
-    wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), '1.0.0', true);
+    wp_enqueue_script('ktp-order-inline-projectname', plugins_url('js/ktp-order-inline-projectname.js', __FILE__), array('jquery'), KTPWP_PLUGIN_VERSION, true);
     // Nonceをjsに渡す（案件名インライン編集用）
     if (current_user_can('manage_options')) {
         wp_add_inline_script('ktp-order-inline-projectname', 'var ktpwp_inline_edit_nonce = ' . json_encode(array(
@@ -457,6 +457,37 @@ function ktpwp_scripts_and_styles() {
     // ajaxurlをJavaScriptで利用可能にする
     wp_add_inline_script('ktp-invoice-items', 'var ajaxurl = ' . json_encode(admin_url('admin-ajax.php')) . ';');
     wp_add_inline_script('ktp-cost-items', 'var ajaxurl = ' . json_encode(admin_url('admin-ajax.php')) . ';');
+
+    // リファレンス機能のスクリプトを読み込み（ログイン済みユーザーのみ）
+    if ( is_user_logged_in() ) {
+        wp_enqueue_script(
+            'ktpwp-reference',
+            plugins_url( 'js/plugin-reference.js', __FILE__ ),
+            array( 'jquery' ),
+            KTPWP_PLUGIN_VERSION,
+            true
+        );
+
+        wp_add_inline_script(
+            'ktpwp-reference',
+            'var ktpwp_reference = ' . json_encode(array(
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'ktpwp_reference_nonce' ),
+                'strings'  => array(
+                    'modal_title'         => esc_html__( 'プラグインリファレンス', 'ktpwp' ),
+                    'loading'             => esc_html__( '読み込み中...', 'ktpwp' ),
+                    'error_loading'       => esc_html__( 'コンテンツの読み込みに失敗しました。', 'ktpwp' ),
+                    'close'               => esc_html__( '閉じる', 'ktpwp' ),
+                    'nav_overview'        => esc_html__( '概要', 'ktpwp' ),
+                    'nav_tabs'            => esc_html__( 'タブ機能', 'ktpwp' ),
+                    'nav_shortcodes'      => esc_html__( 'ショートコード', 'ktpwp' ),
+                    'nav_settings'        => esc_html__( '設定', 'ktpwp' ),
+                    'nav_security'        => esc_html__( 'セキュリティ', 'ktpwp' ),
+                    'nav_troubleshooting' => esc_html__( 'トラブルシューティング', 'ktpwp' ),
+                )
+            )) . ';'
+        );
+    }
 }
 add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 add_action( 'admin_enqueue_scripts', 'ktpwp_scripts_and_styles' );
@@ -611,10 +642,11 @@ function KTPWP_Index(){
                 // セッションの有効性も確認
                 $user_sessions = WP_Session_Tokens::get_instance( $current_user->ID );
                 if ( $user_sessions && ! empty( $user_sessions->get_all() ) ) {
+                    $reference_instance = KTPWP_Plugin_Reference::get_instance();
                     $navigation_links = '　<a href="' . $logout_link . '">' . esc_html__('ログアウト', 'ktpwp') . '</a>'
                         . '　<a href="' . $update_link_url . '">' . esc_html__('更新', 'ktpwp') . '</a>'
                         . '　' . $act_key
-                        . '<a href="#" class="ktpwp-reference-link">' . esc_html__('リファレンス', 'ktpwp') . '</a>';
+                        . $reference_instance->get_reference_link();
                 }
             }
 

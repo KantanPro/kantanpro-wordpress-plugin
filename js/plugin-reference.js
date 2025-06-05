@@ -15,7 +15,7 @@
 
         // モーダルを開く関数
         function openReferenceModal() {
-            // モーダルが存在しない場合は作成
+            // モーダルが存在しない場合は作成（フォールバック）
             if ($('#ktpwp-reference-modal').length === 0) {
                 createModalHTML();
             }
@@ -96,6 +96,12 @@
             loadReferenceSection(section);
         });
 
+        // キャッシュクリアボタンクリックイベント
+        $(document).on('click', '.ktpwp-clear-cache-btn', function(e) {
+            e.preventDefault();
+            clearReferenceCache();
+        });
+
         // リファレンスセクションを読み込む
         function loadReferenceSection(section) {
             var $loading = $('#ktpwp-reference-loading');
@@ -105,14 +111,16 @@
             $loading.show();
             $content.hide();
             
-            // Ajax でセクションデータを取得
+            // Ajax でセクションデータを取得（キャッシュ無効化）
             $.ajax({
                 url: ktpwp_reference.ajax_url,
                 type: 'POST',
+                cache: false,
                 data: {
                     action: 'ktpwp_get_reference',
                     nonce: ktpwp_reference.nonce,
-                    section: section
+                    section: section,
+                    _timestamp: Date.now() // キャッシュバスター
                 },
                 success: function(response) {
                     $loading.hide();
@@ -171,6 +179,60 @@
                     }
                 }
             });
+        }
+
+        // リファレンスキャッシュをクリアする
+        function clearReferenceCache() {
+            var $btn = $('.ktpwp-clear-cache-btn');
+            var originalText = $btn.text();
+            
+            $btn.text('クリア中...').prop('disabled', true);
+            
+            $.ajax({
+                url: ktpwp_reference.ajax_url,
+                type: 'POST',
+                cache: false,
+                data: {
+                    action: 'ktpwp_clear_reference_cache',
+                    nonce: ktpwp_reference.nonce,
+                    _timestamp: Date.now()
+                },
+                success: function(response) {
+                    $btn.text(originalText).prop('disabled', false);
+                    console.log('Cache clear response:', response);
+                    
+                    if (response.success) {
+                        // 現在のアクティブセクションを再読み込み
+                        var activeSection = $('.ktpwp-reference-nav a.active').data('section') || 'overview';
+                        loadReferenceSection(activeSection);
+                        
+                        // 成功メッセージを表示
+                        showCacheMessage(response.data.message || 'キャッシュをクリアしました', 'success');
+                    } else {
+                        var errorMsg = response.data && response.data.message ? response.data.message : 'キャッシュクリアに失敗しました';
+                        showCacheMessage(errorMsg, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.text(originalText).prop('disabled', false);
+                    console.error('Cache clear error:', status, error, xhr.responseText);
+                    showCacheMessage('キャッシュクリアでエラーが発生しました: ' + error, 'error');
+                }
+            });
+        }
+
+        // キャッシュメッセージを表示
+        function showCacheMessage(message, type) {
+            var messageClass = type === 'success' ? 'success' : 'error';
+            var $message = $('<div class="ktpwp-cache-message ' + messageClass + '">' + message + '</div>');
+            
+            $('.ktpwp-modal-header').append($message);
+            
+            setTimeout(function() {
+                $message.fadeOut(function() {
+                    $message.remove();
+                });
+            }, 3000);
         }
     });
 

@@ -217,7 +217,8 @@ class KTPWP_Shortcodes {
             $links[] = $activation_key;
         }
         
-        $links[] = '<a href="#" class="ktpwp-reference-link">' . esc_html__('リファレンス', 'ktpwp') . '</a>';
+        $reference_instance = KTPWP_Plugin_Reference::get_instance();
+        $links[] = $reference_instance->get_reference_link();
         
         return '　' . implode('　', $links);
     }
