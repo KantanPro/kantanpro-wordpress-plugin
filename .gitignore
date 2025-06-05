@@ -5,3 +5,16 @@ images/default/upload/
 images/upload/
 prompt.txt
 images/upload/*
+
+# Log files
+*.log
+
+# htaccess
+/.htaccess
+
+# All themes
+#
+# Note: If you wish to whitelist themes,
+# uncomment the next line
+#/wp-content/themes
+>>>>>>> b292c4816b9a549f693c64b23652ce0c133df0b1
