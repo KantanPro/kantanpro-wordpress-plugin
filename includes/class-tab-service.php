@@ -1,501 +1,101 @@
 <?php
-require_once 'class-image_processor.php';
+/**
+ * Service class for KTPWP plugin
+ *
+ * Handles service data management including table creation,
+ * data operations (CRUD), and security implementations.
+ *
+ * @package KTPWP
+ * @subpackage Includes
+ * @since 1.0.0
+ * @author Kantan Pro
+ * @copyright 2024 Kantan Pro
+ * @license GPL-2.0+
+ */
 
-if (!class_exists('Kntan_Service_Class')) {
+// Prevent direct access
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+require_once 'class-image_processor.php';
+require_once 'class-ktpwp-service-ui.php';
+require_once 'class-ktpwp-service-db.php';
+
+if ( ! class_exists( 'Kntan_Service_Class' ) ) {
+
+/**
+ * Service class for managing service data
+ *
+ * @since 1.0.0
+ */
 class Kntan_Service_Class {
 
-    public function __construct($tab_name = '') {
+    /**
+     * UI helper instance
+     *
+     * @var KTPWP_Service_UI
+     */
+    private $ui_helper;
 
+    /**
+     * DB helper instance
+     *
+     * @var KTPWP_Service_DB
+     */
+    private $db_helper;
+
+    /**
+     * Constructor
+     *
+     * @since 1.0.0
+     * @param string $tab_name The tab name
+     */
+    public function __construct( $tab_name = '' ) {
+        // Initialize helper classes using singleton pattern
+        $this->ui_helper = KTPWP_Service_UI::get_instance();
+        $this->db_helper = KTPWP_Service_DB::get_instance();
     }
     
-    
     // -----------------------------
-    // テーブル作成
+    // Table Operations
     // -----------------------------
-    
 
-    // クッキーの設定
-    function Set_Cookie($name) {
-        $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            $query_id = 1;
-        }
+    /**
+     * Set cookie for UI session management (delegated to UI helper)
+     *
+     * @since 1.0.0
+     * @param string $name The name parameter for cookie
+     * @return int The query ID
+     */
+    public function set_cookie( $name ) {
+        return $this->ui_helper->set_cookie( $name );
     }
 
-    function Create_Table($tab_name) {
-        global $wpdb;
-        $my_table_version = '1.0.0';
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-        $charset_collate = $wpdb->get_charset_collate();
-
-        // カラム名リスト
-        $columns = [
-            "id" => "MEDIUMINT(9) NOT NULL AUTO_INCREMENT",
-            "time" => "BIGINT(11) DEFAULT '0' NOT NULL",
-            "service_name" => "TINYTEXT",
-            "image_url" => "VARCHAR(255)",
-            "memo" => "TEXT",
-            "search_field" => "TEXT",
-            "frequency" => "INT NOT NULL DEFAULT 0",
-            "category" => "VARCHAR(100) NOT NULL DEFAULT '一般'"
-        ];
-
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
-            // CREATE TABLE時はUNIQUE KEYも含めてOK
-            $columns_sql = [];
-            foreach ($columns as $col => $def) {
-                $columns_sql[] = "$col $def";
-            }
-            $columns_sql[] = "UNIQUE KEY id (id)";
-            $sql = "CREATE TABLE $table_name (" . implode(", ", $columns_sql) . ") $charset_collate;";
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-            add_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-        } else {
-            // 既存カラム取得
-            $existing_columns = $wpdb->get_col("DESCRIBE $table_name", 0);
-            // カラム追加
-            foreach ($columns as $col => $def) {
-                if (!in_array($col, $existing_columns)) {
-                    $wpdb->query("ALTER TABLE $table_name ADD $col $def");
-                }
-            }
-            // UNIQUE KEY追加（idにUNIQUE INDEXがなければ追加）
-            $indexes = $wpdb->get_results("SHOW INDEX FROM $table_name WHERE Key_name = 'id'");
-            if (empty($indexes)) {
-                $wpdb->query("ALTER TABLE $table_name ADD UNIQUE (id)");
-            }
-            update_option('ktp_' . $tab_name . '_table_version', $my_table_version);
-        }
+    /**
+     * Create service table (delegated to DB helper)
+     *
+     * @since 1.0.0
+     * @param string $tab_name The table name suffix
+     * @return bool True on success, false on failure
+     */
+    public function create_table( $tab_name ) {
+        return $this->db_helper->create_table( $tab_name );
     }
 
     // -----------------------------
-    // テーブルの操作（更新・追加・削除・検索）
+    // Table Operations (CRUD)
     // -----------------------------
 
-    function Update_Table( $tab_name) {
-
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ktp_' . $tab_name;
-
-        // テーブル名にロックをかける
-        $wpdb->query("LOCK TABLES {$table_name} WRITE;");
-        
-        // POSTデーター受信
-        $data_id = isset($_POST['data_id']) ? $_POST['data_id'] : '';
-        $query_post = isset($_POST['query_post']) ? $_POST['query_post'] : '';
-        $service_name = isset($_POST['service_name']) ? $_POST['service_name'] : '';
-        $memo = isset($_POST['memo']) ? $_POST['memo'] : '';
-        $category = isset($_POST['category']) ? $_POST['category'] : '';
-        
-        // search_fieldの値を設定
-        $search_field_value = implode(', ', [
-            current_time('mysql'),
-            $service_name,
-            $memo,
-            $category
-        ]);
-
-        if ($data_id === 0) {
-            $last_id_query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_result = $wpdb->get_row($last_id_query);
-            if ($last_id_result) {
-                $data_id = $last_id_result->id;
-            }
-        }
-
-        // 削除
-        if ($query_post == 'delete' && $data_id > 0) {
-            $wpdb->delete(
-                $table_name,
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%d'
-                )
-            );
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-
-            // リダイレクト
-            // データ削除後に表示するデータIDを適切に設定
-            $next_id_query = "SELECT id FROM {$table_name} WHERE id > {$data_id} ORDER BY id ASC LIMIT 1";
-            $next_id_result = $wpdb->get_row($next_id_query);
-            if ($next_id_result) {
-                $next_data_id = $next_id_result->id;
-            } else {
-                $prev_id_query = "SELECT id FROM {$table_name} WHERE id < {$data_id} ORDER BY id DESC LIMIT 1";
-                $prev_id_result = $wpdb->get_row($prev_id_query);
-                $next_data_id = $prev_id_result ? $prev_id_result->id : 0;            }            $action = 'update';
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_id, query_postパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-            // 新しいパラメータを追加
-            $url = add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $next_data_id,
-                'query_post' => $action
-            ], $base_url);
-            $cookie_name = 'ktp_' . $tab_name . '_id';
-            setcookie($cookie_name, $next_data_id, time() + (86400 * 30), "/"); // 30日間有効
-            header("Location: {$url}");
-            exit;
-        }    
-        
-        // 更新
-        elseif( $query_post == 'update' ){
-
-            $wpdb->update( 
-                $table_name, 
-                array( 
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'search_field' => $search_field_value,
-                ),
-                    array( 'id' => $data_id ), 
-                    array( 
-                        '%s',  // service_name
-                        '%s',  // memo
-                        '%s',  // category
-                        '%s',  // search_field
-                    ),
-                    array( '%d' ) 
-            );
-
-            // $data_idの取得方法を確認
-            $data_id = isset($_POST['data_id']) ? intval($_POST['data_id']) : 0;
-            if($data_id > 0){
-                // 頻度の値を+1する
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE $table_name SET frequency = frequency + 1 WHERE id = %d",
-                        $data_id
-                    )
-                );
-            } else {
-                // $data_idが不正な場合のエラーハンドリング
-                // 例: IDが指定されていない、または不正な値の場合
-                error_log('Invalid or missing data_id in Update_Table function');
-            }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            
-        }
-
-        // 検索
-        elseif( $query_post == 'search' ){
-
-        // SQLクエリを準備（search_fieldを検索対象にする）
-        $search_query = $_POST['search_query'];
-        $results = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE search_field LIKE %s", '%' . $wpdb->esc_like($search_query) . '%'));
-
-            // 検索結果が1つある場合の処理
-            if (count($results) == 1) {
-
-                // 検索結果のIDを取得
-                $id = $results[0]->id;
-                
-                // 頻度の値を+1する
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "UPDATE $table_name SET frequency = frequency + 1 WHERE ID = %d",
-                        $id
-                    )
-                );                 // 検索後に更新モードにする
-                 $action = 'update';
-                 $data_id = $id;
-                 // 現在のURLを取得
-                 $current_url = add_query_arg(NULL, NULL);
-                 // tab_name, data_id, query_postパラメータを除去
-                 $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                 // 新しいパラメータを追加
-                 $url = add_query_arg([
-                     'tab_name' => $tab_name,
-                     'data_id' => $data_id,
-                     'query_post' => $action
-                 ], $base_url);
-                 header("Location: {$url}");
-
-            }
-
-            // 検索結果が複数ある場合の処理
-            elseif (count($results) > 1) {
-                // 検索結果を表示するHTMLを初期化
-                $search_results_html = "<div class='data_contents'><div class='search_list_box'><h3>■ 検索結果が複数あります！</h3><ul>";
-
-                // 検索結果のリストを生成
-                foreach ($results as $row) {
-                    $id = esc_html($row->id);
-                    $service_name = esc_html($row->service_name); // 商品名を取得
-                    $category = esc_html($row->category); // カテゴリーを取得
-                    // 各検索結果に対してリンクを設定
-                    $search_results_html .= "<li style='text-align:left; width:100%;'><a href='" . add_query_arg(array('tab_name' => $tab_name, 'data_id' => $id, 'query_post' => 'update')) . "' style='text-align:left;'>ID：{$id} 商品名：{$service_name} カテゴリー：{$category}</a></li>";
-                }
-                // HTMLを閉じる
-                $search_results_html .= "</ul></div></div>";
-
-                // JavaScriptに渡すために、検索結果のHTMLをエスケープ
-                $search_results_html_js = json_encode($search_results_html);
-
-                // JavaScriptでポップアップを表示
-                echo "<script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var searchResultsHtml = $search_results_html_js;
-                    var popup = document.createElement('div');
-                    popup.innerHTML = searchResultsHtml;
-                    popup.style.position = 'fixed';
-                    popup.style.top = '50%';
-                    popup.style.left = '50%';
-                    popup.style.transform = 'translate(-50%, -50%)';
-                    popup.style.backgroundColor = '#fff';
-                    popup.style.padding = '20px';
-                    popup.style.zIndex = '1000';
-                    popup.style.width = '80%';
-                    popup.style.maxWidth = '600px';
-                    popup.style.border = '1px solid #ccc';
-                    popup.style.borderRadius = '5px';
-                    popup.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                    document.body.appendChild(popup);
-                    // ポップアップを閉じるためのボタンを追加
-                    var closeButton = document.createElement('button');
-                    closeButton.textContent = '閉じる';
-                    closeButton.style.fontSize = '0.8em';
-                    closeButton.style.color = 'black'; // 文字をもう少し黒く
-                    closeButton.style.display = 'block';
-                    closeButton.style.margin = '10px auto 0';
-                    closeButton.style.padding = '10px';
-                    closeButton.style.backgroundColor = '#cdcccc'; // 背景は薄い緑
-                    closeButton.style.borderRadius = '5px'; // 角を少し丸く
-                    closeButton.style.borderColor = '#999'; // ボーダーカラーをもう少し明るく
-                    closeButton.onclick = function() {
-                        document.body.removeChild(popup);
-                        // 元の検索モードに戻るために特定のURLにリダイレクト
-                        location.href = '" . add_query_arg(array('tab_name' => $tab_name, 'query_post' => 'search')) . "';
-                    };
-                    popup.appendChild(closeButton);
-                });
-                </script>";
-            }
-
-            // 検索結果が0件の場合の処理
-            else {                // JavaScriptを使用してポップアップ警告を表示
-                echo "<script>
-                alert('検索結果がありません！');
-                </script>";
-                // リダイレクトの代わりにクエリパラメータを設定
-                $_GET['tab_name'] = $tab_name;
-                $_GET['query_post'] = 'search';
-            }
-
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-            exit;
-        }
-        // 追加
-        elseif( $query_post == 'insert' ) {
-
-            $insert_result = $wpdb->insert( 
-                $table_name, 
-                array( 
-                    'time' => current_time( 'mysql' ),
-                    'service_name' => $service_name,
-                    'memo' => $memo,
-                    'category' => $category,
-                    'search_field' => $search_field_value
-                ) 
-            );
-            if($insert_result === false) {
-                error_log('Insert error: ' . $wpdb->last_error);
-            } else {
-
-                // ロックを解除する
-                $wpdb->query("UNLOCK TABLES;");
-
-                // 追加後に更新モードにする
-                // リダイレクト                $action = 'update';
-                $data_id = $wpdb->insert_id;
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
-                $url = add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $data_id,
-                    'query_post' => $action
-                ], $base_url);
-                header("Location: {$url}");
-                exit;
-            }
-
-        }
-        
-        // 複製
-        elseif( $query_post == 'duplication' ) {
-            // データのIDを取得
-            $data_id = $_POST['data_id'];
-    
-            // データを取得
-            $data = $wpdb->get_row("SELECT * FROM $table_name WHERE id = $data_id", ARRAY_A);
-    
-            // 商品名の最後に#を追加
-            $data['service_name'] .= '#';
-    
-            // IDを削除
-            unset($data['id']);
-    
-            // 頻度を0に設定
-            $data['frequency'] = 0;
-    
-            // search_fieldの値を更新
-            $data['search_field'] = implode(', ', [
-                $data['time'],
-                $data['service_name'],
-                $data['memo'],
-                $data['category']
-            ]);
-    
-            // データを挿入
-            $insert_result = $wpdb->insert($table_name, $data);
-            if($insert_result === false) {
-                // エラーログに挿入エラーを記録
-                error_log('Duplication error: ' . $wpdb->last_error);
-            } else {
-                // 挿入成功後の処理
-                $new_data_id = $wpdb->insert_id;
-
-                // ロックを解除する
-                $wpdb->query("UNLOCK TABLES;");
-                
-                // 追加後に更新モードにする
-                // リダイレクト                $action = 'update';
-                // 現在のURLを取得
-                $current_url = add_query_arg(NULL, NULL);
-                // tab_name, data_id, query_postパラメータを除去
-                $base_url = remove_query_arg(['tab_name', 'data_id', 'query_post'], $current_url);
-                // 新しいパラメータを追加
-                $url = add_query_arg([
-                    'tab_name' => $tab_name,
-                    'data_id' => $new_data_id,
-                    'query_post' => $action
-                ], $base_url);
-                $cookie_name = 'ktp_' . $tab_name . '_id'; // クッキー名を設定
-                setcookie($cookie_name, $new_data_id, time() + (86400 * 30), "/"); // クッキーを保存
-                header("Location: {$url}");
-                exit;
-            }
-        }
-        
-        // 
-        // 商品画像処理
-        //        // 画像をアップロード
-        elseif ($query_post == 'upload_image') {
-            // 先にImage_Processorクラスが存在するか確認
-            if (!class_exists('Image_Processor')) {
-                require_once(dirname(__FILE__) . '/class-image_processor.php');
-            }
-            
-            // 画像URLを取得
-            $image_processor = new Image_Processor();
-            $default_image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
-            
-            // デフォルト画像のパスが正しいか確認
-            $default_image_path = dirname(__FILE__) . '/../images/default/no-image-icon.jpg';
-            if (!file_exists($default_image_path)) {
-                // デフォルト画像が存在しない場合、エラーログに記録
-                error_log('Default image not found: ' . $default_image_path);
-            }
-            
-            $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-
-            $wpdb->update(
-                $table_name,
-                array(
-                    'image_url' => $image_url
-                ),
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%s'
-                ),
-                array(
-                    '%d'
-                )
-            );            // echo $image_url;
-            // exit;
-
-            // リダイレクト
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_idパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
-            // 新しいパラメータを追加
-            $url = add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $data_id
-            ], $base_url);
-            header("Location: {$url}");
-            exit;
-        }        // 画像削除：デフォルト画像に戻す
-        elseif ($query_post == 'delete_image') {
-
-            // デフォルト画像のURLを設定
-            $default_image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
-            
-            // 既存の画像ファイルを削除する処理を追加
-            $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
-            $file_path = $upload_dir . $data_id . '.jpeg';
-            
-            // ファイルが存在する場合は削除する
-            if (file_exists($file_path)) {
-                unlink($file_path);
-            }
-
-            $wpdb->update(
-                $table_name,
-                array(
-                    'image_url' => $default_image_url
-                ),
-                array(
-                    'id' => $data_id
-                ),
-                array(
-                    '%s'
-                ),
-                array(
-                    '%d'
-                )
-            );            // リダイレクト
-            // 現在のURLを取得
-            $current_url = add_query_arg(NULL, NULL);
-            // tab_name, data_idパラメータを除去
-            $base_url = remove_query_arg(['tab_name', 'data_id'], $current_url);
-            // 新しいパラメータを追加
-            $url = add_query_arg([
-                'tab_name' => $tab_name,
-                'data_id' => $data_id
-            ], $base_url);
-            header("Location: {$url}");
-            exit;
-        }
-
-        // どの処理にも当てはまらない場合はロック解除
-        else {
-            // ロックを解除する
-            $wpdb->query("UNLOCK TABLES;");
-        }
-
-
+    /**
+     * Update table with POST data (delegated to DB helper)
+     *
+     * @since 1.0.0
+     * @param string $tab_name The table name suffix
+     * @return void
+     */
+    public function update_table( $tab_name ) {
+        return $this->db_helper->update_table( $tab_name );
     }
 
 
@@ -507,79 +107,286 @@ class Kntan_Service_Class {
 
         global $wpdb;
 
+        // GETパラメータからメッセージを取得して表示
+        if (isset($_GET['message'])) {
+            $message_type = sanitize_text_field($_GET['message']);
+            $message_text = '';
+            $notice_class = '';
+
+            // ソート操作時はメッセージを表示しないようにする
+            $is_sorting_action = isset($_GET['sort_by']) || isset($_GET['sort_order']);
+
+            if ($message_type === 'updated' && !$is_sorting_action) {
+                $message_text = esc_html__('更新しました。', 'ktpwp');
+                $notice_class = 'notice-success is-dismissible';
+            } elseif ($message_type === 'added') {
+                $message_text = esc_html__('新しいサービスを追加しました。', 'ktpwp');
+                $notice_class = 'notice-success is-dismissible';
+            } elseif ($message_type === 'deleted') {
+                $message_text = esc_html__('削除しました。', 'ktpwp');
+                $notice_class = 'notice-success is-dismissible';
+            } elseif ($message_type === 'duplicated') {
+                $message_text = esc_html__('複製しました。', 'ktpwp');
+                $notice_class = 'notice-success is-dismissible';
+            } elseif ($message_type === 'search_cancelled') {
+                $message_text = esc_html__('検索をキャンセルしました。', 'ktpwp');
+                $notice_class = 'notice-info is-dismissible';
+            }
+            // 他のメッセージタイプも必要に応じて追加
+
+            if (!empty($message_text) && !empty($notice_class)) {
+                echo '<div class="notice ' . esc_attr($notice_class) . '"><p>' . $message_text . '</p></div>';
+                // JavaScript を追加して、表示後にURLから 'message' パラメータを削除 (DOMContentLoaded内で実行)
+                echo '<script type="text/javascript">' .
+                     'document.addEventListener("DOMContentLoaded", function() {' .
+                     '  if (window.history.replaceState) {' .
+                     '    const currentUrl = new URL(window.location.href);' .
+                     '    if (currentUrl.searchParams.has(\'message\')) {' .
+                     '      currentUrl.searchParams.delete(\'message\');' .
+                     '      window.history.replaceState({ path: currentUrl.href }, \'\', currentUrl.href);' .
+                     '    }' .
+                     '  }' .
+                     '});' .
+                     '</script>';
+            }
+        }
+
+        // セッション変数をチェックしてメッセージを表示 (これは前の修正の名残なので、GETパラメータ方式に統一した場合は削除またはコメントアウトを検討)
+        // if (isset($_SESSION['ktp_service_message']) && isset($_SESSION['ktp_service_message_type'])) {
+        //     $message_text = $_SESSION['ktp_service_message'];
+        //     $message_type = $_SESSION['ktp_service_message_type'];
+        //     unset($_SESSION['ktp_service_message']); // メッセージを表示したらセッション変数を削除
+        //     unset($_SESSION['ktp_service_message_type']);
+        //
+        //     $notice_class = 'notice-success'; // デフォルトは成功メッセージ
+        //     if ($message_type === 'error') {
+        //         $notice_class = 'notice-error';
+        //     } elseif ($message_type === 'updated') {
+        //         $notice_class = 'notice-success is-dismissible'; // 更新成功のクラス
+        //     }
+        //
+        //     echo '<div class="notice ' . esc_attr($notice_class) . '"><p>' . esc_html($message_text) . '</p></div>';
+        // }
+
+
+        // 検索モードの確認
+        $search_mode = false;
+        $search_message = '';
+        if (!session_id()) {
+            session_start();
+        }
+        if (isset($_SESSION['ktp_service_search_mode']) && $_SESSION['ktp_service_search_mode']) {
+            $search_mode = true;
+            $search_message = isset($_SESSION['ktp_service_search_message']) ? $_SESSION['ktp_service_search_message'] : '';
+        }
+
+        // 成功メッセージの表示
+        $message = '';
+        // JavaScript-based notifications instead of static HTML
+        if (isset($_GET['message'])) {
+            echo '<script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const messageType = "' . esc_js($_GET['message']) . '";
+                switch (messageType) {
+                    case "updated":
+                        showSuccessNotification("' . esc_js(__('更新しました。', 'ktpwp')) . '");
+                        break;
+                    case "added":
+                        showSuccessNotification("' . esc_js(__('新しいサービスを追加しました。', 'ktpwp')) . '");
+                        break;
+                    case "deleted":
+                        showSuccessNotification("' . esc_js(__('削除しました。', 'ktpwp')) . '");
+                        break;
+                    case "duplicated":
+                        showSuccessNotification("' . esc_js(__('複製しました。', 'ktpwp')) . '");
+                        break;
+                    case "search_found":
+                        showInfoNotification("' . esc_js(__('検索結果を表示しています。', 'ktpwp')) . '");
+                        break;
+                    case "search_cancelled":
+                        showInfoNotification("' . esc_js(__('検索をキャンセルしました。', 'ktpwp')) . '");
+                        break;
+                }
+            });
+            </script>';
+        }
+
+        // 検索メッセージの表示
+        if ($search_mode && $search_message) {
+            $message .= '<div class="notice notice-info" style="margin: 10px 0; padding: 10px; background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; border-radius: 4px;">' 
+                . '<span style="margin-right: 10px; color: #17a2b8; font-size: 18px;" class="material-symbols-outlined">search</span>'
+                . esc_html($search_message) . '</div>';
+        }
+
         // -----------------------------
         // リスト表示
         // -----------------------------
         
         // テーブル名
-        $table_name = $wpdb->prefix . 'ktp_' . $name;
-            // -----------------------------
+        $table_name = $wpdb->prefix . 'ktp_' . $name;        // -----------------------------
         // ページネーションリンク
         // -----------------------------
+// ソート順の取得（デフォルトはIDの降順 - 新しい順）
+        $sort_by = 'id';
+        $sort_order = 'DESC';
         
-        // 表示範囲
-        $query_limit = 20;
+        if (isset($_GET['sort_by'])) {
+            $sort_by = sanitize_text_field($_GET['sort_by']);
+            // 安全なカラム名のみ許可（SQLインジェクション対策）
+            $allowed_columns = array('id', 'service_name', 'price', 'unit', 'frequency', 'time', 'category');
+            if (!in_array($sort_by, $allowed_columns)) {
+                $sort_by = 'id'; // 不正な値の場合はデフォルトに戻す
+            }
+        }
         
+        if (isset($_GET['sort_order'])) {
+            $sort_order_param = strtoupper(sanitize_text_field($_GET['sort_order']));
+            // ASCかDESCのみ許可
+            $sort_order = ($sort_order_param === 'ASC') ? 'ASC' : 'DESC';
+        }
+        
+        // 現在のページのURLを生成 (この$base_page_urlは現在のリクエストのパラメータを含む可能性がある)
+        global $wp;
+        $current_page_id = get_queried_object_id();
+        $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
+        
+        // 表示範囲（1ページあたりの表示件数）
+        // 一般設定から表示件数を取得（設定クラスが利用可能な場合）
+        if (class_exists('KTP_Settings')) {
+            $query_limit = KTP_Settings::get_work_list_range();
+        } else {
+            $query_limit = 20; // フォールバック値
+        }
+        if (!is_numeric($query_limit) || $query_limit <= 0) {
+            $query_limit = 20; // 不正な値の場合はデフォルト値に
+        }
+        
+        // ソートプルダウンを追加
+        // ソートフォームのアクションURLからは 'message' を除去
+        $sort_action_url = remove_query_arg('message', $base_page_url);
+        
+        $sort_dropdown = '<div class="sort-dropdown" style="float:right;margin-left:10px;">' .
+            '<form method="get" action="' . esc_url($sort_action_url) . '" style="display:flex;align-items:center;">';
+        
+        // 現在のGETパラメータを維持するための隠しフィールド (messageとソート自体に関連するキーは除く)
+        foreach ($_GET as $key => $value) {
+            if (!in_array($key, ['message', 'sort_by', 'sort_order', '_ktp_service_nonce', 'query_post', 'send_post'])) {
+                $sort_dropdown .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr(stripslashes($value)) . '">';
+            }
+        }
+        
+        $sort_dropdown .= 
+            '<select id="sort-select" name="sort_by" style="margin-right:5px;">' .
+            '<option value="id" ' . selected($sort_by, 'id', false) . '>' . esc_html__('ID', 'ktpwp') . '</option>' .
+            '<option value="service_name" ' . selected($sort_by, 'service_name', false) . '>' . esc_html__('サービス名', 'ktpwp') . '</option>' .
+            '<option value="price" ' . selected($sort_by, 'price', false) . '>' . esc_html__('価格', 'ktpwp') . '</option>' .
+            '<option value="unit" ' . selected($sort_by, 'unit', false) . '>' . esc_html__('単位', 'ktpwp') . '</option>' .
+            '<option value="category" ' . selected($sort_by, 'category', false) . '>' . esc_html__('カテゴリー', 'ktpwp') . '</option>' .
+            '<option value="frequency" ' . selected($sort_by, 'frequency', false) . '>' . esc_html__('頻度', 'ktpwp') . '</option>' .
+            '<option value="time" ' . selected($sort_by, 'time', false) . '>' . esc_html__('登録日', 'ktpwp') . '</option>' .
+            '</select>' .
+            '<select id="sort-order" name="sort_order">' .
+            '<option value="ASC" ' . selected($sort_order, 'ASC', false) . '>' . esc_html__('昇順', 'ktpwp') . '</option>' .
+            '<option value="DESC" ' . selected($sort_order, 'DESC', false) . '>' . esc_html__('降順', 'ktpwp') . '</option>' .
+            '</select>' .
+            '<button type="submit" style="margin-left:5px;padding:4px 8px;background:#f0f0f0;border:1px solid #ccc;border-radius:3px;cursor:pointer;" title="' . esc_attr__('適用', 'ktpwp') . '">' .
+            '<span class="material-symbols-outlined" style="font-size:18px;line-height:18px;vertical-align:middle;">check</span>' .
+            '</button>' .
+            '</form></div>';
+
         // リスト表示部分の開始
         $results_h = <<<END
-        <div class="data_contents">
-            <div class="data_list_box">
-            <h3>■ 商品リスト（レンジ： $query_limit ）</h3>
-        END;        // スタート位置を決める
+            <div class="ktp_data_list_box">
+            <div class="data_list_title">■ サービスリスト {$sort_dropdown}</div>
+        END;
+        // スタート位置を決める
         $page_stage = $_GET['page_stage'] ?? '';
         $page_start = $_GET['page_start'] ?? 0;
         $flg = $_GET['flg'] ?? '';
         if ($page_stage == '') {
             $page_start = 0;
-        }
-        $query_range = $page_start . ',' . $query_limit;
-
-        $query_order_by = 'frequency';
+        }        $query_range = $page_start . ',' . $query_limit;
 
         // 全データ数を取得
         $total_query = "SELECT COUNT(*) FROM {$table_name}";
         $total_rows = $wpdb->get_var($total_query);
+        
+        // ゼロ除算防止のための安全対策
+        if ($query_limit <= 0) {
+            if (class_exists('KTP_Settings')) {
+                $query_limit = KTP_Settings::get_work_list_range();
+            } else {
+                $query_limit = 20; // フォールバック値
+            }
+        }
+        
         $total_pages = ceil($total_rows / $query_limit);
 
         // 現在のページ番号を計算
         $current_page = floor($page_start / $query_limit) + 1;
 
-        // データを取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY frequency DESC LIMIT %d, %d", $page_start, $query_limit);
+        // データを取得（ソート順を適用）
+        $query = $wpdb->prepare("SELECT * FROM {$table_name} ORDER BY {$sort_by} {$sort_order} LIMIT %d, %d", $page_start, $query_limit);
         $post_row = $wpdb->get_results($query);
         $results = []; // ← 追加：未定義エラー防止
         if( $post_row ){
             foreach ($post_row as $row){
                 $id = esc_html($row->id);
-                $time = esc_html($row->time);
                 $service_name = esc_html($row->service_name);
-                $memo = esc_html($row->memo);
+                $price = isset($row->price) ? intval($row->price) : 0;
+                $unit = isset($row->unit) ? esc_html($row->unit) : '';
                 $category = esc_html($row->category);
-                $image_url = esc_html($row->image_url);
                 $frequency = esc_html($row->frequency);
                   // リスト項目
                 $cookie_name = 'ktp_' . $name . '_id';
-                $results[] = '<a href="' . add_query_arg(array('tab_name' => $name, 'data_id' => $id, 'page_start' => $page_start, 'page_stage' => $page_stage)) . '">'.
-                    '<div class="data_list_item">ID: ' . $id . ' ' . $service_name . ' : ' . $category . ' : 頻度(' . $frequency . ')</div>'.
+                // $base_page_url を add_query_arg の第2引数として使用
+                $item_link_args = array(
+                    'tab_name' => $name, 
+                    'data_id' => $id, 
+                    'page_start' => $page_start, 
+                    'page_stage' => $page_stage
+                );
+                // 他のソートやフィルタ関連のGETパラメータを維持しつつ、'message'は含めない
+                foreach ($_GET as $getKey => $getValue) {
+                    if (!in_array($getKey, ['tab_name', 'data_id', 'page_start', 'page_stage', 'message', '_ktp_service_nonce', 'query_post', 'send_post'])) {
+                        $item_link_args[$getKey] = $getValue;
+                    }
+                }
+                $results[] = '<a href="' . esc_url(add_query_arg($item_link_args, $base_page_url)) . '">'.
+                    '<div class="ktp_data_list_item">' . esc_html__('ID', 'ktpwp') . ': ' . $id . ' ' . $service_name . ' : ' . number_format($price) . '円' . ($unit ? '/' . $unit : '') . ' : ' . $category . ' : ' . esc_html__('頻度', 'ktpwp') . '(' . $frequency . ')</div>'.
                 '</a>';
             }
             $query_max_num = $wpdb->num_rows;
         } else {
-            $results[] = '<div class="data_list_item">データーがありません。</div>';
+            $results[] = '<div class="ktp_data_list_item">' . esc_html__('データーがありません。', 'ktpwp') . '</div>';
         }
 
-        $results_f = "<div class=\"pagination\">";
+        $results_f = '<div class="pagination">';
 
         // 最初へリンク
         if ($current_page > 1) {
-            $first_start = 0; // 最初のページ
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg)) . '">|&lt;</a> ';
+            $first_start = 0;
+            $first_page_link_args = array('tab_name' => $name, 'page_start' => $first_start, 'page_stage' => 2, 'flg' => $flg);
+            // 現在のソート順を維持
+            if (isset($_GET['sort_by'])) $first_page_link_args['sort_by'] = $_GET['sort_by'];
+            if (isset($_GET['sort_order'])) $first_page_link_args['sort_order'] = $_GET['sort_order'];
+            $first_page_link_url = esc_url(add_query_arg($first_page_link_args, $base_page_url));
+            $results_f .= <<<END
+            <a href="{$first_page_link_url}">|<</a> 
+            END;
         }
 
         // 前へリンク
         if ($current_page > 1) {
             $prev_start = ($current_page - 2) * $query_limit;
-            $results_f .= '<a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg)) . '">&lt;</a>';
+            $prev_page_link_args = array('tab_name' => $name, 'page_start' => $prev_start, 'page_stage' => 2, 'flg' => $flg);
+            // 現在のソート順を維持
+            if (isset($_GET['sort_by'])) $prev_page_link_args['sort_by'] = $_GET['sort_by'];
+            if (isset($_GET['sort_order'])) $prev_page_link_args['sort_order'] = $_GET['sort_order'];
+            $prev_page_link_url = esc_url(add_query_arg($prev_page_link_args, $base_page_url));
+            $results_f .= <<<END
+            <a href="{$prev_page_link_url}"><</a>
+            END;
         }
 
         // 現在のページ範囲表示と総数
@@ -587,464 +394,441 @@ class Kntan_Service_Class {
         $page_start_display = ($current_page - 1) * $query_limit + 1;
         $results_f .= "<div class='stage'> $page_start_display ~ $page_end / $total_rows</div>";
 
-        // 次へリンク（現在のページが最後のページより小さい場合のみ表示）
+        // 次へリンク
         if ($current_page < $total_pages) {
             $next_start = $current_page * $query_limit;
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;</a>';
+            $next_page_link_args = array('tab_name' => $name, 'page_start' => $next_start, 'page_stage' => 2, 'flg' => $flg);
+            // 現在のソート順を維持
+            if (isset($_GET['sort_by'])) $next_page_link_args['sort_by'] = $_GET['sort_by'];
+            if (isset($_GET['sort_order'])) $next_page_link_args['sort_order'] = $_GET['sort_order'];
+            $next_page_link_url = esc_url(add_query_arg($next_page_link_args, $base_page_url));
+            $results_f .= <<<END
+            <a href="{$next_page_link_url}">></a>
+            END;
         }
 
         // 最後へリンク
         if ($current_page < $total_pages) {
-            $last_start = ($total_pages - 1) * $query_limit; // 最後のページ
-            $results_f .= ' <a href="' . add_query_arg(array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg)) . '">&gt;|</a>';
+            $last_start = ($total_pages - 1) * $query_limit;
+            $last_page_link_args = array('tab_name' => $name, 'page_start' => $last_start, 'page_stage' => 2, 'flg' => $flg);
+            // 現在のソート順を維持
+            if (isset($_GET['sort_by'])) $last_page_link_args['sort_by'] = $_GET['sort_by'];
+            if (isset($_GET['sort_order'])) $last_page_link_args['sort_order'] = $_GET['sort_order'];
+            $last_page_link_url = esc_url(add_query_arg($last_page_link_args, $base_page_url));
+            $results_f .= <<<END
+             <a href="{$last_page_link_url}">>|</a>
+            END;
         }
-        
-        $results_f .= "</div></div>";
 
-        $data_list = $results_h . implode( $results ) . $results_f;
+        $results_f .= '</div>';
+
+        $data_list = $results_h . implode( $results ) . $results_f . '</div>'; // ktp_data_list_box を閉じる
 
         // -----------------------------
         // 詳細表示(GET)
         // -----------------------------
 
-        // 現在表示中の詳細
-        $cookie_name = 'ktp_' . $name . '_id';
-        if (isset($_GET['data_id'])) {
-            $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-        } elseif (isset($_COOKIE[$cookie_name])) {
-            $query_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-        } else {
-            // 最後のIDを取得して表示
-            $query = "SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1";
-            $last_id_row = $wpdb->get_row($query);
-            $query_id = $last_id_row ? $last_id_row->id : 1;
-        }
-
+        // アクションを取得（POSTパラメータを優先、次にGETパラメータ、デフォルトは'update'）
+        $action = isset($_POST['query_post']) ? $_POST['query_post'] : (isset($_GET['query_post']) ? $_GET['query_post'] : 'update');
         
-        // データを取得し変数に格納
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
-        $post_row = $wpdb->get_results($query);
-        foreach ($post_row as $row){
-            $data_id = esc_html($row->id);
-            $time = esc_html($row->time);
-            $service_name = esc_html($row->service_name);
-            $memo = esc_html($row->memo);
-            $category = esc_html($row->category);
-            $image_url = esc_html($row->image_url);
+        // 安全性確保: GETリクエストの場合は危険なアクションを実行しない
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['duplicate', 'delete', 'insert', 'search', 'search_execute', 'upload_image'])) {
+            $action = 'update';
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('KTPWP Service Debug: Dangerous action blocked for GET request, reset to update');
+            }
+        }
+        
+        // デバッグ: タブクリック時の動作をログに記録
+        error_log('KTPWP Service Debug: Final action = ' . $action);
+        error_log('KTPWP Service Debug: POST query_post = ' . (isset($_POST['query_post']) ? $_POST['query_post'] : 'not set'));
+        error_log('KTPWP Service Debug: GET query_post = ' . (isset($_GET['query_post']) ? $_GET['query_post'] : 'not set'));
+        error_log('KTPWP Service Debug: Request method = ' . $_SERVER['REQUEST_METHOD']);
+        
+        // 初期化
+        $data_id = '';
+        $time = '';
+        $service_name = '';
+        $price = 0;
+        $unit = '';
+        $memo = '';
+        $category = '';
+        $image_url = '';
+        $query_id = 0;
+        
+        // 追加モード以外の場合のみデータを取得
+        if ($action !== 'istmode') {
+            // 現在表示中の詳細
+            $cookie_name = 'ktp_' . $name . '_id';
+            
+            // デバッグログ：初期状態の確認
+            error_log('KTPWP Service Debug: 初期データ取得開始');
+            error_log('KTPWP Service Debug: GET data_id = ' . (isset($_GET['data_id']) ? $_GET['data_id'] : 'not set'));
+            error_log('KTPWP Service Debug: Cookie ' . $cookie_name . ' = ' . (isset($_COOKIE[$cookie_name]) ? $_COOKIE[$cookie_name] : 'not set'));
+            error_log('KTPWP Service Debug: Table name = ' . $table_name);
+            
+            if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
+                $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+                error_log('KTPWP Service Debug: GETパラメータからquery_id設定: ' . $query_id);
+                // GETパラメータで取得したIDをクッキーに保存
+                setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
+                error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を ' . $query_id . ' に更新');
+            } elseif (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
+                $cookie_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+                // クッキーIDがDBに存在するかチェック
+                $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $cookie_id));
+                error_log('KTPWP Service Debug: クッキーID ' . $cookie_id . ' の存在確認結果: ' . $exists);
+                if ($exists) {
+                    $query_id = $cookie_id;
+                    error_log('KTPWP Service Debug: クッキーからquery_id設定: ' . $query_id);
+                } else {
+                    // 存在しなければ最新ID（降順トップ）
+                    $last_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                    $query_id = $last_id_row ? $last_id_row->id : 1;
+                    error_log('KTPWP Service Debug: クッキーID存在せず、最新IDを設定: ' . $query_id);
+                    // 最新IDをクッキーに保存
+                    setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
+                    error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を最新ID ' . $query_id . ' に更新');
+                }
+            } else {
+                // data_id未指定時は必ずID最新のサービスを表示（降順トップ）
+                $last_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                $query_id = $last_id_row ? $last_id_row->id : 1;
+                error_log('KTPWP Service Debug: パラメータ・クッキー未設定、最新IDを設定: ' . $query_id);
+                error_log('KTPWP Service Debug: 取得した最新データ: ' . ($last_id_row ? print_r($last_id_row, true) : 'null'));
+                // 最新IDをクッキーに保存
+                setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
+                error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を初期最新ID ' . $query_id . ' に設定');
+            }
+
+            // データを取得し変数に格納
+            $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+            $post_row = $wpdb->get_results($query);
+            if (!$post_row || count($post_row) === 0) {
+                // 存在しないIDの場合は最新IDを取得して再表示
+                $last_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
+                if ($last_id_row && isset($last_id_row->id)) {
+                    $query_id = $last_id_row->id;
+                    $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+                    $post_row = $wpdb->get_results($query);
+                }
+                // それでもデータがなければ「データがありません」は後で処理
+            }
+            foreach ($post_row as $row){
+                $data_id = esc_html($row->id);
+                $time = esc_html($row->time);
+                $service_name = esc_html($row->service_name);
+                $price = isset($row->price) ? intval($row->price) : 0;
+                $unit = isset($row->unit) ? esc_html($row->unit) : '';
+                $memo = esc_html($row->memo);
+                $category = esc_html($row->category);
+                $image_url = esc_html($row->image_url);
+            }
         }
           // 表示するフォーム要素を定義
         $fields = [
             // 'ID' => ['type' => 'text', 'name' => 'data_id', 'readonly' => true], 
-            '商品名' => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => '必須 商品・サービス名'],
-            // '画像URL' => ['type' => 'text', 'name' => 'image_url'], // 商品画像のURLフィールドはコメントアウト
-            'メモ' => ['type' => 'textarea', 'name' => 'memo'],
-            'カテゴリー' => [
+            esc_html__('サービス名', 'ktpwp') => ['type' => 'text', 'name' => 'service_name', 'required' => true, 'placeholder' => esc_attr__('必須 サービス名', 'ktpwp')],
+            esc_html__('価格', 'ktpwp') => ['type' => 'number', 'name' => 'price', 'placeholder' => esc_attr__('価格（円）', 'ktpwp')],
+            esc_html__('単位', 'ktpwp') => ['type' => 'text', 'name' => 'unit', 'placeholder' => esc_attr__('月、件、時間など', 'ktpwp')],
+            // '画像URL' => ['type' => 'text', 'name' => 'image_url'], // サービス画像のURLフィールドはコメントアウト
+            esc_html__('メモ', 'ktpwp') => ['type' => 'textarea', 'name' => 'memo'],
+            esc_html__('カテゴリー', 'ktpwp') => [
                 'type' => 'text',
                 'name' => 'category',
-                'options' => '一般',
+                'options' => esc_html__('一般', 'ktpwp'),
                 'suggest' => true,
             ],
         ];
         
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : 'update';// アクションを取得（デフォルトは'update'）
-        $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
-        $data_forms .= '<div class="box">'; // フォームを囲む<div>タグの開始タグを追加
-
-        // データー量を取得
-        $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
-        $data_num = $wpdb->get_results($query);
-        $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
-
-        // 空のフォームを表示(追加モードの場合)
-        if ($action === 'istmode') {
-
-                $data_id = $wpdb->insert_id;
-
-                // 詳細表示部分の開始
-                $data_title = <<<END
-                    <div class="data_detail_box">
-                    <h3>■ 商品の詳細</h3>
-                END;
-
-                // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-                $data_forms = <<<END
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var postalCode = document.querySelector('input[name="postal_code"]');
-                    var prefecture = document.querySelector('input[name="prefecture"]');
-                    var city = document.querySelector('input[name="city"]');
-                    var address = document.querySelector('input[name="address"]');
-                    postalCode.addEventListener('blur', function() {
-                        var xhr = new XMLHttpRequest();
-                        xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                        xhr.addEventListener('load', function() {
-                            var response = JSON.parse(xhr.responseText);
-                            if (response.results) {
-                                var data = response.results[0];
-                                prefecture.value = data.address1;
-                                city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                                address.value = ''; // 番地は空欄に
-                            }
-                        });
-                        xhr.send();
-                    });
-                });
-                </script>
-                END;
-
-                // 空のフォームフィールドを生成
-                $data_forms .= '<form method="post" action="">';
-                foreach ($fields as $label => $field) {
-                    $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                    $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                    $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                    $fieldName = $field['name'];
-                    $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
-                    if ($field['type'] === 'textarea') {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
-                    } elseif ($field['type'] === 'select') {
-                        $options = '';
-
-                        foreach ($field['options'] as $option) {
-                            $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                            $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
-                        }
-
-                        $default = isset($field['default']) ? $field['default'] : ''; // デフォルト値を取得
-
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
-                    } else {
-                        $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
-                    }
-                }
-
-                $data_forms .= "<div class='button'>";
-
-                if( $action === 'istmode'){
-                    // 追加実行ボタン
-                    $action = 'insert';
-                    $data_id = $data_id + 1;
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <input type='hidden' name='data_id' value='$data_id'>
-                    <button type='submit' name='send_post' title="追加実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
-                }
-                
-                elseif( $action === 'srcmode'){
-
-                    // 検索実行ボタン
-                    $action = 'search';
-                    $data_forms .= <<<END
-                    <form method='post' action=''>
-                    <input type='hidden' name='query_post' value='$action'>
-                    <button type='submit' name='send_post' title="検索実行">
-                    <span class="material-symbols-outlined">
-                    select_check_box
-                    </span>
-                    </button>
-                    </form>
-                    END;
-                }
-    
-                // キャンセルボタン
-                $action = 'update';
-                $data_id = $data_id - 1;
-                $data_forms .= <<<END
-                <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="キャンセル">
-                <span class="material-symbols-outlined">
-                disabled_by_default
-                </span>            
-                </button>
-                </form>
-                END;
-
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= '</div>';
+        // アクションを取得（POSTパラメータを優先、次にGETパラメータ、デフォルトは'update'）
+        $action = 'update';
+        if (isset($_POST['query_post'])) {
+            $action = sanitize_text_field($_POST['query_post']);
+        } elseif (isset($_GET['query_post'])) {
+            $action = sanitize_text_field($_GET['query_post']);
         }
-
-        // 空のフォームを表示(検索モードの場合)
-        elseif ($action === 'srcmode') {
-
-            // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 商品の詳細（ 検索モード ）</h3>
-            END;
-
-            // 検索フォームを生成
-            $data_forms = '<form method="post" action="">';
-            $data_forms .= "<div class=\"form-group\"><input type=\"text\" name=\"search_query\" placeholder=\"フリーワード\" required></div>";
-               
-            // 検索リストを生成
-            $data_forms .= $search_results_list;
-
-            // ボタン<div>タグを追加
-            $data_forms .= "<div class='button'>";
+        
+        $data_forms = ''; // フォームのHTMLコードを格納する変数を初期化
+        
+        // 検索モードの場合は検索フォームを表示
+        if ($search_mode) {
+            // 検索フォームの表示
+            $data_title = '<div class="data_detail_box search-mode">' .
+                          '<div class="data_detail_title">■ ' . esc_html__('サービス検索', 'ktpwp') . '</div>';
+            
+            // 検索フォーム
+            $data_forms .= '<form method="post" action="" class="search-form">';
+            if (function_exists('wp_nonce_field')) { 
+                $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+            }
+            
+            // 検索フィールド
+            $data_forms .= '<div class="form-group">';
+            $data_forms .= '<label>' . esc_html__('サービス名で検索', 'ktpwp') . '：</label>';
+            $data_forms .= '<input type="text" name="search_service_name" placeholder="' . esc_attr__('サービス名を入力', 'ktpwp') . '" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">';
+            $data_forms .= '</div>';
+            
+            $data_forms .= '<div class="form-group">';
+            $data_forms .= '<label>' . esc_html__('カテゴリーで検索', 'ktpwp') . '：</label>';
+            $data_forms .= '<input type="text" name="search_category" placeholder="' . esc_attr__('カテゴリーを入力', 'ktpwp') . '" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">';
+            $data_forms .= '</div>';
+            
+            // 検索ボタン群
+            $data_forms .= '<div class="search-button-group" style="margin-top: 20px; display: flex; gap: 10px;">';
             
             // 検索実行ボタン
-            $action = 'search';
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <button type='submit' name='send_post' title="検索実行">
-            <span class="material-symbols-outlined">
-            select_check_box
-            </span>
-            </button>
-            </form>
-            END;
-
-            // キャンセルボタン
-            $action = 'update';
-            $data_id = $data_id - 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-            <input type='hidden' name='data_id' value=''>
-            <input type='hidden' name='query_post' value='$action'>
-            <input type='hidden' name='data_id' value='$data_id'>
-            <button type='submit' name='send_post' title="キャンセル">
-            <span class="material-symbols-outlined">
-            disabled_by_default
-            </span>            
-            </button>
-            </form>
-            END;
-
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= '</div>';
-        }            
-
-        // 追加・検索 以外なら更新フォームを表示
-        elseif ($action !== 'srcmode' || $action !== 'istmode') {
-
-            // 郵便番号から住所を自動入力するためのJavaScriptコードを追加（日本郵政のAPIを利用）
-            $data_forms .= <<<END
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var postalCode = document.querySelector('input[name="postal_code"]');
-                var prefecture = document.querySelector('input[name="prefecture"]');
-                var city = document.querySelector('input[name="city"]');
-                var address = document.querySelector('input[name="address"]');
-                postalCode.addEventListener('blur', function() {
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', 'https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + postalCode.value);
-                    xhr.addEventListener('load', function() {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.results) {
-                            var data = response.results[0];
-                            prefecture.value = data.address1;
-                            city.value = data.address2 + data.address3; // 市区町村と町名を結合
-                            address.value = ''; // 番地は空欄に
-                        }
-                    });
-                    xhr.send();
-                });
-            });
-            </script>
-            END;
+            $data_forms .= '<input type="hidden" name="query_post" value="search_execute">';
+            $data_forms .= '<button type="submit" name="send_post" title="' . esc_attr__('検索実行', 'ktpwp') . '" style="background-color: #0073aa; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px;">search</span>';
+            $data_forms .= esc_html__('検索実行', 'ktpwp');
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
             
-            // データを取得
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'ktp_' . $name;
-            
-            // データを取得
-            $query = "SELECT * FROM {$table_name} WHERE id = %d";
-            $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));            $image_url = '';
-            foreach ($post_row as $row) {
-                $image_url = esc_html($row->image_url);
+            // キャンセルボタン（別フォーム）
+            $data_forms .= '<form method="post" action="" style="margin: 0;">';
+            if (function_exists('wp_nonce_field')) { 
+                $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
             }
+            $data_forms .= '<input type="hidden" name="query_post" value="search_cancel">';
+            $data_forms .= '<button type="submit" name="send_post" title="' . esc_attr__('検索キャンセル', 'ktpwp') . '" style="background-color: #666; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">';
+            $data_forms .= '<span class="material-symbols-outlined" style="font-size: 18px;">close</span>';
+            $data_forms .= esc_html__('キャンセル', 'ktpwp');
+            $data_forms .= '</button>';
+            $data_forms .= '</form>';
             
-            // 画像URLが空または無効な場合、デフォルト画像を使用
-            if (empty($image_url)) {
-                $image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
-            }
+            $data_forms .= '</div>'; // search-button-group の終了
+            // Removed: $data_forms .= '</div>'; // data_detail_box の終了 (This was incorrectly closing the detail box here)
             
-            // アップロード画像が存在するか確認
-            $upload_dir = dirname(__FILE__) . '/../images/default/upload/';
-            $upload_file = $upload_dir . $data_id . '.jpeg';
-            if (file_exists($upload_file)) {
-                $plugin_url = plugin_dir_url(dirname(__FILE__));
-                $image_url = $plugin_url . 'images/default/upload/' . $data_id . '.jpeg';
-            }
+        }
+        // 空のフォームを表示(追加モードの場合)
+        elseif ($action === 'istmode') {
+            // 追加モードは data_id を空にする
+            $data_id = '';
+            // 詳細表示部分の開始
+            $data_title = '<div class="data_detail_box">' .
+                          '<div class="data_detail_title">■ ' . esc_html__('サービス追加中', 'ktpwp') . '</div>';
             
-            $data_forms .= "<div class=\"image\"><img src=\"{$image_url}\" alt=\"商品画像\" class=\"product-image\" onerror=\"this.src='" . plugin_dir_url(dirname(__FILE__)) . "images/default/no-image-icon.jpg'\"></div>";            $data_forms .= '<div class=image_upload_form>';            // 商品画像アップロードフォームを追加
-            $data_forms .= <<<END
-            <form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">
-            <div class="file-upload-container">
-            <input type="file" name="image" class="file-input">
-            <input type="hidden" name="data_id" value="$data_id">
-            <input type="hidden" name="query_post" value="upload_image">
-            <button type="submit" class="upload-btn" title="画像をアップロード">
-              <span class="material-symbols-outlined">upload</span>
-            </button>
-            </div>
-            </form>
-            <script>
-            function checkImageUpload(form) {
-                if (!form.image.value) {
-                    alert('画像が選択されていません。アップロードする画像を選択してください。');
-                    return false;
-                }
-                return true;
-            }
-            </script>
-            END;
-
-            // 商品画像削除ボタンを追加
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="delete_image">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
-                    <span class="material-symbols-outlined">
-                        delete
-                    </span>
-                </button>
-            </form>
-            END;
+            // 追加フォーム
+            $data_forms .= "<form name='service_form' method='post' action=''>";
+            if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
             
-            $data_forms .= '</div>';
-            
-            $data_forms .= "<div class=\"add\">";
-            $data_forms .= "<form method=\"post\" action=\"\">"; // フォームの開始タグを追加
-
-            // cookieに保存されたIDを取得
-            $cookie_name = 'ktp_'. $name . '_id';
-            if (isset($_GET['data_id'])) {
-                $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-            } elseif (isset($_COOKIE[$cookie_name])) {
-                $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
-            } else {
-                $data_id = $last_id_row ? $last_id_row->id : Null;
-            }
-
-            // 表題
-            $data_title = <<<END
-            <div class="data_detail_box">
-                <h3>■ 商品の詳細（ ID： $data_id ）</h3>
-            END;
-
-
+            // フィールド生成
             foreach ($fields as $label => $field) {
-                $value = $action === 'update' ? ${$field['name']} : ''; // フォームフィールドの値を取得
-                $pattern = isset($field['pattern']) ? " pattern=\"{$field['pattern']}\"" : ''; // バリデーションパターンが指定されている場合は、パターン属性を追加
-                $required = isset($field['required']) && $field['required'] ? ' required' : ''; // 必須フィールドの場合は、required属性を追加
-                $placeholder = isset($field['placeholder']) ? " placeholder=\"{$field['placeholder']}\"" : ''; // プレースホルダーが指定されている場合は、プレースホルダー属性を追加
-
+                $value = ''; // 追加モードでは常に空
+                $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
+                $required = isset($field['required']) && $field['required'] ? ' required' : '';
+                $fieldName = esc_attr($field['name']);
+                $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+                $label_i18n = esc_html__($label, 'ktpwp');
+                
                 if ($field['type'] === 'textarea') {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <textarea name=\"{$field['name']}\"{$pattern}{$required}>{$value}</textarea></div>"; // テキストエリアのフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
                 } elseif ($field['type'] === 'select') {
                     $options = '';
-
-                    foreach ($field['options'] as $option) {
-                        $selected = $value === $option ? ' selected' : ''; // 選択されたオプションを判定し、selected属性を追加
-                        $options .= "<option value=\"{$option}\"{$selected}>{$option}</option>"; // オプション要素を追加
+                    foreach ((array)$field['options'] as $option) {
+                        $options .= "<option value=\"" . esc_attr($option) . "\">" . esc_html__($option, 'ktpwp') . "</option>";
                     }
-
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <select name=\"{$field['name']}\"{$required}>{$options}</select></div>"; // セレクトボックスのフォームフィールドを追加
+                    $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
                 } else {
-                    $data_forms .= "<div class=\"form-group\"><label>{$label}：</label> <input type=\"{$field['type']}\" name=\"{$field['name']}\" value=\"{$value}\"{$pattern}{$required}{$placeholder}></div>"; // その他のフォームフィールドを追加
+                    $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
                 }
             }
-
-            $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"{$action}\">"; // フォームのアクションを指定する隠しフィールドを追加
-            $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">"; // データIDを指定する隠しフィールドを追加
             
-            // 検索リストを生成
-            if (!isset($search_results_list)) {
-                $search_results_list = '';
-            }
-            $data_forms .= $search_results_list;
             $data_forms .= "<div class='button'>";
-
-            // 更新ボタンを追加
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <button type="submit" name="send_post" title="更新する">
-                    <span class="material-symbols-outlined">
-                    cached
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 削除ボタン
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="delete">
-                <button type="submit" name="send_post" title="削除する" onclick="return confirm('本当に削除しますか？')">
-                    <span class="material-symbols-outlined">
-                        delete
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 複製ボタン
-            $data_forms .= <<<END
-            <form method="post" action="">
-                <input type="hidden" name="data_id" value="{$data_id}">
-                <input type="hidden" name="query_post" value="duplication">
-                <button type="submit" name="send_post" title="複製する">
-                    <span class="material-symbols-outlined">
-                    content_copy
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 追加モードボタン
-            $action = 'istmode';
-            $data_id = $data_id + 1;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-                <input type='hidden' name='data_id' value=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <input type='hidden' name='data_id' value='$data_id'>
-                <button type='submit' name='send_post' title="追加する">
-                    <span class="material-symbols-outlined">
-                    add
-                    </span>
-                </button>
-            </form>
-            END;
-
-            // 検索モードボタン
-            $action = 'srcmode';
-            // $data_id = $data_id;
-            $data_forms .= <<<END
-            <form method='post' action=''>
-                <input type='hidden' name='query_post' value='$action'>
-                <button type='submit' name='send_post' title="検索する">
-                    <span class="material-symbols-outlined">
-                    search
-                    </span>
-                </button>
-            </form>
-            END;
-
+            // 追加実行ボタン
+            $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
+            $data_forms .= "<input type='hidden' name='data_id' value=''>";
+            $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
+            // キャンセルボタン
+            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
+            $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
+            $data_forms .= '</form>';
+        } else {
+            // 通常モード：既存の詳細フォーム表示
+        
+        // データー量を取得（追加モード以外の場合）
+        if ($action !== 'istmode') {
+            $query = $wpdb->prepare("SELECT * FROM {$table_name} WHERE id = %d", $query_id);
+            $data_num = $wpdb->get_results($query);
+            $data_num = count($data_num); // 現在のデータ数を取得し$data_numに格納
+        } else {
+            $data_num = 0; // 新規追加の場合はデータ数を0に設定
         }
-                            
+
+        // 更新フォームを表示
+        // cookieに保存されたIDを取得
+        $cookie_name = 'ktp_'. $name . '_id';
+        if (isset($_GET['data_id'])) {
+            $data_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
+        } elseif (isset($_COOKIE[$cookie_name])) {
+            $data_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
+        } else {
+            $data_id = $last_id_row ? $last_id_row->id : Null;
+        }
+
+        // ボタン群HTMLの準備
+        $button_group_html = '<div class="button-group" style="display: flex; gap: 8px; margin-left: auto;">';
+
+        // 削除ボタン
+        if ($data_id) {
+            $button_group_html .= '<form method="post" action="" style="margin: 0;" onsubmit="return confirm(\'' . esc_js(__('本当に削除しますか？この操作は元に戻せません。', 'ktpwp')) . '\');">';
+            if (function_exists('wp_nonce_field')) { 
+                $button_group_html .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+            }
+            $button_group_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+            $button_group_html .= '<input type="hidden" name="query_post" value="delete">';
+            $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('削除する', 'ktpwp') . '" class="button-style delete-submit-btn">';
+            $button_group_html .= '<span class="material-symbols-outlined">delete</span>';
+            $button_group_html .= '</button>';
+            $button_group_html .= '</form>';
+        }
+
+        // 追加モードボタン
+        $add_action = 'istmode';
+        $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+        if (function_exists('wp_nonce_field')) { 
+            $button_group_html .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+        }
+        $button_group_html .= '<input type="hidden" name="data_id" value="">';
+        $button_group_html .= '<input type="hidden" name="query_post" value="' . esc_attr($add_action) . '">';
+        $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('追加する', 'ktpwp') . '" class="button-style add-submit-btn">';
+        $button_group_html .= '<span class="material-symbols-outlined">add</span>';
+        $button_group_html .= '</button>';
+        $button_group_html .= '</form>';
+
+        // 複製ボタン
+        if ($data_id) {
+            $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+            if (function_exists('wp_nonce_field')) { 
+                $button_group_html .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+            }
+            $button_group_html .= '<input type="hidden" name="query_post" value="duplicate">';
+            $button_group_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+            $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('複製する', 'ktpwp') . '" class="button-style duplicate-submit-btn">';
+            $button_group_html .= '<span class="material-symbols-outlined">content_copy</span>';
+            $button_group_html .= '</button>';
+            $button_group_html .= '</form>';
+        }
+
+        // 検索モードボタン
+        $search_action = 'srcmode';
+        $button_group_html .= '<form method="post" action="" style="margin: 0;">';
+        if (function_exists('wp_nonce_field')) { 
+            $button_group_html .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+        }
+        $button_group_html .= '<input type="hidden" name="query_post" value="' . esc_attr($search_action) . '">';
+        $button_group_html .= '<button type="submit" name="send_post" title="' . esc_attr__('検索する', 'ktpwp') . '" class="button-style search-mode-btn">';
+        $button_group_html .= '<span class="material-symbols-outlined">search</span>';
+        $button_group_html .= '</button>';
+        $button_group_html .= '</form>';
+        
+        $button_group_html .= '</div>'; // ボタングループ終了
+        
+        // データを取得
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_' . $name;
+        
+        // データを取得
+        $query = "SELECT * FROM {$table_name} WHERE id = %d";
+        $post_row = $wpdb->get_results($wpdb->prepare($query, $data_id));
+        $image_url = '';
+        foreach ($post_row as $row) {
+            $image_url = esc_html($row->image_url);
+        }
+        
+        // 画像URLが空または無効な場合、デフォルト画像を使用
+        if (empty($image_url)) {
+            $image_url = plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg';
+        }
+        
+        // アップロード画像が存在するか確認
+        $upload_dir = dirname(__FILE__) . '/../images/upload/';
+        $upload_file = $upload_dir . $data_id . '.jpeg';
+        if (file_exists($upload_file)) {
+            $plugin_url = plugin_dir_url(dirname(__FILE__));
+            $image_url = $plugin_url . 'images/upload/' . $data_id . '.jpeg';
+        }
+        
+        // 画像とアップロードフォームのHTML
+        $image_section_html = '<div style="margin-top: 10px;">'; // 画像セクション開始
+        $image_section_html .= '<div class="image"><img src="' . $image_url . '" alt="' . esc_attr__('サービス画像', 'ktpwp') . '" class="product-image" onerror="this.src=\'' . plugin_dir_url(dirname(__FILE__)) . 'images/default/no-image-icon.jpg\'" style="width: 100%; height: auto; max-width: 100%;"></div>';
+        $image_section_html .= '<div class="image_upload_form">';
+        
+        // サービス画像アップロードフォーム
+        $nonce_field_upload = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+        $image_section_html .= '<form action="" method="post" enctype="multipart/form-data" onsubmit="return checkImageUpload(this);">';
+        $image_section_html .= $nonce_field_upload;
+        $image_section_html .= '<div class="file-upload-container">';
+        $image_section_html .= '<input type="file" name="image" class="file-input">';
+        $image_section_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $image_section_html .= '<input type="hidden" name="query_post" value="upload_image">';
+        $image_section_html .= '<button type="submit" name="send_post" class="upload-btn" title="画像をアップロード">';
+        $image_section_html .= '<span class="material-symbols-outlined">upload</span>';
+        $image_section_html .= '</button>';
+        $image_section_html .= '</div>';
+        $image_section_html .= '</form>';
+        $image_section_html .= '<script>function checkImageUpload(form) { if (!form.image.value) { alert("画像が選択されていません。アップロードする画像を選択してください。"); return false; } return true; }</script>';
+
+        // サービス画像削除ボタン
+        $nonce_field_delete = function_exists('wp_nonce_field') ? wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false) : '';
+        $image_section_html .= '<form method="post" action="">';
+        $image_section_html .= $nonce_field_delete;
+        $image_section_html .= '<input type="hidden" name="data_id" value="' . esc_attr($data_id) . '">';
+        $image_section_html .= '<input type="hidden" name="query_post" value="delete_image">';
+        $image_section_html .= '<button type="submit" name="send_post" title="削除する" onclick="return confirm(\'本当に削除しますか？\')">';
+        $image_section_html .= '<span class="material-symbols-outlined">delete</span>';
+        $image_section_html .= '</button>';
+        $image_section_html .= '</form>';
+        $image_section_html .= '</div>'; // image_upload_form終了
+        $image_section_html .= '</div>'; // 画像セクション終了
+        
+        // 表題にボタングループと画像セクションを含める
+        $data_title = '<div class="data_detail_box"><div class="data_detail_title" style="display: flex; align-items: center; justify-content: space-between;">
+        <div>■ サービスの詳細（ ID： ' . $data_id . ' ）</div>' . $button_group_html . '</div>' . $image_section_html;
+        
+        // 更新フォームの開始
+        $data_forms .= "<form name='service_form' method='post' action=''>";
+        if (function_exists('wp_nonce_field')) { $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); }
+        foreach ($fields as $label => $field) {
+            $value = $action === 'update' ? ${$field['name']} : '';
+            $pattern = isset($field['pattern']) ? " pattern=\"" . esc_attr($field['pattern']) . "\"" : '';
+            $required = isset($field['required']) && $field['required'] ? ' required' : '';
+            $fieldName = esc_attr($field['name']);
+            $placeholder = isset($field['placeholder']) ? " placeholder=\"" . esc_attr__($field['placeholder'], 'ktpwp') . "\"" : '';
+            $label_i18n = esc_html__($label, 'ktpwp');
+            if ($field['type'] === 'textarea') {
+                $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <textarea name=\"{$fieldName}\"{$pattern}{$required}>" . esc_textarea($value) . "</textarea></div>";
+            } elseif ($field['type'] === 'select') {
+                $options = '';
+                foreach ((array)$field['options'] as $option) {
+                    $selected = $value === $option ? ' selected' : '';
+                    $options .= "<option value=\"" . esc_attr($option) . "\"{$selected}>" . esc_html__($option, 'ktpwp') . "</option>";
+                }
+                $default = isset($field['default']) ? esc_html__($field['default'], 'ktpwp') : '';
+                $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <select name=\"{$fieldName}\"{$required}><option value=\"\">{$default}</option>{$options}</select></div>";
+            } else {
+                $data_forms .= "<div class=\"form-group\"><label>{$label_i18n}：</label> <input type=\"{$field['type']}\" name=\"{$fieldName}\" value=\"" . esc_attr($value) . "\"{$pattern}{$required}{$placeholder}></div>";
+            }
+        }
+        $data_forms .= "<input type=\"hidden\" name=\"query_post\" value=\"update\">";
+        $data_forms .= "<input type=\"hidden\" name=\"data_id\" value=\"{$data_id}\">";
+        $data_forms .= "<div class='button'>";
+        $data_forms .= "<button type=\"submit\" name=\"send_post\" title=\"" . esc_attr__('更新する', 'ktpwp') . "\" class=\"update-submit-btn\"><span class=\"material-symbols-outlined\">cached</span></button>";
+        $data_forms .= "</div>";
+        $data_forms .= "</form>";
+
+        } // 通常モード分岐の終了
+            
+            $data_forms .= "<div class=\"add\">";
+            // 表題は上部で既に定義済み、重複フォーム削除完了
+            
         $data_forms .= '</div>'; // フォームを囲む<div>タグの終了
         
         // 詳細表示部分の終了
-        $div_end = <<<END
-            </div> <!-- data_detail_boxの終了 -->
-        </div> <!-- data_contentsの終了 -->
-        END;
+        $div_end = '</div> <!-- data_detail_boxの終了 -->';
 
         // -----------------------------
         // テンプレート印刷
@@ -1129,10 +913,10 @@ class Kntan_Service_Class {
         END;
 
         // コンテンツを返す
-        $content = $print . $data_list . $data_title . $data_forms . $search_results_list . $div_end;
+        $content = $message . $print . '<div class="data_contents">' . $data_list . $data_title . $data_forms . $div_end . '</div> <!-- data_contentsの終了 -->';
         return $content;
-        
     }
 
-}
-} // class_exists
+} // End class Kntan_Service_Class
+
+} // End if class_exists

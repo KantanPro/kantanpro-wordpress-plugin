@@ -1,30 +1,23 @@
 <?php
 
-class Kantan_Login_Error{
-
-    // public $name;
+class Kantan_Login_Error {
 
     public function __construct() {
-        // $name = "example"; // Assign a value to the variable $name
-        // $this->$name;
-        // add_action('');
-        // add_filter('');
+        // 必要なアクションやフィルターを追加
+        add_shortcode('ktpwp_login_error', array($this, 'Error_View'));
     }
-    
-    // ログインしていない場合
-    function Error_View() {
 
+    // ログインしていない場合のエラービュー
+    public function Error_View() {
         // ログインのリンク
-        $login_link = wp_login_url();        // 表示する内容
-        $content = <<<END
-        <h3>KTPWPを利用するにはログインしてください。</h3>
-        <!--ログイン-->
-        <p><font size="4"><a href="$login_link">ログイン</a></font>　
-        <font size="4"><a href="/welcome-to-ktpwp/">ホームへ</a></font></p>
-        END;
+        $login_link = esc_url(wp_login_url());
+
+        // 表示する内容
+        $content  = '<h3>' . esc_html__('KTPWPを利用するにはログインしてください。', 'ktpwp') . '</h3>';
+        $content .= '<!--ログイン-->';
+        $content .= '<p><font size="4"><a href="' . $login_link . '">' . esc_html__('ログイン', 'ktpwp') . '</a></font>　';
+        $content .= '<font size="4"><a href="' . esc_url(home_url('/welcome-to-ktpwp/')) . '">' . esc_html__('ホームへ', 'ktpwp') . '</a></font></p>';
+
         return $content;
     }
-    // function filter() {
-
-    // }
 }

@@ -8,7 +8,7 @@ function add_general_custom_fields() {
     add_menu_page(
         'KTPWPの設定', // page_title
         'KTPWP', // menu_title
-        'manage_options', // capability
+        'edit_posts', // capability - allow editors and above
         'ktp-admin', // menu_slug
         'display_plugin_admin_page', // function
         'dashicons-admin-generic', // icon_url（WordPress標準アイコン）

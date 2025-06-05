@@ -113,6 +113,68 @@
     text-decoration: none !important;
 }
 
+/* 画像アップロードフィールドスタイル */
+.ktp-admin-wrap .ktp-image-upload-field {
+    position: relative !important;
+}
+
+.ktp-admin-wrap .ktp-image-preview {
+    margin-bottom: 10px !important;
+}
+
+.ktp-admin-wrap .ktp-image-preview img {
+    max-width: 300px !important;
+    max-height: 200px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    display: block !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.ktp-admin-wrap .ktp-upload-image {
+    margin-right: 10px !important;
+}
+
+.ktp-admin-wrap .ktp-remove-image {
+    color: #a00 !important;
+    border-color: #a00 !important;
+}
+
+.ktp-admin-wrap .ktp-remove-image:hover {
+    color: #fff !important;
+    background-color: #a00 !important;
+}
+
+/* デザイン設定フィールド */
+.ktp-admin-wrap input[type="color"] {
+    width: 100px !important;
+    height: 40px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+
+.ktp-admin-wrap input[type="color"]:hover {
+    border-color: #0073aa !important;
+}
+
+/* カスタムCSSエリア */
+.ktp-admin-wrap #custom_css {
+    font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    padding: 10px !important;
+    background-color: #f9f9f9 !important;
+}
+
+.ktp-admin-wrap #custom_css:focus {
+    border-color: #0073aa !important;
+    box-shadow: 0 0 0 1px #0073aa !important;
+    background-color: #fff !important;
+}
+
 /* 印刷時のスタイル */
 @media print {
     #adminmenumain,

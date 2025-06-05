@@ -1,3 +1,97 @@
+/* コスト項目トグルボタン */
+.toggle-cost-items {
+    background: #007cba;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background 0.2s;
+}
+.toggle-cost-items[aria-expanded="true"] {
+    background: #6c757d;
+}
+.toggle-cost-items:hover {
+    background: #005a87;
+}
+
+/* スタッフチャットトグルボタン */
+.toggle-staff-chat {
+    background: #007cba;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background 0.2s;
+}
+.toggle-staff-chat[aria-expanded="true"] {
+    background: #6c757d;
+}
+.toggle-staff-chat:hover {
+    background: #005a87;
+}
+.order_cost_box {
+    margin-top: 16px;
+}
+.order_cost_box h4 {
+    margin-bottom: 8px;
+}
+.order_cost_box #cost-items-content {
+    margin-top: 8px;
+}
+.order_memo_box {
+    margin-top: 16px;
+}
+.order_memo_box h4 {
+    margin-bottom: 8px;
+}
+.order_memo_box #staff-chat-content {
+    margin-top: 8px;
+}
+/* 請求項目テーブル：交互色の透明行を白に */
+.invoice-items-table tr:nth-of-type(even) {
+  background-color: #fff !important;
+}
+/* コスト項目テーブル：交互色の透明行を白に */
+.cost-items-table tr:nth-of-type(even) {
+  background-color: #fff !important;
+}
+/* 請求項目テーブルの単価・数量・金額フィールドを左揃え */
+.invoice-item-input.price,
+.invoice-item-input.quantity,
+.invoice-item-input.amount {
+    text-align: left;
+}
+/* コスト項目テーブルの単価・数量・金額フィールドを左揃え */
+.cost-item-input.price,
+.cost-item-input.quantity,
+.cost-item-input.amount {
+    text-align: left;
+}
+.drag-handle {
+    cursor: move;
+    display: inline-block;
+    font-size: 18px;
+    margin-right: 4px;
+    color: #888;
+    vertical-align: middle;
+    user-select: none;
+}
+
+.invoice-item-row.dragging {
+    background: #e3f2fd !important;
+    opacity: 0.7;
+}
+
+.cost-item-row.dragging {
+    background: #e3f2fd !important;
+    opacity: 0.7;
+}
 /* 受注書概要ヘッダーのレイアウト調整 */
 .order-header-flex {
   display: flex;
@@ -61,6 +155,48 @@
   object-fit: cover;
 }
 
+/* データ詳細タイトル・リストタイトルのスタイル */
+.data_detail_title,
+.data_list_title {
+  font-weight: 700; /* より太い太字に */
+  background-color: rgba(173, 216, 230, 0.4); /* 少し濃い目の水色の背景色 */
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ソートドロップダウンのスタイル */
+.sort-dropdown {
+  flex-shrink: 0;
+  margin-left: 10px;
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
+.sort-dropdown select {
+  padding: 3px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .data_list_title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sort-dropdown {
+    margin-top: 8px;
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
 /* ログイン中ユーザーのアイコンを丸くする */
 .user_icon {
     border-radius: 50%;
@@ -82,10 +218,12 @@
 /* workflow（各タブの操作・フィルタエリア用） */
 .workflow {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: center;
   align-items: center;
-  margin: 0px 0 0px 0;
-  padding: 0 10px;
+  margin: 10px 0 10px 0;
+  padding: 10px; /* 10pxのパディングを確実に適用 */
   width: 100%;
 }
 
@@ -132,6 +270,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: nowrap; /* 改行させない */
+  justify-content: flex-end; /* 進捗プルダウンメニューを右寄せ */
 }
 
 /* 仕事リストの進捗プルダウン */
@@ -209,7 +348,8 @@
 }
 
 /* 仕事リストタブ専用 全幅レイアウト */
-.work_list_box {
+.work_list_box,
+.ktp_work_list_box {
   width: 100%;
   max-width: 100%;
   padding: 20px;
@@ -217,32 +357,52 @@
   text-align: left;
 }
 
+.work_list_box ul,
+.ktp_work_list_box ul {
+  padding-left: 0px;
+  margin: 0;
+  list-style: none;
+}
+
+.work_list_box li,
+.ktp_work_list_box li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 /* モバイル時の仕事リストタブ調整 */
 @media screen and (max-width: 767px) {
-  .work_list_box {
+  .work_list_box,
+  .ktp_work_list_box {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
     padding: 10px !important;
   }
-  .work_list_box ul {
+  .work_list_box ul,
+  .ktp_work_list_box ul {
     padding-left: 0;
     margin: 0;
+    list-style: none;
   }
-  .work_list_box li {
+  .work_list_box li,
+  .ktp_work_list_box li {
     font-size: 15px;
     padding: 8px 4px;
     border-bottom: 1px solid #eee;
     word-break: break-all;
     list-style: none;
   }
-  .work_list_box a {
+  .work_list_box a,
+  .ktp_work_list_box a {
     display: block;
     color: #1976d2;
     text-decoration: none;
     word-break: break-all;
   }
-  .work_list_box a:hover {
+  .work_list_box a:hover,
+  .ktp_work_list_box a:hover {
     text-decoration: underline;
   }
 }
@@ -340,30 +500,35 @@
 
 /* 仕事リストタブ専用 レスポンシブ調整 */
 @media screen and (max-width: 767px) {
-  .data_list_box {
+  .data_list_box,
+  .ktp_data_list_box {
     width: 100% !important;
     float: none !important;
     padding: 10px !important;
     box-sizing: border-box;
   }
-  .data_list_box ul {
+  .data_list_box ul,
+  .ktp_data_list_box ul {
     padding-left: 0;
     margin: 0;
   }
-  .data_list_box li {
+  .data_list_box li,
+  .ktp_data_list_box li {
     font-size: 15px;
     padding: 8px 4px;
     border-bottom: 1px solid #eee;
     word-break: break-all;
     list-style: none;
   }
-  .data_list_box a {
+  .data_list_box a,
+  .ktp_data_list_box a {
     display: block;
     color: #1976d2;
     text-decoration: none;
     word-break: break-all;
   }
-  .data_list_box a:hover {
+  .data_list_box a:hover,
+  .ktp_data_list_box a:hover {
     text-decoration: underline;
   }
 }
@@ -374,7 +539,7 @@
 #order_content {
   width: 100%;
   max-width: 100%;
-  margin: 24px 0;
+  margin: 0 0 24px 0;
 }
 
 /* 伝票処理・レポートタブのボックススタイル */
@@ -473,7 +638,8 @@
 }
 
 /* リストBOX */
-.data_list_box {
+.data_list_box,
+.ktp_data_list_box {
   width: 100%;
   padding: 20px;
   box-sizing: border-box;
@@ -481,7 +647,8 @@
 }
 
 /* 詳細BOX */
-.data_detail_box {
+.data_detail_box,
+.ktp_data_detail_box {
   width: 100%;
   padding: 20px;
   box-sizing: border-box;
@@ -490,7 +657,8 @@
 }
 
 /* 詳細カラムのスタイル改善 */
-.data_detail_box {
+.data_detail_box,
+.ktp_data_detail_box {
   background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -499,7 +667,8 @@
 }
 
 /* 詳細BOXの見出し */
-.data_detail_box h3 {
+.data_detail_box h3,
+.ktp_data_detail_box h3 {
   background-color: #f0f4f8;
   margin: 0;
   padding: 12px 16px;
@@ -511,15 +680,24 @@
 
 /* リストBOXと詳細BOXのレスポンシブ */
 @media screen and (min-width: 767px) {
-  .data_list_box {
+  .data_list_box,
+  .ktp_data_list_box {
     width: 50%;
     float: left;
   }
 
-  .data_detail_box {
+  .data_detail_box,
+  .ktp_data_detail_box {
     width: 50%;
     float: right;
   }
+}
+
+/* フロートのクリアフィックス - 新しいクラス名用 */
+.ktp_data_contents::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 /* リストのアイテム */
@@ -530,57 +708,64 @@
   padding: 12px 16px;
   transition: background-color 0.2s ease, transform 0.1s ease;
   position: relative;
-  display: block;
 }
 
 /* データリストの交互の行に色を付ける - アンカータグに対して適用 */
-.data_list_box > a:nth-of-type(odd) .data_list_item {
+.data_list_box > a:nth-of-type(odd) .data_list_item,
+.ktp_data_list_box > a:nth-of-type(odd) .ktp_data_list_item {
   background-color: #f9fafb; /* 薄いグレーブルー */
 }
 
-.data_list_box > a:nth-of-type(even) .data_list_item {
+.data_list_box > a:nth-of-type(even) .data_list_item,
+.ktp_data_list_box > a:nth-of-type(even) .ktp_data_list_item {
   background-color: #ffffff; /* 白 */
 }
 
 /* 直接データリストアイテムだけの場合（エラーメッセージなど） */
-.data_list_box > .data_list_item:nth-of-type(odd) {
+.data_list_box > .data_list_item:nth-of-type(odd),
+.ktp_data_list_box > .ktp_data_list_item:nth-of-type(odd) {
   background-color: #f9fafb; /* 薄いグレーブルー */
 }
 
-.data_list_box > .data_list_item:nth-of-type(even) {
+.data_list_box > .data_list_item:nth-of-type(even),
+.ktp_data_list_box > .ktp_data_list_item:nth-of-type(even) {
   background-color: #ffffff; /* 白 */
 }
 
 /* ホバー時の背景色と微妙な変化 */
-.data_list_box a:hover .data_list_item {
+.data_list_box a:hover .data_list_item,
+.ktp_data_list_box a:hover .ktp_data_list_item {
   background-color: #f0f7ff; /* 薄い青 */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03); /* 微妙な影を追加 */
   z-index: 1; /* ホバー時に前面に */
 }
 
 /* データリストのリンクスタイル */
-.data_list_box a {
+.data_list_box a,
+.ktp_data_list_box a {
   text-decoration: none;
   color: #2c3e50;
   display: block;
   transition: color 0.2s ease;
 }
 
-.data_list_box a:hover {
+.data_list_box a:hover,
+.ktp_data_list_box a:hover {
   color: #1a73e8;
 }
 
 /* データリストボックス全体のスタイル */
-.data_list_box {
+.data_list_box,
+.ktp_data_list_box {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* データリストボックスの見出し */
-.data_list_box h3 {
+.data_list_box h3,
+.ktp_data_list_box h3 {
   background-color: #f0f4f8;
   margin: 0;
   padding: 12px 16px;
@@ -596,6 +781,10 @@
   border: 1px solid;
   padding: 15px;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 /* ページネーション */
@@ -1183,13 +1372,23 @@ input[name="tab_item"] {
   opacity: 0.9;
   font-size: 14px;
   color: #444;
-  width: 100%;
 }
 
-/* 商品画像のスタイル */
+/* サービス画像コンテナのスタイル */
+.image {
+  width: 100%; /* 利用可能な幅を最大に */
+  max-width: 100%; /* コンテナの幅を超えないようにする */
+  margin-bottom: 10px; /* 下に余白を追加 */
+  overflow: hidden; /* 画像がはみ出さないようにする */
+  border-radius: 4px; /* 角を少し丸く */
+  border: 1px solid #e5e7eb; /* 薄いボーダーを追加 */
+}
+
+/* サービス画像のスタイル */
 .product-image {
-  width: 100%; /* コンテナの幅に合わせて画像を拡大/縮小 */
+  width: 100%; /* div.imageの幅いっぱいに表示 */
   height: auto; /* 画像の高さを画像に合わせる */
+  max-width: 100%; /* コンテナの幅を超えないようにする */
   max-height: 320px; /* モバイル時以外は高さ320pxに制限 */
   object-fit: contain; /* コンテナ内で縦横比を保ちつつ、全体が見えるように調整 */
   object-position: left; /* 画像を左寄せにする */
@@ -1322,140 +1521,1195 @@ input[name="tab_item"] {
   max-width: 260px;
 }
 
-/* 検索モード専用スタイル */
-.search-mode-form {
-  background-color: #f8f9fa !important;
-  border: 2px solid #0073aa !important;
-  border-radius: 8px !important;
-  padding: 20px !important;
-  margin: 10px 0 !important;
-  box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;
+/* ピンク背景の美しいフローティング通知システム */
+.ktp-floating-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff6b9d, #ff8a9d);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(255, 107, 157, 0.4);
+    z-index: 10000;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 200px;
+    max-width: 500px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* WordPress管理画面での検索モード専用スタイル（高い特定性） */
-body.wp-admin .search-mode-form, 
-body.wp-admin .search-mode-form.ktpwp-search-form,
-#wpbody .search-mode-form,
-.wrap .search-mode-form {
-  background-color: #f8f9fa !important;
-  border: 2px solid #0073aa !important;
-  border-radius: 8px !important;
-  padding: 20px !important;
-  margin: 10px 0 !important;
-  box-shadow: 0 2px 8px rgba(0, 115, 170, 0.1) !important;
-  display: block !important;
+.ktp-floating-notification.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
 }
 
-body.wp-admin .search-mode-form .form-group,
-#wpbody .search-mode-form .form-group,
-.wrap .search-mode-form .form-group {
-  margin-bottom: 15px !important;
+.ktp-floating-notification.success {
+    background: linear-gradient(135deg, #ff6b9d, #ff8a9d);
 }
 
-body.wp-admin .search-mode-form input[type="text"],
-#wpbody .search-mode-form input[type="text"],
-.wrap .search-mode-form input[type="text"] {
-  width: 100% !important;
-  padding: 12px !important;
-  font-size: 16px !important;
-  border: 2px solid #ddd !important;
-  border-radius: 5px !important;
-  box-sizing: border-box !important;
-  transition: border-color 0.3s ease !important;
-  max-width: none !important;
+.ktp-floating-notification.error {
+    background: linear-gradient(135deg, #ff4757, #ff6b9d);
 }
 
-body.wp-admin .search-mode-form input[type="text"]:focus,
-#wpbody .search-mode-form input[type="text"]:focus,
-.wrap .search-mode_form input[type="text"]:focus {
-  border-color: #0073aa !important;
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1) !important;
+.ktp-floating-notification.warning {
+    background: linear-gradient(135deg, #ffb347, #ff8a9d);
 }
 
-body.wp-admin .search-mode-form .no-results,
-#wpbody .search-mode-form .no-results,
-.wrap .search-mode-form .no-results {
-  padding: 12px !important;
-  background-color: #fff3cd !important;
-  border: 1px solid #ffeaa7 !important;
-  border-radius: 5px !important;
-  margin: 10px 0 !important;
-  color: #856404 !important;
-  font-weight: 500 !important;
-  display: block !important;
+.ktp-floating-notification.info {
+    background: linear-gradient(135deg, #74b9ff, #ff8a9d);
 }
 
-body.wp-admin .search-mode-form .button-group,
-#wpbody .search-mode-form .button-group,
-.wrap .search-mode-form .button-group {
-  display: flex !important;
-  gap: 10px !important;
-  margin-top: 15px !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important;
+.ktp-floating-notification.pinkback {
+    background: linear-gradient(135deg, #ff6b9d, #ff4da6);
+    box-shadow: 0 8px 24px rgba(255, 107, 157, 0.5);
 }
 
-body.wp-admin .search-mode-form button,
-#wpbody .search-mode-form button,
-.wrap .search-mode-form button {
-  border: none !important;
-  padding: 10px 20px !important;
-  cursor: pointer !important;
-  border-radius: 5px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  transition: all 0.3s ease !important;
-  text-decoration: none !important;
-  line-height: 1 !important;
+/* アニメーション効果 */
+@keyframes ktp-notification-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
-body.wp-admin .search-mode-form button[name="send_post"],
-#wpbody .search-mode-form button[name="send_post"],
-.wrap .search-mode-form button[name="send_post"] {
-  background-color: #0073aa !important;
-  color: white !important;
+@keyframes ktp-notification-slide-out {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
 }
 
-body.wp-admin .search-mode-form button[name="send_post"]:hover,
-#wpbody .search-mode-form button[name="send_post"]:hover,
-.wrap .search-mode-form button[name="send_post"]:hover {
-  background-color: #005a87 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 5px rgba(0, 115, 170, 0.3) !important;
+.ktp-floating-notification.slide-in {
+    animation: ktp-notification-slide-in 0.3s ease-out;
 }
 
-body.wp-admin .search-mode-form button[title="キャンセル"],
-#wpbody .search-mode-form button[title="キャンセル"],
-.wrap .search-mode-form button[title="キャンセル"] {
-  background-color: #666 !important;
-  color: white !important;
+.ktp-floating-notification.slide-out {
+    animation: ktp-notification-slide-out 0.3s ease-in;
 }
 
-body.wp-admin .search-mode-form button[title="キャンセル"]:hover,
-#wpbody .search-mode-form button[title="キャンセル"]:hover,
-.wrap .search-mode-form button[title="キャンセル"]:hover {
-  background-color: #555 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 5px rgba(102, 102, 102, 0.3) !important;
+/* モバイル対応 */
+@media (max-width: 768px) {
+    .ktp-floating-notification {
+        left: 10px;
+        right: 10px;
+        transform: none;
+        max-width: none;
+        min-width: auto;
+    }
+    
+    .ktp-floating-notification.show {
+        transform: none;
+    }
+    
+    @keyframes ktp-notification-slide-in {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes ktp-notification-slide-out {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+    }
 }
 
-body.wp-admin .search-mode-form .material-symbols-outlined,
-#wpbody .search-mode-form .material-symbols-outlined,
-.wrap .search-mode-form .material-symbols-outlined {
-  font-size: 18px !important;
-  width: 18px !important;
-  height: 18px !important;
+/* 請求項目テーブルのスタイル */
+.invoice-items-container {
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
 }
 
-/* 検索モードのタイトル（高い特定性） */
-body.wp-admin .data_detail_box.search-mode h3,
-#wpbody .data_detail_box.search-mode h3,
-.wrap .data_detail_box.search-mode h3 {
-  background-color: #e3f2fd !important;
-  color: #0277bd !important;
-  border-bottom: 2px solid #0073aa !important;
+.invoice-items-container h3 {
+    margin: 0 0 15px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.invoice-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.invoice-items-table th,
+.invoice-items-table td {
+    border: 1px solid #d0d7de;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.invoice-items-table th {
+    background-color: #e8f4f8;
+    font-weight: bold;
+    white-space: nowrap;
+    color: #2c3e50;
+}
+
+.invoice-items-table .actions-column {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.invoice-items-table .invoice-item-input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    padding: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.invoice-items-table .invoice-item-input:focus {
+    background: #fff;
+    border: 1px solid #007cba;
+    outline: none;
+    box-shadow: 0 0 3px rgba(0, 124, 186, 0.3);
+}
+
+.invoice-items-table .price,
+.invoice-items-table .quantity,
+.invoice-items-table .amount {
+    width: 100px;
+    text-align: right;
+}
+
+.invoice-items-table .unit {
+    width: 60px;
+}
+
+.invoice-items-table .product-name {
+    min-width: 150px;
+}
+
+.invoice-items-table .remarks {
+    min-width: 120px;
+    resize: vertical;
+}
+
+.invoice-items-table .amount {
+    background-color: #f0f8ff !important;
+    color: #333;
+    font-weight: 500;
+}
+
+/* 操作ボタンのスタイル */
+.btn-add-row,
+.btn-delete-row,
+.btn-move-row {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    margin: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.btn-add-row:hover {
+    background: #005a87;
+}
+
+.btn-delete-row {
+    background: #dc3545;
+}
+
+.btn-delete-row:hover {
+    background: #c82333;
+}
+
+.btn-move-row {
+    background: #6c757d;
+}
+
+.btn-move-row:hover {
+    background: #545b62;
+}
+
+/* 請求項目の保存ボタンとアクション領域 */
+.invoice-items-actions {
+    margin-top: 16px;
+    text-align: center;
+    padding: 16px;
+    border-top: 1px solid #ddd;
+}
+
+.btn-save-invoice-items {
+    background: #2196f3;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.btn-save-invoice-items:hover {
+    background: #1976d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-save-invoice-items:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .invoice-items-table {
+        font-size: 12px;
+    }
+    
+    .invoice-items-table th,
+    .invoice-items-table td {
+        padding: 6px 4px;
+    }
+    
+    .invoice-items-table .actions-column {
+        width: 60px;
+    }
+    
+    .btn-add-row,
+    .btn-delete-row,
+    .btn-move-row {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+}
+
+/* コスト項目テーブルのスタイル */
+.cost-items-container {
+    margin: 20px 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.cost-items-container h3 {
+    margin: 0 0 15px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.cost-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.cost-items-table th,
+.cost-items-table td {
+    border: 1px solid #d0d7de;
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.cost-items-table th {
+    background-color: #e8f4f8;
+    font-weight: bold;
+    white-space: nowrap;
+    color: #2c3e50;
+}
+
+.cost-items-table .actions-column {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.cost-items-table .cost-item-input {
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    padding: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.cost-items-table .cost-item-input:focus {
+    background: #fff;
+    border: 1px solid #007cba;
+    outline: none;
+    box-shadow: 0 0 3px rgba(0, 124, 186, 0.3);
+}
+
+.cost-items-table .price,
+.cost-items-table .quantity,
+.cost-items-table .amount {
+    width: 100px;
+    text-align: right;
+}
+
+.cost-items-table .unit {
+    width: 60px;
+}
+
+.cost-items-table .product-name {
+    min-width: 150px;
+}
+
+.cost-items-table .remarks {
+    min-width: 120px;
+    resize: vertical;
+}
+
+.cost-items-table .amount {
+    background-color: #f0f8ff !important;
+    color: #333;
+    font-weight: 500;
+}
+
+/* コスト項目の保存ボタンとアクション領域 */
+.cost-items-actions {
+    margin-top: 16px;
+    text-align: center;
+    padding: 16px;
+    border-top: 1px solid #ddd;
+}
+
+.btn-save-cost-items {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.btn-save-cost-items:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-save-cost-items:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* コスト項目の合計表示 */
+.cost-items-total {
+    font-size: 16px;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+/* 請求項目の合計表示 */
+.invoice-items-total {
+    font-size: 16px;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+/* 利益表示 */
+.profit-display {
+    font-size: 16px;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.profit-display.positive {
+    color: #28a745;
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.profit-display.negative {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+/* ==========================================================================
+   Plugin Reference Modal Styles
+   ========================================================================== */
+
+/* ヘッダー内のリファレンスリンク */
+.ktp_header .ktpwp-reference-link {
+    color: #0073aa;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 4px 8px;
+    border: 1px solid #0073aa;
+    border-radius: 3px;
+    background: #fff;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.ktp_header .ktpwp-reference-link:hover {
+    background: #0073aa;
+    color: #fff;
+    text-decoration: none;
+}
+
+.ktp_header .ktpwp-reference-link:focus {
+    outline: 2px solid #005a87;
+    outline-offset: 1px;
+}
+
+/* モーダル基本スタイル */
+.ktpwp-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.ktpwp-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.ktpwp-modal-content {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 1000px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* モーダルヘッダー */
+.ktpwp-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+}
+
+.ktpwp-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.ktpwp-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.ktpwp-modal-close:hover {
+    background: #f0f0f0;
+    color: #000;
+}
+
+/* モーダルボディ */
+.ktpwp-modal-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* サイドバー */
+.ktpwp-reference-sidebar {
+    width: 250px;
+    background: #f9f9f9;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+}
+
+.ktpwp-reference-nav {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ktpwp-reference-nav li {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ktpwp-reference-nav a {
+    display: block;
+    padding: 15px 20px;
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.ktpwp-reference-nav a:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.ktpwp-reference-nav a.active {
+    background: #0073aa;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* コンテンツエリア */
+.ktpwp-reference-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    position: relative;
+}
+
+#ktpwp-reference-loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+#ktpwp-reference-text {
+    line-height: 1.6;
+}
+
+#ktpwp-reference-text h1,
+#ktpwp-reference-text h2,
+#ktpwp-reference-text h3,
+#ktpwp-reference-text h4 {
+    color: #23282d;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+#ktpwp-reference-text h1 {
+    font-size: 24px;
+    border-bottom: 2px solid #0073aa;
+    padding-bottom: 8px;
+}
+
+#ktpwp-reference-text h2 {
+    font-size: 20px;
+    margin-top: 32px;
+}
+
+#ktpwp-reference-text h3 {
+    font-size: 18px;
+    margin-top: 24px;
+}
+
+#ktpwp-reference-text p {
+    margin-bottom: 16px;
+}
+
+#ktpwp-reference-text ul,
+#ktpwp-reference-text ol {
+    margin-bottom: 16px;
+    padding-left: 24px;
+}
+
+#ktpwp-reference-text li {
+    margin-bottom: 8px;
+}
+
+#ktpwp-reference-text code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    font-size: 90%;
+}
+
+#ktpwp-reference-text pre {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+}
+
+#ktpwp-reference-text pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+}
+
+#ktpwp-reference-text .error {
+    color: #dc3232;
+    background: #ffeaea;
+    border: 1px solid #dc3232;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+/* モーダル開放時の body オーバーフロー制御 */
+body.ktpwp-modal-open {
+    overflow: hidden;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    .ktpwp-modal-overlay {
+        padding: 10px;
+    }
+    
+    .ktpwp-modal-content {
+        max-height: 90vh;
+    }
+    
+    .ktpwp-modal-body {
+        flex-direction: column;
+    }
+    
+    .ktpwp-reference-sidebar {
+        width: 100%;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .ktpwp-reference-nav {
+        display: flex;
+        overflow-x: auto;
+    }
+    
+    .ktpwp-reference-nav li {
+        border-bottom: none;
+        border-right: 1px solid #e0e0e0;
+        flex-shrink: 0;
+    }
+    
+    .ktpwp-reference-nav a {
+        white-space: nowrap;
+        padding: 12px 16px;
+    }
+    
+    .ktpwp-reference-content {
+        padding: 16px;
+    }
+}
+
+/* Staff Chat Styles */
+.staff-chat-container {
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* トグルボタンのスタイル */
+.staff-chat-toggle-header {
+    margin-bottom: 0;
+}
+
+.staff-chat-toggle-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #007cba 0%, #005a87 100%);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.staff-chat-toggle-btn:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004766 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.staff-chat-toggle-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.staff-chat-toggle-icon {
+    margin-right: 8px;
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.staff-chat-toggle-btn.open .staff-chat-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.staff-chat-toggle-text {
+    flex: 1;
+    text-align: left;
+}
+
+.staff-chat-message-count {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* チャットコンテンツエリア */
+.staff-chat-content {
+    margin-top: 0;
+    border-radius: 0 0 4px 4px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 第1行目を固定表示するためのヘッダー */
+.staff-chat-header-fixed {
+    border: 1px solid #ddd;
+    border-bottom: none;
+    border-radius: 0;
+    background-color: #f0f8f0;
+    background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #46b450;
+}
+
+.staff-chat-messages {
+    max-height: 350px;
+    min-height: 150px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0;
+    padding: 10px;
+    background-color: #fafafa;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+/* スクロールバーのスタイリング */
+.staff-chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.staff-chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.staff-chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.staff-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.staff-chat-message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 4px solid #007cba;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.staff-chat-message.initial {
+    border-left-color: #46b450;
+    background-color: #f7fcf0;
+}
+
+.staff-chat-message.first-line {
+    padding: 12px 15px;
+    margin-bottom: 0;
+    border-left-color: #46b450;
+    background-color: #f0f8f0;
+    border-radius: 4px 4px 0 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* スクロール可能エリア内のメッセージ */
+.staff-chat-message.scrollable {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 4px solid #007cba;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.staff-chat-header-line {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.staff-chat-header-line .staff-chat-avatar-wrapper {
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.staff-chat-header-line .staff-chat-wp-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50%;
+    border: 2px solid #46b450;
+}
+
+.staff-chat-header-line .staff-chat-user-name {
+    color: #2c3e50;
+    margin-right: 15px;
+    font-weight: 600;
+}
+
+.staff-chat-header-line .staff-chat-order-time {
+    color: #7f8c8d;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.staff-chat-message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.staff-chat-message-header .staff-chat-avatar-wrapper {
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.staff-chat-message-header .staff-chat-wp-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50%;
+    border: 1px solid #007cba;
+}
+
+.staff-chat-user-name {
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.staff-chat-timestamp {
+    color: #999;
+    font-size: 12px;
+}
+
+.staff-chat-content {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.staff-chat-form {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-top: 15px;
+}
+
+.staff-chat-input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.staff-chat-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 36px;
+    max-height: 120px;
+}
+
+.staff-chat-submit {
+    padding: 8px 16px;
+    background-color: #007cba;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+}
+
+.staff-chat-submit:hover {
+    background-color: #005a87;
+}
+
+.staff-chat-submit:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.staff-chat-empty {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* アニメーション */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* 通知バッジのスタイル */
+.staff-chat-notification-badge {
+    color: #ff4444 !important;
+    margin-left: 8px !important;
+    font-size: 16px !important;
+    animation: pulse 1s infinite;
+}
+
+/* トグルの展開/折りたたみアニメーション */
+.staff-chat-content {
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.staff-chat-content[style*="display: none"] {
+    max-height: 0;
+    opacity: 0;
+}
+
+.staff-chat-content[style*="display: block"] {
+    max-height: 1000px;
+    opacity: 1;
+}
+
+/* スタッフチャットのモバイル対応 */
+@media screen and (max-width: 768px) {
+    .staff-chat-toggle-btn {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .staff-chat-toggle-text {
+        font-size: 13px;
+    }
+    
+    .staff-chat-message-count {
+        font-size: 11px;
+        padding: 1px 6px;
+        margin-left: 6px;
+    }
+    
+    .staff-chat-messages {
+        max-height: 250px;
+        min-height: 120px;
+        padding: 8px;
+    }
+    
+    .staff-chat-message {
+        margin-bottom: 12px;
+        padding: 8px;
+    }
+    
+    .staff-chat-header-line .staff-chat-wp-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .staff-chat-header-line .staff-chat-user-name {
+        font-size: 13px;
+        margin-right: 10px;
+    }
+    
+    .staff-chat-header-line .staff-chat-order-time {
+        font-size: 12px;
+    }
+    
+    .staff-chat-message-header .staff-chat-wp-avatar {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    
+    .staff-chat-form {
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .staff-chat-input {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-height: 32px;
+    }
+    
+    .staff-chat-submit {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .staff-chat-toggle-btn {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
+    .staff-chat-toggle-icon {
+        margin-right: 6px;
+        font-size: 11px;
+    }
+    
+    .staff-chat-toggle-text {
+        font-size: 12px;
+    }
+    
+    .staff-chat-message-count {
+        font-size: 10px;
+        padding: 1px 4px;
+        margin-left: 4px;
+        border-radius: 10px;
+    }
+    
+    .staff-chat-messages {
+        max-height: 200px;
+        min-height: 100px;
+        padding: 6px;
+    }
+    
+    .staff-chat-message {
+        margin-bottom: 10px;
+        padding: 6px;
+    }
+    
+    .staff-chat-header-line {
+        font-size: 12px;
+    }
+    
+    .staff-chat-header-line .staff-chat-wp-avatar {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    .staff-chat-header-line .staff-chat-user-name {
+        font-size: 12px;
+        margin-right: 8px;
+    }
+    
+    .staff-chat-header-line .staff-chat-order-time {
+        font-size: 11px;
+    }
+    
+    .staff-chat-message-header {
+        font-size: 11px;
+    }
+    
+    .staff-chat-message-header .staff-chat-wp-avatar {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    
+    .staff-chat-content {
+        font-size: 13px;
+    }
+    
+    .staff-chat-input {
+        padding: 5px 8px;
+        font-size: 12px;
+        min-height: 28px;
+    }
+    
+    .staff-chat-submit {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+    
+    .staff-chat-notification-badge {
+        font-size: 14px !important;
+        margin-left: 6px !important;
+    }
 }

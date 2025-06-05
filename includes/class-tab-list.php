@@ -1,54 +1,105 @@
 <?php
+/**
+ * List class for KTPWP plugin
+ *
+ * Handles order list display, filtering, and management.
+ *
+ * @package KTPWP
+ * @subpackage Includes
+ * @since 1.0.0
+ * @author Kantan Pro
+ * @copyright 2024 Kantan Pro
+ * @license GPL-2.0+
+ */
 
-if (!class_exists('Kantan_List_Class')) {
-class Kantan_List_Class{
+// Prevent direct access
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
+if ( ! class_exists( 'Kantan_List_Class' ) ) {
 
+/**
+ * List class for managing order lists
+ *
+ * @since 1.0.0
+ */
+class Kantan_List_Class {
 
+    /**
+     * Constructor
+     *
+     * @since 1.0.0
+     */
     public function __construct() {
-        // $this->name = 'list';
+        // Constructor initialization
     }
     
-    function List_Tab_View( $tab_name ) {
-        global $wpdb; // $wpdbオブジェクトを使用可能にする
-        $table_name = $wpdb->prefix . 'ktp_order'; // 受注書テーブル名
+    /**
+     * Display list tab view
+     *
+     * @since 1.0.0
+     * @param string $tab_name Tab name
+     * @return void
+     */
+    public function List_Tab_View( $tab_name ) {
+        // Check user capabilities
+        // if ( ! current_user_can( 'manage_options' ) ) {
+        //     wp_die( __( 'You do not have sufficient permissions to access this page.', 'ktpwp' ) );
+        // }
 
-        $content = ''; // 表示するHTMLコンテンツ
-
-        // controllerコンテナを上部に表示
-        $content .= '<div class="controller">';
-        $content .= '<div class="printer">';
-        // 印刷ボタン（ダミー）
-        $content .= '<button title="印刷する" onclick="alert(\\\'印刷ダミー\\\')">';
-        $content .= '<span class="material-symbols-outlined" aria-label="印刷">print</span>';
-        $content .= '</button>';
-        $content .= '</div>'; // .printer 終了
-
-        // 進捗状況ボタン
-        $progress_labels = [
-            1 => '受付中',
-            2 => '見積中',
-            3 => '作成中',
-            4 => '完成未請求',
-            5 => '請求済',
-            6 => '入金済'
-        ];
-        $selected_progress = isset($_GET['progress']) ? intval($_GET['progress']) : 1;
-
-        // 各進捗ごとの件数を取得
-        $progress_counts = [];
-        foreach ($progress_labels as $num => $label) {
-            $progress_counts[$num] = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE progress = %d", $num));
+        if ( empty( $tab_name ) ) {
+            error_log( 'KTPWP: Empty tab_name provided to List_Tab_View method' );
+            return;
         }
 
-        $content .= '</div>'; // .controller 終了
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ktp_order';
 
-        // 進捗ボタンを全幅で表示するworkflowエリア
+        $content = '';
+
+        // Controller container display at top
+        $content .= '<div class="controller">';
+        $content .= '<div class="printer">';
+        
+        // Print button with proper escaping
+        $content .= '<button title="' . esc_attr__( 'Print', 'ktpwp' ) . '" onclick="alert(\'' . esc_js( __( 'Print function placeholder', 'ktpwp' ) ) . '\')">';
+        $content .= '<span class="material-symbols-outlined" aria-label="' . esc_attr__( 'Print', 'ktpwp' ) . '">print</span>';
+        $content .= '</button>';
+        $content .= '</div>'; // .printer end
+
+        // Progress status buttons
+        $progress_labels = array(
+            1 => __( '受付中', 'ktpwp' ),
+            2 => __( '見積中', 'ktpwp' ),
+            3 => __( '作成中', 'ktpwp' ),
+            4 => __( '完成未請求', 'ktpwp' ),
+            5 => __( '請求済', 'ktpwp' ),
+            6 => __( '入金済', 'ktpwp' )
+        );
+        
+        $selected_progress = isset( $_GET['progress'] ) ? absint( $_GET['progress'] ) : 1;
+
+        // Get count for each progress status with prepared statements
+        $progress_counts = array();
+        foreach ( $progress_labels as $num => $label ) {
+            $count = $wpdb->get_var( $wpdb->prepare( 
+                "SELECT COUNT(*) FROM `%1s` WHERE progress = %d", 
+                $table_name, 
+                $num 
+            ) );
+            $progress_counts[ $num ] = (int) $count;
+        }
+
+        $content .= '</div>'; // .controller end
+
+        // Workflow area to display progress buttons in full width
         $content .= '<div class="workflow" style="width:100%;margin:0px 0 0px 0;">';
         $content .= '<div class="progress-filter" style="display:flex;gap:8px;width:100%;justify-content:center;">';
-        foreach ($progress_labels as $num => $label) {
-            $active = ($selected_progress === $num) ? 'style=\\"font-weight:bold;background:#1976d2;color:#fff;\\"' : '';
-            $btn_label = $label . ' (' . $progress_counts[$num] . ')';
+        
+        foreach ( $progress_labels as $num => $label ) {
+            $active = ( $selected_progress === $num ) ? 'style="font-weight:bold;background:#1976d2;color:#fff;"' : '';
+            $btn_label = esc_html( $label ) . ' (' . $progress_counts[ $num ] . ')';
             // $content .= '<a href="?tab_name=' . urlencode($tab_name) . '&progress=' . $num . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
             $content .= '<a href="' . add_query_arg(array('tab_name' => $tab_name, 'progress' => $num)) . '" class="progress-btn" '.$active.'>' . $btn_label . '</a>';
         }
@@ -59,7 +110,12 @@ class Kantan_List_Class{
         // $content .= '<h3>■ 受注書リスト</h3>';
 
         // ページネーション設定
-        $query_limit = 20;
+        // 一般設定から表示件数を取得（設定クラスが利用可能な場合）
+        if (class_exists('KTP_Settings')) {
+            $query_limit = KTP_Settings::get_work_list_range();
+        } else {
+            $query_limit = 20; // フォールバック値
+        }
         $page_stage = isset($_GET['page_stage']) ? $_GET['page_stage'] : '';
         $page_start = isset($_GET['page_start']) ? intval($_GET['page_start']) : 0;
         $flg = isset($_GET['flg']) ? $_GET['flg'] : '';
@@ -77,7 +133,7 @@ class Kantan_List_Class{
         $order_list = $wpdb->get_results($query);
 
         // --- ここからラッパー追加 ---
-        $content .= '<div class="work_list_box">';
+        $content .= '<div class="ktp_work_list_box">';
         if ($order_list) {
             // 進捗ラベル
         $progress_labels = [
@@ -122,7 +178,7 @@ class Kantan_List_Class{
                 $detail_url = add_query_arg(array('tab_name' => 'order', 'order_id' => $order_id));
 
                 // プルダウンフォーム
-                $content .= "<li class='work-list-item'>";
+                $content .= "<li class='ktp_work_list_item'>";
                 $content .= "<a href='{$detail_url}'>ID: {$order_id} - {$customer_name} ({$user_name})";
                 if ($project_name !== '') {
                     $content .= " - <span class='project_name'>{$project_name}</span>";
@@ -193,7 +249,7 @@ class Kantan_List_Class{
             }
             $content .= '</div>';
         }
-        $content .= '</div>'; // .work_list_box 終了
+        $content .= '</div>'; // .ktp_work_list_box 終了
         // --- ここまでラッパー追加 ---
 
         return $content;
