@@ -53,16 +53,28 @@ jQuery(document).ready(function($) {
         var preview = field.find('.ktp-image-preview');
         var uploadBtn = field.find('.ktp-upload-image');
         
+        var currentValue = hiddenInput.val();
+        
         // 確認ダイアログ
         if (confirm('画像を削除しますか？')) {
-            // フィールドをクリア
-            hiddenInput.val('');
-            
-            // プレビューを非表示
-            preview.hide();
-            
-            // ボタンのテキストを変更
-            uploadBtn.text('画像をアップロード');
+            // 数値（添付ファイルID）の場合のみ完全削除
+            // 文字列パス（デフォルト画像）の場合はデフォルト値にリセット
+            if (isNaN(currentValue) || currentValue === '') {
+                // デフォルト画像パスの場合は空にせず、デフォルト値に戻す
+                hiddenInput.val('images/default/header_bg_image.png');
+                // プレビューを更新（デフォルト画像URLを設定）
+                var defaultImageUrl = hiddenInput.data('default-url');
+                if (defaultImageUrl) {
+                    preview.find('img').attr('src', defaultImageUrl);
+                    preview.show();
+                }
+                uploadBtn.text('画像を変更');
+            } else {
+                // 添付ファイルIDの場合は完全削除
+                hiddenInput.val('');
+                preview.hide();
+                uploadBtn.text('画像をアップロード');
+            }
         }
     });
 });

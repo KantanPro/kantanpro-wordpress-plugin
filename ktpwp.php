@@ -3,7 +3,7 @@
  * Plugin Name: KTPWP
  * Plugin URI: https://ktpwp.com/
  * Description: ショートコード[ktpwp_all_tab]を固定ページに入れてください。商品・顧客・案件・仕入れ先・各種設定・レポートのタブが使えます。
- * Version: 0.1.0beta
+ * Version: beta
  * Author: Kantan Pro
  * Author URI: https://ktpwp.com/blog/
  * License: GPL v2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // プラグイン定数定義
 if ( ! defined( 'KTPWP_PLUGIN_VERSION' ) ) {
-    define( 'KTPWP_PLUGIN_VERSION', '0.0.0beta' );
+    define( 'KTPWP_PLUGIN_VERSION', 'beta' );
 }
 if ( ! defined( 'KTPWP_PLUGIN_NAME' ) ) {
     define( 'KTPWP_PLUGIN_NAME', 'KTPWP' );

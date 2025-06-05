@@ -102,14 +102,18 @@ class KTP_Settings {
      * @return array Design settings
      */
     public static function get_design_settings() {
-        return get_option( 'ktp_design_settings', array(
-            'tab_bg_color' => '#eeeeee',
-            'tab_active_color' => '#cdcccc',
-            'tab_inactive_color' => '#bbbbbb',
-            'tab_border_color' => '#cdcccc',
-            'header_bg_image' => 0,
+        // システムデフォルト値
+        $system_defaults = array(
+            'tab_active_color' => '#B7CBFB',
+            'tab_inactive_color' => '#E6EDFF',
+            'tab_border_color' => '#B7CBFB',
+            'odd_row_color' => '#E7EEFD',
+            'even_row_color' => '#FFFFFF',
+            'header_bg_image' => 'images/default/header_bg_image.jpg',
             'custom_css' => ''
-        ) );
+        );
+        
+        return get_option( 'ktp_design_settings', $system_defaults );
     }
 
     /**
@@ -121,11 +125,20 @@ class KTP_Settings {
     public static function get_header_bg_image_url() {
         $design_settings = self::get_design_settings();
         
-        if ( ! empty( $design_settings['header_bg_image'] ) ) {
-            return wp_get_attachment_image_url( $design_settings['header_bg_image'], 'full' );
-        }
+        $header_bg_image = ! empty( $design_settings['header_bg_image'] ) ? $design_settings['header_bg_image'] : 'images/default/header_bg_image.png';
         
-        return '';
+        // 数値の場合はWordPressの添付ファイルIDとして処理
+        if ( is_numeric( $header_bg_image ) ) {
+            return wp_get_attachment_image_url( $header_bg_image, 'full' );
+        } else {
+            // 文字列の場合は直接パスとして処理
+            $image_path = $header_bg_image;
+            // 相対パスの場合は、プラグインディレクトリからの絶対URLに変換
+            if ( strpos( $image_path, 'http' ) !== 0 ) {
+                return plugin_dir_url( dirname( __FILE__ ) ) . $image_path;
+            }
+            return $image_path;
+        }
     }
 
     /**
@@ -140,6 +153,7 @@ class KTP_Settings {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_styles' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_media_scripts' ) );
         add_action( 'wp_head', array( $this, 'output_custom_styles' ) );
+        add_action( 'admin_init', array( $this, 'handle_default_settings_actions' ) );
     }
 
     /**
@@ -227,12 +241,12 @@ class KTP_Settings {
         // デザイン設定のデフォルト値を設定
         $design_option_name = 'ktp_design_settings';
         $design_defaults = array(
-            'tab_active_color' => '#cdcccc',
-            'tab_inactive_color' => '#bbbbbb',
-            'tab_border_color' => '#cdcccc',
-            'odd_row_color' => '#ffffff',
-            'even_row_color' => '#f9f9f9',
-            'header_bg_image' => 0,
+            'tab_active_color' => '#B7CBFB',
+            'tab_inactive_color' => '#E6EDFF',
+            'tab_border_color' => '#B7CBFB',
+            'odd_row_color' => '#E7EEFD',
+            'even_row_color' => '#FFFFFF',
+            'header_bg_image' => 'images/default/header_bg_image.jpg',
             'custom_css' => ''
         );
         
@@ -654,6 +668,15 @@ class KTP_Settings {
                             <?php submit_button( __( '設定を保存', 'ktpwp' ), 'primary', 'submit', false ); ?>
                         </div>
                     </form>
+                    
+                    <!-- デフォルト設定管理セクション -->
+                    <div class="ktp-default-settings-section" style="margin-top: 30px;">
+                        <form method="post" action="" onsubmit="return confirm('<?php echo esc_js( __( 'すべてのデザイン設定がデフォルト値にリセットされます。よろしいですか？', 'ktpwp' ) ); ?>');">
+                            <?php wp_nonce_field( 'ktp_reset_to_default', 'ktp_reset_to_default_nonce' ); ?>
+                            <input type="hidden" name="action" value="reset_to_default">
+                            <?php submit_button( __( 'デフォルトに戻す', 'ktpwp' ), 'secondary', 'reset_to_default', false ); ?>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1015,7 +1038,12 @@ class KTP_Settings {
         }
 
         if ( isset( $input['header_bg_image'] ) ) {
-            $new_input['header_bg_image'] = absint( $input['header_bg_image'] );
+            // 数値（添付ファイルID）または文字列（画像パス）に対応
+            if ( is_numeric( $input['header_bg_image'] ) ) {
+                $new_input['header_bg_image'] = absint( $input['header_bg_image'] );
+            } else {
+                $new_input['header_bg_image'] = sanitize_text_field( $input['header_bg_image'] );
+            }
         }
 
         if ( isset( $input['custom_css'] ) ) {
@@ -1545,28 +1573,40 @@ class KTP_Settings {
      */
     public function header_bg_image_callback() {
         $options = get_option( 'ktp_design_settings' );
-        $image_id = isset( $options['header_bg_image'] ) ? $options['header_bg_image'] : 0;
+        $image_value = isset( $options['header_bg_image'] ) ? $options['header_bg_image'] : 'images/default/header_bg_image.png';
         $image_url = '';
         
-        if ( $image_id ) {
-            $image_url = wp_get_attachment_image_url( $image_id, 'full' );
+        // 数値の場合は添付ファイルID、文字列の場合は画像パス
+        // デフォルト値がある場合は常に画像URLを設定
+        if ( is_numeric( $image_value ) ) {
+            // 添付ファイルIDの場合
+            $image_url = wp_get_attachment_image_url( $image_value, 'full' );
+        } else {
+            // 文字列パスの場合
+            $image_path = $image_value;
+            if ( strpos( $image_path, 'http' ) !== 0 ) {
+                // 相対パスの場合は、プラグインディレクトリからの絶対URLに変換
+                $image_url = plugin_dir_url( dirname( __FILE__ ) ) . $image_path;
+            } else {
+                $image_url = $image_path;
+            }
         }
         ?>
         <div class="ktp-image-upload-field">
-            <input type="hidden" id="header_bg_image" name="ktp_design_settings[header_bg_image]" value="<?php echo esc_attr( $image_id ); ?>" />
+            <input type="hidden" id="header_bg_image" name="ktp_design_settings[header_bg_image]" value="<?php echo esc_attr( $image_value ); ?>" data-default-url="<?php echo esc_url( plugin_dir_url( dirname( __FILE__ ) ) . 'images/default/header_bg_image.png' ); ?>" />
             
-            <div class="ktp-image-preview" style="margin-bottom: 10px; <?php echo $image_url ? '' : 'display: none;'; ?>">
+            <div class="ktp-image-preview" style="margin-bottom: 10px;">
                 <img id="header_bg_image_preview" src="<?php echo esc_url( $image_url ); ?>" style="max-width: 300px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;" />
                 <br>
-                <button type="button" class="button ktp-remove-image" style="margin-top: 5px; <?php echo $image_url ? '' : 'display: none;'; ?>">画像を削除</button>
+                <button type="button" class="button ktp-remove-image" style="margin-top: 5px;">画像を削除</button>
             </div>
             
             <button type="button" class="button ktp-upload-image">
-                <?php echo $image_url ? '画像を変更' : '画像をアップロード'; ?>
+                画像を変更
             </button>
             
             <div style="font-size:12px;color:#555;margin-top:4px;">
-                <?php echo esc_html__( '※ div.ktp_headerの背景画像として使用されます。推奨サイズ: 1920×400px', 'ktpwp' ); ?>
+                <?php echo esc_html__( '※ ヘッダーの背景画像として使用されます。推奨サイズ: 1920×100px', 'ktpwp' ); ?>
             </div>
         </div>
         <?php
@@ -1607,11 +1647,12 @@ class KTP_Settings {
         
         $custom_css = '';
         
-        // div.ktp_headerのボーダーを削除とマージン調整
+        // div.ktp_headerの基本スタイル
         $custom_css .= '
 div.ktp_header {
     border: none !important;
     margin-bottom: 10px;
+    position: relative;
 }';
 
         // タブを手前に表示するためのz-index設定
@@ -1622,9 +1663,25 @@ div.ktp_header {
 }';
         
         // ヘッダー背景画像の設定
-        if ( ! empty( $design_options['header_bg_image'] ) ) {
-            $image_url = wp_get_attachment_image_url( $design_options['header_bg_image'], 'full' );
-            if ( $image_url ) {
+        $header_bg_image = ! empty( $design_options['header_bg_image'] ) ? $design_options['header_bg_image'] : 'images/default/header_bg_image.png';
+        $image_url = '';
+        
+        // 数値の場合は添付ファイルID、文字列の場合は画像パス
+        if ( is_numeric( $header_bg_image ) ) {
+            // 添付ファイルIDの場合
+            $image_url = wp_get_attachment_image_url( $header_bg_image, 'full' );
+        } else {
+            // 文字列パスの場合
+            $image_path = $header_bg_image;
+            if ( strpos( $image_path, 'http' ) !== 0 ) {
+                // 相対パスの場合は、プラグインディレクトリからの絶対URLに変換
+                $image_url = plugin_dir_url( dirname( __FILE__ ) ) . $image_path;
+            } else {
+                $image_url = $image_path;
+            }
+        }
+        
+        if ( $image_url ) {
                 $custom_css .= '
 div.ktp_header {
     background-image: url(' . esc_url( $image_url ) . ');
@@ -1632,8 +1689,29 @@ div.ktp_header {
     background-position: center center;
     background-repeat: no-repeat;
     border: none !important;
+    width: 100%;
+    height: 100px;
+    max-width: 1920px;
+    margin: 0 auto 10px auto;
+    position: relative;
+    overflow: hidden;
+}
+
+div.ktp_header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 1;
+}
+
+div.ktp_header > * {
+    position: relative;
+    z-index: 2;
 }';
-            }
         }
         
         // タブのアクティブ時の色設定
@@ -1730,6 +1808,54 @@ div.ktp_header {
             echo '</style>';
         }
     }
+
+    /**
+     * デフォルト設定管理のアクションを処理
+     *
+     * @since 1.0.0
+     * @return void
+     */
+    public function handle_default_settings_actions() {
+        // 管理者権限チェック
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        // デザイン設定ページでのみ実行
+        if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'ktp-design-settings' ) {
+            return;
+        }
+
+        // 設定をデフォルト値にリセット
+        if ( isset( $_POST['action'] ) && $_POST['action'] === 'reset_to_default' ) {
+            if ( ! wp_verify_nonce( $_POST['ktp_reset_to_default_nonce'], 'ktp_reset_to_default' ) ) {
+                wp_die( __( 'セキュリティチェックに失敗しました。', 'ktpwp' ) );
+            }
+
+            // システムデフォルト値を使用
+            $system_defaults = array(
+                'tab_active_color' => '#B7CBFB',
+                'tab_inactive_color' => '#E6EDFF',
+                'tab_border_color' => '#B7CBFB',
+                'odd_row_color' => '#E7EEFD',
+                'even_row_color' => '#FFFFFF',
+                'header_bg_image' => 'images/default/header_bg_image.jpg',
+                'custom_css' => ''
+            );
+            update_option( 'ktp_design_settings', $system_defaults );
+            add_settings_error( 
+                'ktp_design_settings', 
+                'reset_to_default', 
+                __( 'デザイン設定をデフォルト値にリセットしました。', 'ktpwp' ), 
+                'updated' 
+            );
+            
+            // リダイレクトでページを再読み込みし、フォームの再送信を防ぐ
+            wp_redirect( admin_url( 'admin.php?page=ktp-design-settings&settings-updated=true' ) );
+            exit;
+        }
+    }
+
 }
 
 // インスタンスを初期化
