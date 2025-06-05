@@ -109,7 +109,7 @@ class KTP_Settings {
             'tab_border_color' => '#B7CBFB',
             'odd_row_color' => '#E7EEFD',
             'even_row_color' => '#FFFFFF',
-            'header_bg_image' => 'images/default/header_bg_image.jpg',
+            'header_bg_image' => 'images/default/header_bg_image.png',
             'custom_css' => ''
         );
         
@@ -246,7 +246,7 @@ class KTP_Settings {
             'tab_border_color' => '#B7CBFB',
             'odd_row_color' => '#E7EEFD',
             'even_row_color' => '#FFFFFF',
-            'header_bg_image' => 'images/default/header_bg_image.jpg',
+            'header_bg_image' => 'images/default/header_bg_image.png',
             'custom_css' => ''
         );
         
@@ -1839,7 +1839,7 @@ div.ktp_header > * {
                 'tab_border_color' => '#B7CBFB',
                 'odd_row_color' => '#E7EEFD',
                 'even_row_color' => '#FFFFFF',
-                'header_bg_image' => 'images/default/header_bg_image.jpg',
+                'header_bg_image' => 'images/default/header_bg_image.png',
                 'custom_css' => ''
             );
             update_option( 'ktp_design_settings', $system_defaults );
