@@ -7,28 +7,28 @@ Stable tag: 0.0.0beta
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-== Description ==
-KTPWP is a workflow management plugin for WordPress.
-Insert the shortcode [ktpwp_all_tab] into a page to manage business orders, clients, services, suppliers, and more.
+== 説明 ==
+KTPWPは、WordPressのワークフロー管理プラグインです。
+ページにショートコード [ktpwp_all_tab] を挿入することで、ビジネスの注文、クライアント、サービス、サプライヤーなどを管理できます。
 
-== Installation ==
-1. Upload the plugin files to the `/wp-content/plugins/ktpwp` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Add the shortcode `[ktpwp_all_tab]` to a page.
+== インストール ==
+1. プラグインファイルを `/wp-content/plugins` ディレクトリにアップロードするか、WordPressのプラグイン画面から直接インストールしてください。
+2. WordPressの「プラグイン」画面でプラグインを有効化してください。
+3. ページにショートコード `[ktpwp_all_tab]` を追加してください。
 
-== Frequently Asked Questions ==
-= Is this plugin secure? =
-Yes. It implements SQL injection prevention, XSS protection, CSRF nonce, file upload validation, and more.
+== よくある質問 ==
+= このプラグインは安全ですか？ =
+はい。SQLインジェクション防止、XSS保護、CSRF nonce、ファイルアップロードの検証など、セキュリティ対策が実装されています。
 
-== Screenshots ==
-1. Main workflow management screen
-2. Order management tab
-3. Client management tab
+== スクリーンショット ==
+1. メインワークフロー管理画面
+2. 注文管理タブ
+3. クライアント管理タブ
 
-== Changelog ==
-= 0.0.0beta =
-* Initial release.
+== 変更履歴 ==
+= beta =
+* βリリース。
 
-== Upgrade Notice ==
-= 0.0.0beta =
-First public beta.
+== アップグレード通知 ==
+= beta =
+最初のパブリックベータ版。
