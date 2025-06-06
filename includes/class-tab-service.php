@@ -107,6 +107,46 @@ class Kntan_Service_Class {
 
         global $wpdb;
 
+        // Ensure table exists
+        $table_name = $wpdb->prefix . 'ktp_' . sanitize_key( $name );
+        $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) );
+        
+        if ( ! $table_exists ) {
+            // Create table if it doesn't exist
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'KTPWP Service: Table does not exist, creating: ' . $table_name );
+            }
+            $this->create_table( $name );
+        }
+
+        // Handle POST requests by calling update_table
+        if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+            // Debug logging
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'KTPWP Service: POST request detected in View_Table' );
+                error_log( 'KTPWP Service: Full POST data: ' . print_r( $_POST, true ) );
+                error_log( 'KTPWP Service: Full GET data: ' . print_r( $_GET, true ) );
+                error_log( 'KTPWP Service: Request URI: ' . $_SERVER['REQUEST_URI'] );
+            }
+            
+            // istmode（追加モード）の場合は update_table を呼ばない
+            $query_post = isset( $_POST['query_post'] ) ? sanitize_text_field( $_POST['query_post'] ) : '';
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'KTPWP Service: Extracted query_post: "' . $query_post . '"' );
+            }
+            
+            if ( $query_post !== 'istmode' ) {
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( 'KTPWP Service: Calling update_table with query_post: "' . $query_post . '"' );
+                }
+                $this->update_table( $name );
+            } else {
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( 'KTPWP Service: Skipping update_table for istmode' );
+                }
+            }
+        }
+
         // GETパラメータからメッセージを取得して表示
         if (isset($_GET['message'])) {
             $message_type = sanitize_text_field($_GET['message']);
@@ -435,7 +475,7 @@ class Kntan_Service_Class {
         // -----------------------------
 
         // アクションを取得（POSTパラメータを優先、次にGETパラメータ、デフォルトは'update'）
-        $action = isset($_POST['query_post']) ? $_POST['query_post'] : (isset($_GET['query_post']) ? $_GET['query_post'] : 'update');
+        $action = isset($_POST['query_post']) ? sanitize_text_field($_POST['query_post']) : (isset($_GET['query_post']) ? sanitize_text_field($_GET['query_post']) : 'update');
         
         // 安全性確保: GETリクエストの場合は危険なアクションを実行しない
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['duplicate', 'delete', 'insert', 'search', 'search_execute', 'upload_image'])) {
@@ -446,10 +486,12 @@ class Kntan_Service_Class {
         }
         
         // デバッグ: タブクリック時の動作をログに記録
-        error_log('KTPWP Service Debug: Final action = ' . $action);
-        error_log('KTPWP Service Debug: POST query_post = ' . (isset($_POST['query_post']) ? $_POST['query_post'] : 'not set'));
-        error_log('KTPWP Service Debug: GET query_post = ' . (isset($_GET['query_post']) ? $_GET['query_post'] : 'not set'));
-        error_log('KTPWP Service Debug: Request method = ' . $_SERVER['REQUEST_METHOD']);
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Service Debug: Final action = "' . $action . '"');
+            error_log('KTPWP Service Debug: POST query_post = ' . (isset($_POST['query_post']) ? '"' . $_POST['query_post'] . '"' : 'not set'));
+            error_log('KTPWP Service Debug: GET query_post = ' . (isset($_GET['query_post']) ? '"' . $_GET['query_post'] . '"' : 'not set'));
+            error_log('KTPWP Service Debug: Request method = ' . $_SERVER['REQUEST_METHOD']);
+        }
         
         // 初期化
         $data_id = '';
@@ -644,14 +686,23 @@ class Kntan_Service_Class {
             
             $data_forms .= "<div class='button'>";
             // 追加実行ボタン
-            $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
+            $data_forms .= "<input type='hidden' name='query_post' value='new'>";
             $data_forms .= "<input type='hidden' name='data_id' value=''>";
-            $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
-            // キャンセルボタン
-            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
+            $data_forms .= "<input type='hidden' name='action_type' value='create_new'>";
+            $data_forms .= "<button type='submit' name='send_post' value='create' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
+            $data_forms .= "</form>";
+            
+            // キャンセルボタン（独立したフォーム）
+            $data_forms .= "<form method='post' action='' style='display:inline-block;margin-left:10px;'>";
+            if (function_exists('wp_nonce_field')) { 
+                $data_forms .= wp_nonce_field('ktp_service_action', '_ktp_service_nonce', true, false); 
+            }
+            $data_forms .= "<input type='hidden' name='query_post' value='update'>";
+            $data_forms .= "<input type='hidden' name='action_type' value='cancel'>";
+            $data_forms .= "<button type='submit' name='send_post' value='cancel' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
+            $data_forms .= "</form>";
             $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
-            $data_forms .= '</form>';
         } else {
             // 通常モード：既存の詳細フォーム表示
         

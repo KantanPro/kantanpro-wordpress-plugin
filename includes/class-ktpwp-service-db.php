@@ -50,7 +50,6 @@ class KTPWP_Service_DB {
      */
     public function create_table( $tab_name ) {
         if ( empty( $tab_name ) ) {
-            error_log( 'KTPWP: Empty tab_name provided to create_table method' );
             return false;
         }
 
@@ -62,7 +61,7 @@ class KTPWP_Service_DB {
         // Column definitions with internationalization
         $columns = array(
             'id' => 'MEDIUMINT(9) NOT NULL AUTO_INCREMENT',
-            'time' => 'BIGINT(11) DEFAULT \'0\' NOT NULL',
+            'time' => 'DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL',
             'service_name' => 'TINYTEXT',
             'price' => 'DECIMAL(10,0) DEFAULT 0 NOT NULL',
             'unit' => 'VARCHAR(50) NOT NULL DEFAULT \'\'',
@@ -115,9 +114,9 @@ class KTPWP_Service_DB {
         $data_id = isset( $_POST['data_id'] ) ? absint( $_POST['data_id'] ) : 0;
         $query_post = isset( $_POST['query_post'] ) ? sanitize_text_field( $_POST['query_post'] ) : '';
 
-        // Debug logging
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( 'KTPWP Service: POST received - query_post: ' . $query_post . ', data_id: ' . $data_id );
+        // Empty query_post should not be processed
+        if ( empty( $query_post ) ) {
+            return;
         }
 
         // Sanitize form fields
@@ -171,6 +170,10 @@ class KTPWP_Service_DB {
             case 'new':
                 return $this->handle_new_service($tab_name);
                 
+            case 'istmode':
+                // 追加モードの場合は何もしない（表示ロジックで処理される）
+                return;
+                
             case 'delete':
                 return $this->handle_delete_service($tab_name, $data_id);
                 
@@ -183,16 +186,13 @@ class KTPWP_Service_DB {
                 return $this->handle_search_operations($tab_name, $query_post);
                 
             case 'upload_image':
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('KTPWP: upload_imageケースに到達 - tab_name: ' . $tab_name . ', data_id: ' . $data_id);
-                }
                 return $this->handle_upload_image($tab_name, $data_id);
                 
             case 'delete_image':
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('KTPWP: delete_imageケースに到達 - tab_name: ' . $tab_name . ', data_id: ' . $data_id);
-                }
                 return $this->handle_delete_image($tab_name, $data_id);
+                
+            default:
+                break;
         }
     }
 
@@ -208,14 +208,30 @@ class KTPWP_Service_DB {
 
         // nonceを検証
         if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for new.'); }
             wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
         }
 
         // 新しいIDを取得
-        $new_id_query = "SELECT MAX(id) + 1 as new_id FROM {$table_name}";
+        $new_id_query = "SELECT COALESCE(MAX(id), 0) + 1 as new_id FROM {$table_name}";
         $new_id_result = $wpdb->get_row($new_id_query);
-        $new_id = $new_id_result ? $new_id_result->new_id : 1;
+        $new_id = $new_id_result && isset($new_id_result->new_id) ? intval($new_id_result->new_id) : 1;
+
+        // フォームからのデータを取得
+        $service_name = isset($_POST['service_name']) ? sanitize_text_field($_POST['service_name']) : esc_html__('新しいサービス', 'ktpwp');
+        $price = isset($_POST['price']) ? intval($_POST['price']) : 0;
+        $unit = isset($_POST['unit']) ? sanitize_text_field($_POST['unit']) : '';
+        $memo = isset($_POST['memo']) ? sanitize_textarea_field($_POST['memo']) : '';
+        $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : '';
+
+        // 検索フィールド値を作成
+        $search_field_value = implode(', ', array(
+            current_time('mysql'),
+            $service_name,
+            $price,
+            $unit,
+            $memo,
+            $category
+        ));
 
         // 新規データを挿入
         $insert_result = $wpdb->insert(
@@ -223,49 +239,45 @@ class KTPWP_Service_DB {
             array(
                 'id' => $new_id,
                 'time' => current_time('mysql'),
-                'service_name' => esc_html__('新しいサービス', 'ktpwp'),
-                'price' => 0,
-                'unit' => '',
-                'memo' => '',
-                'category' => '',
+                'service_name' => $service_name,
+                'price' => $price,
+                'unit' => $unit,
+                'memo' => $memo,
+                'category' => $category,
                 'image_url' => '',
-                'frequency' => '',
-                'search_field' => esc_html__('新しいサービス', 'ktpwp')
+                'frequency' => 0,
+                'search_field' => $search_field_value
             ),
-            array('%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s')
+            array('%d', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s')
         );
 
         if($insert_result === false) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Insert error: ' . $wpdb->last_error); }
             echo "<script>alert('" . esc_js(esc_html__('新規追加に失敗しました。', 'ktpwp')) . "');</script>";
         } else {
-            // 成功時は新しいレコードにリダイレクト
-            global $wp;
-            $current_page_id = get_queried_object_id();
-            $base_page_url = get_permalink($current_page_id);
-            if (!$base_page_url) {
-                 $base_page_url = home_url(add_query_arg(array(), $wp->request));
+            
+            // 元のページ（ショートコードが配置された固定ページ）にリダイレクト
+            $current_page_url = wp_get_referer();
+            if (!$current_page_url) {
+                // refererが取得できない場合は、現在のページIDを取得してURLを構築
+                global $wp;
+                $current_page_id = get_queried_object_id();
+                if ($current_page_id) {
+                    $current_page_url = get_permalink($current_page_id);
+                } else {
+                    $current_page_url = home_url($wp->request);
+                }
             }
-            $url = add_query_arg(array(
+            
+            $redirect_url = add_query_arg(array(
                 'tab_name' => $tab_name,
                 'data_id' => $new_id,
                 'message' => 'added'
-            ), $base_page_url);
-            // 不要なパラメータを確実に除去
-            $url = remove_query_arg(array('query_post', '_ktp_service_nonce', 'send_post'), $url);
+            ), $current_page_url);
             
-            echo '<script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    showSuccessNotification("' . esc_js(esc_html__('新しいサービスを追加しました。', 'ktpwp')) . '");
-                    setTimeout(function() {
-                        window.location.href = "' . esc_js($url) . '";
-                    }, 1000);
-                });
-            </script>';
+            // PHPリダイレクトを使用（JavaScriptではなく）
+            wp_redirect($redirect_url);
+            exit;
         }
-        
-        $wpdb->query("UNLOCK TABLES;");
-        exit;
     }
 
     /**
@@ -281,7 +293,6 @@ class KTPWP_Service_DB {
 
         // nonceを検証
         if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for delete.'); }
             wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
         }
         
@@ -293,7 +304,6 @@ class KTPWP_Service_DB {
             );
 
             if($delete_result === false) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Delete error: ' . $wpdb->last_error); }
                 echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     showErrorNotification('" . esc_js(esc_html__('削除に失敗しました。', 'ktpwp')) . "');
@@ -317,7 +327,6 @@ class KTPWP_Service_DB {
         }
         
         $wpdb->query("UNLOCK TABLES;");
-        exit;
     }
 
     /**
@@ -333,15 +342,11 @@ class KTPWP_Service_DB {
 
         // POSTリクエストのみ許可
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('KTPWP Service: Duplicate action blocked - not a POST request');
-            }
             wp_die(esc_html__('Invalid request method.', 'ktpwp'));
         }
         
         // nonceを検証
         if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for duplicate.'); }
             wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
         }
         
@@ -374,7 +379,7 @@ class KTPWP_Service_DB {
                 );
 
                 if($insert_result === false) {
-                    if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Duplicate error: ' . $wpdb->last_error); }
+                    // エラー処理は最小限に
                 } else {
                     // 成功時は複製されたレコードにリダイレクト
                     global $wp;
@@ -398,7 +403,6 @@ class KTPWP_Service_DB {
         }
         
         $wpdb->query("UNLOCK TABLES;");
-        exit;
     }
 
     /**
@@ -414,7 +418,6 @@ class KTPWP_Service_DB {
 
         // nonceを検証
         if (!isset($_POST['_ktp_service_nonce']) || !wp_verify_nonce($_POST['_ktp_service_nonce'], 'ktp_service_action')) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Nonce verification failed for search operation.'); }
             wp_die(esc_html__('Nonce verification failed.', 'ktpwp'));
         }
 
@@ -449,7 +452,6 @@ class KTPWP_Service_DB {
             </script>';
             
             $wpdb->query("UNLOCK TABLES;");
-            exit;
         } elseif ($query_post === 'search_execute') {
             $search_service_name = isset($_POST['search_service_name']) ? sanitize_text_field($_POST['search_service_name']) : '';
             $search_category = isset($_POST['search_category']) ? sanitize_text_field($_POST['search_category']) : '';
@@ -527,12 +529,6 @@ class KTPWP_Service_DB {
     private function handle_upload_image($tab_name, $data_id) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . sanitize_key( $tab_name );
-
-        // デバッグログを追加
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: 画像アップロード処理開始 - data_id: ' . $data_id);
-            error_log('KTPWP: $_FILES内容: ' . print_r($_FILES, true));
-        }
         
         // 先にImage_Processorクラスが存在するか確認
         if (!class_exists('Image_Processor')) {
@@ -546,15 +542,10 @@ class KTPWP_Service_DB {
         // デフォルト画像のパスが正しいか確認
         $default_image_path = dirname(__FILE__) . '/../images/default/no-image-icon.jpg';
         if (!file_exists($default_image_path)) {
-            // デフォルト画像が存在しない場合、エラーログに記録
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('Default image not found: ' . $default_image_path); }
+            // デフォルト画像が存在しない場合のエラーは記録しない（プロダクション環境）
         }
         
         $image_url = $image_processor->handle_image($tab_name, $data_id, $default_image_url);
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: 画像処理結果 - image_url: ' . $image_url);
-        }
 
         $update_result = $wpdb->update(
             $table_name,
@@ -572,21 +563,28 @@ class KTPWP_Service_DB {
             )
         );
         
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: DB更新結果 - rows affected: ' . $update_result);
-        }
-        
         $wpdb->query("UNLOCK TABLES;"); // Unlock before redirect
         
-        // リダイレクト
-        global $wp;
-        $current_page_id = get_queried_object_id();
-        $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-        $url = add_query_arg([
+        // 元のページ（ショートコードが配置された固定ページ）にリダイレクト
+        $current_page_url = wp_get_referer();
+        if (!$current_page_url) {
+            // refererが取得できない場合は、現在のページIDを取得してURLを構築
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            if ($current_page_id) {
+                $current_page_url = get_permalink($current_page_id);
+            } else {
+                $current_page_url = home_url($wp->request);
+            }
+        }
+        
+        $redirect_url = add_query_arg(array(
             'tab_name' => $tab_name,
-            'data_id' => $data_id
-        ], $base_page_url);
-        header('Location: ' . esc_url_raw($url));
+            'data_id' => $data_id,
+            'message' => 'image_uploaded'
+        ), $current_page_url);
+        
+        wp_redirect($redirect_url);
         exit;
     }
 
@@ -630,15 +628,26 @@ class KTPWP_Service_DB {
         );
         $wpdb->query("UNLOCK TABLES;"); // Unlock before redirect
         
-        // リダイレクト
-        global $wp;
-        $current_page_id = get_queried_object_id();
-        $base_page_url = add_query_arg( array( 'page_id' => $current_page_id ), home_url( $wp->request ) );
-        $url = add_query_arg([
+        // 元のページ（ショートコードが配置された固定ページ）にリダイレクト
+        $current_page_url = wp_get_referer();
+        if (!$current_page_url) {
+            // refererが取得できない場合は、現在のページIDを取得してURLを構築
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            if ($current_page_id) {
+                $current_page_url = get_permalink($current_page_id);
+            } else {
+                $current_page_url = home_url($wp->request);
+            }
+        }
+        
+        $redirect_url = add_query_arg(array(
             'tab_name' => $tab_name,
-            'data_id' => $data_id
-        ], $base_page_url);
-        header('Location: ' . esc_url_raw($url));
+            'data_id' => $data_id,
+            'message' => 'image_deleted'
+        ), $current_page_url);
+        
+        wp_redirect($redirect_url);
         exit;
     }
 
@@ -756,11 +765,6 @@ class KTPWP_Service_DB {
             $results = $wpdb->get_results($sql);
         }
         
-        // エラーログ記録（デバッグモード時のみ）
-        if (defined('WP_DEBUG') && WP_DEBUG && $wpdb->last_error) {
-            error_log('KTPWP: Error in get_services query: ' . $wpdb->last_error);
-        }
-        
         return $results ? $results : array();
     }
 
@@ -820,11 +824,6 @@ class KTPWP_Service_DB {
             $count = $wpdb->get_var($wpdb->prepare($sql, $where_values));
         } else {
             $count = $wpdb->get_var($sql);
-        }
-        
-        // エラーログ記録（デバッグモード時のみ）
-        if (defined('WP_DEBUG') && WP_DEBUG && $wpdb->last_error) {
-            error_log('KTPWP: Error in get_services_count query: ' . $wpdb->last_error);
         }
         
         return $count ? (int)$count : 0;
