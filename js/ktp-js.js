@@ -738,3 +738,28 @@ if (document.getElementById('staff-chat-messages')) {
             window.clearScrollTimeouts();
         }
     });
+    
+    // グローバルスコープで通知を表示する関数
+window.showSuccessNotification = function(message) {
+    // 通知要素を作成
+    var notification = document.createElement('div');
+    notification.className = 'success-notification';
+    notification.textContent = message;
+
+    // 通知を画面に追加
+    document.body.appendChild(notification);
+
+    // 数秒後に通知を削除
+    setTimeout(function() {
+        notification.remove();
+    }, 3000);
+};
+
+// DOMContentLoaded イベントで showSuccessNotification を呼び出す
+window.addEventListener('DOMContentLoaded', function() {
+    if (typeof showSuccessNotification === 'function') {
+        console.log('showSuccessNotification is loaded and ready to use.');
+    } else {
+        console.error('showSuccessNotification is not defined.');
+    }
+});

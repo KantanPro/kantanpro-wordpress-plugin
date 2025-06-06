@@ -99,7 +99,24 @@ class KTPWP_Supplier_Class {
      * @return void
      */
     public function Update_Table( $tab_name ) {
-        $this->supplier_data->update_table( $tab_name, $_POST );
+        // Enhanced debug logging
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'KTPWP DEBUG: KTPWP_Supplier_Class::Update_Table called for tab: ' . $tab_name );
+            error_log( 'KTPWP DEBUG: POST data in Update_Table: ' . print_r( $_POST, true ) );
+            error_log( 'KTPWP DEBUG: $_POST is empty: ' . ( empty( $_POST ) ? 'YES' : 'NO' ) );
+        }
+        
+        // Only proceed if POST data exists
+        if ( ! empty( $_POST ) ) {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'KTPWP DEBUG: Calling supplier_data->update_table()' );
+            }
+            $this->supplier_data->update_table( $tab_name, $_POST );
+        } else {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'KTPWP DEBUG: Skipping supplier_data->update_table() - no POST data' );
+            }
+        }
     }
 
     /**
@@ -995,8 +1012,15 @@ class KTPWP_Supplier_Class {
             $data_forms .= "<input type='hidden' name='query_post' value='insert'>";
             $data_forms .= "<input type='hidden' name='data_id' value=''>";
             $data_forms .= "<button type='submit' name='send_post' title='追加実行'><span class='material-symbols-outlined'>select_check_box</span></button>";
-            // キャンセルボタン
-            $data_forms .= "<button type='submit' name='query_post' value='update' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
+            // キャンセルボタン（JavaScriptでリダイレクト）
+            global $wp;
+            $current_page_id = get_queried_object_id();
+            $base_page_url = get_permalink( $current_page_id );
+            if ( ! $base_page_url ) {
+                $base_page_url = home_url( add_query_arg( array(), $wp->request ) );
+            }
+            $cancel_url = add_query_arg( array( 'tab_name' => $tab_name ), $base_page_url );
+            $data_forms .= "<button type='button' onclick='window.location.href=\"" . esc_js( $cancel_url ) . "\"' title='キャンセル'><span class='material-symbols-outlined'>disabled_by_default</span></button>";
             $data_forms .= "<div class=\"add\"></div>";
             $data_forms .= '</div>';
             $data_forms .= '</form>';

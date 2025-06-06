@@ -410,7 +410,7 @@ if (file_exists(MY_PLUGIN_PATH . 'includes/class-ktp-settings.php')) {
 add_action( 'plugins_loaded', 'KTPWP_Index' );
 
 function ktpwp_scripts_and_styles() {
-    wp_enqueue_script( 'ktp-js', plugins_url( 'js/ktp-js.js', __FILE__ ), array( 'jquery' ), KTPWP_PLUGIN_VERSION, true );
+    wp_enqueue_script( 'ktp-js', plugins_url( 'js/ktp-js.js', __FILE__ ) . '?v=' . time(), array( 'jquery' ), null, true );
 
     // デバッグモードの設定（WP_DEBUGまたは開発環境でのみ有効）
     $debug_mode = (defined('WP_DEBUG') && WP_DEBUG) || (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG);
@@ -422,12 +422,12 @@ function ktpwp_scripts_and_styles() {
     wp_add_inline_script('ktp-js', 'var ktpwpStaffChatShowLabel = ' . json_encode(esc_html__('表示', 'ktpwp')) . ';');
     wp_add_inline_script('ktp-js', 'var ktpwpStaffChatHideLabel = ' . json_encode(esc_html__('非表示', 'ktpwp')) . ';');
 
-    wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__), array(), KTPWP_PLUGIN_VERSION, 'all');
+    wp_register_style('ktp-css', plugins_url('css/styles.css', __FILE__) . '?v=' . time(), array(), KTPWP_PLUGIN_VERSION, 'all');
     wp_enqueue_style('ktp-css');
     // 進捗プルダウン用のスタイルシートを追加
-    wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
+    wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__) . '?v=' . time(), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
     // 設定タブ用のスタイルシートを追加
-    wp_enqueue_style('ktp-setting-tab', plugins_url('css/ktp-setting-tab.css', __FILE__), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
+    wp_enqueue_style('ktp-setting-tab', plugins_url('css/ktp-setting-tab.css', __FILE__) . '?v=' . time(), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
     
     // Material Symbols アイコンフォントをプリロードとして読み込み
     wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0', array(), '1.0.0', 'all');
@@ -719,10 +719,33 @@ function KTPWP_Index(){
                     $service_content = $service->View_Table($tab_name);
                     break;
                 case 'supplier':
+                    // Enhanced debug logging for supplier processing
+                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                        error_log( 'KTPWP DEBUG: Entering supplier case. REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
+                        error_log( 'KTPWP DEBUG: GET parameters: ' . print_r( $_GET, true ) );
+                        if ( ! empty( $_POST ) ) {
+                            error_log( 'KTPWP DEBUG: POST data detected: ' . print_r( $_POST, true ) );
+                        } else {
+                            error_log( 'KTPWP DEBUG: No POST data found' );
+                        }
+                        error_log( 'KTPWP DEBUG: Current user can manage options: ' . ( current_user_can('manage_options') ? 'YES' : 'NO' ) );
+                    }
+                    
                     $supplier = new KTPWP_Supplier_Class();
                     if (current_user_can('manage_options')) {
                         $supplier->Create_Table($tab_name);
-                        $supplier->Update_Table($tab_name);
+                        
+                        // Only call Update_Table if POST data exists
+                        if ( ! empty( $_POST ) ) {
+                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                                error_log( 'KTPWP DEBUG: Calling supplier Update_Table with POST data' );
+                            }
+                            $supplier->Update_Table($tab_name);
+                        } else {
+                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                                error_log( 'KTPWP DEBUG: Skipping Update_Table - no POST data' );
+                            }
+                        }
                     }
                     $supplier_content = $supplier->View_Table($tab_name);
                     break;
@@ -954,6 +977,9 @@ if (!class_exists('Kntan_Report_Class')) {
 
 if (defined('WP_DEBUG') && WP_DEBUG) {
 }
+
+// ktp-js.js の読み込みをデバッグログに記録
+error_log('KTPWP DEBUG: Enqueuing ktp-js.js');
 
 /**
  * Contact Form 7の送信データをwp_ktp_clientテーブルに登録する
