@@ -39,7 +39,8 @@ class KTPWP_Ajax {
         'auto_save' => 'ktp_ajax_nonce',
         'project_name' => 'ktp_update_project_name',
         'inline_edit' => 'ktpwp_inline_edit_nonce',
-        'general' => 'ktpwp_ajax_nonce'
+        'general' => 'ktpwp_ajax_nonce',
+        'staff_chat' => 'ktpwp_staff_chat_nonce'
     );
     
     /**
@@ -84,6 +85,9 @@ class KTPWP_Ajax {
         
         // 受注関連のAjax処理を初期化
         $this->init_order_ajax_handlers();
+        
+        // スタッフチャット関連のAjax処理を初期化
+        $this->init_staff_chat_ajax_handlers();
         
         // ログイン中ユーザー取得
         add_action('wp_ajax_get_logged_in_users', array($this, 'ajax_get_logged_in_users'));
@@ -130,6 +134,38 @@ class KTPWP_Ajax {
     }
     
     /**
+     * スタッフチャット関連Ajaxハンドラー初期化
+     */
+    private function init_staff_chat_ajax_handlers() {
+        // スタッフチャットクラスファイルの読み込み
+        $staff_chat_class_file = KTPWP_PLUGIN_DIR . 'includes/class-ktpwp-staff-chat.php';
+        
+        if (file_exists($staff_chat_class_file)) {
+            require_once $staff_chat_class_file;
+            
+            if (class_exists('KTPWP_Staff_Chat')) {
+                // 最新チャットメッセージ取得
+                add_action('wp_ajax_get_latest_staff_chat', array($this, 'ajax_get_latest_staff_chat'));
+                add_action('wp_ajax_nopriv_get_latest_staff_chat', array($this, 'ajax_require_login'));
+                $this->registered_handlers[] = 'get_latest_staff_chat';
+                
+                // チャットメッセージ送信
+                add_action('wp_ajax_send_staff_chat_message', array($this, 'ajax_send_staff_chat_message'));
+                add_action('wp_ajax_nopriv_send_staff_chat_message', array($this, 'ajax_require_login'));
+                $this->registered_handlers[] = 'send_staff_chat_message';
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('KTPWP Ajax Error: KTPWP_Staff_Chat class not found');
+                }
+            }
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('KTPWP Ajax Error: class-ktpwp-staff-chat.php not found');
+            }
+        }
+    }
+    
+    /**
      * Ajaxスクリプトの設定
      */
     public function localize_ajax_scripts() {
@@ -153,6 +189,7 @@ class KTPWP_Ajax {
 
         if (isset($wp_scripts->registered['ktp-js'])) {
             wp_add_inline_script('ktp-js', 'var ktp_ajax_object = ' . json_encode($ajax_data) . ';');
+            wp_add_inline_script('ktp-js', 'var ktpwp_ajax = ' . json_encode($ajax_data) . ';');
         }
 
         if (isset($wp_scripts->registered['ktp-invoice-items'])) {
@@ -527,22 +564,149 @@ class KTPWP_Ajax {
      * @param string $message エラーメッセージ
      * @param array $context 追加コンテキスト
      */
-    public function log_ajax_error($message, $context = array()) {
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+    public function log_ajax_error( $message, $context = array() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             $log_message = 'KTPWP Ajax Error: ' . $message;
             
-            if (!empty($context)) {
-                $log_message .= ' | Context: ' . wp_json_encode($context);
+            if ( ! empty( $context ) ) {
+                $log_message .= ' | Context: ' . wp_json_encode( $context );
             }
             
-            error_log($log_message);
+            error_log( $log_message );
         }
     }
     
     /**
-     * デストラクタ
+     * Ajax: 最新スタッフチャットメッセージ取得
      */
-    public function __destruct() {
-        // 必要に応じてクリーンアップ処理
+    public function ajax_get_latest_staff_chat() {
+        try {
+            // ログインチェック
+            if (!is_user_logged_in()) {
+                wp_send_json_error(__('ログインが必要です', 'ktpwp'));
+                return;
+            }
+            
+            // Nonce検証（_ajax_nonceパラメータで送信される）
+            $nonce = $_POST['_ajax_nonce'] ?? '';
+            if (!wp_verify_nonce($nonce, $this->nonce_names['staff_chat'])) {
+                $this->log_ajax_error('Staff chat get messages nonce verification failed', array(
+                    'received_nonce' => $nonce,
+                    'expected_action' => $this->nonce_names['staff_chat']
+                ));
+                wp_send_json_error(__('セキュリティトークンが無効です', 'ktpwp'));
+                return;
+            }
+            
+            // パラメータの取得とサニタイズ
+            $order_id = $this->sanitize_ajax_input('order_id', 'int');
+            $last_time = $this->sanitize_ajax_input('last_time', 'text');
+            
+            if (empty($order_id)) {
+                wp_send_json_error(__('注文IDが必要です', 'ktpwp'));
+                return;
+            }
+            
+            // 権限チェック
+            if (!current_user_can('read')) {
+                wp_send_json_error(__('権限がありません', 'ktpwp'));
+                return;
+            }
+            
+            // スタッフチャットクラスのインスタンス化
+            if (!class_exists('KTPWP_Staff_Chat')) {
+                require_once KTPWP_PLUGIN_DIR . 'includes/class-ktpwp-staff-chat.php';
+            }
+            
+            $staff_chat = new KTPWP_Staff_Chat();
+            
+            // 最新メッセージを取得
+            $messages = $staff_chat->get_messages_after($order_id, $last_time);
+            
+            wp_send_json_success($messages);
+            
+        } catch (Exception $e) {
+            $this->log_ajax_error('Exception during get latest staff chat', array(
+                'message' => $e->getMessage(),
+                'order_id' => $_POST['order_id'] ?? 'unknown',
+            ));
+            wp_send_json_error(__('メッセージの取得中にエラーが発生しました', 'ktpwp'));
+        }
+    }
+    
+    /**
+     * Ajax: スタッフチャットメッセージ送信
+     */
+    public function ajax_send_staff_chat_message() {
+        // デバッグログ開始
+        error_log('KTPWP: ajax_send_staff_chat_message called');
+        error_log('KTPWP: POST data: ' . print_r($_POST, true));
+        error_log('KTPWP: User logged in: ' . (is_user_logged_in() ? 'yes' : 'no'));
+        
+        try {
+            // ログインチェック
+            if (!is_user_logged_in()) {
+                error_log('KTPWP: User not logged in');
+                wp_send_json_error(__('ログインが必要です', 'ktpwp'));
+                return;
+            }
+            
+            // Nonce検証（_ajax_nonceパラメータで送信される）
+            $nonce = $_POST['_ajax_nonce'] ?? '';
+            error_log('KTPWP: Received nonce: ' . $nonce);
+            error_log('KTPWP: Expected nonce action: ' . $this->nonce_names['staff_chat']);
+            
+            if (!wp_verify_nonce($nonce, $this->nonce_names['staff_chat'])) {
+                error_log('KTPWP: Nonce verification failed');
+                $this->log_ajax_error('Staff chat nonce verification failed', array(
+                    'received_nonce' => $nonce,
+                    'expected_action' => $this->nonce_names['staff_chat']
+                ));
+                wp_send_json_error(__('セキュリティトークンが無効です', 'ktpwp'));
+                return;
+            }
+            
+            error_log('KTPWP: Nonce verification passed');
+            
+            // パラメータの取得とサニタイズ
+            $order_id = $this->sanitize_ajax_input('order_id', 'int');
+            $message = $this->sanitize_ajax_input('message', 'text');
+            
+            if (empty($order_id) || empty($message)) {
+                wp_send_json_error(__('注文IDとメッセージが必要です', 'ktpwp'));
+                return;
+            }
+            
+            // 権限チェック
+            if (!current_user_can('read')) {
+                wp_send_json_error(__('権限がありません', 'ktpwp'));
+                return;
+            }
+            
+            // スタッフチャットクラスのインスタンス化
+            if (!class_exists('KTPWP_Staff_Chat')) {
+                require_once KTPWP_PLUGIN_DIR . 'includes/class-ktpwp-staff-chat.php';
+            }
+            
+            $staff_chat = new KTPWP_Staff_Chat();
+            
+            // メッセージを送信
+            $result = $staff_chat->add_message($order_id, $message);
+            
+            if ($result) {
+                wp_send_json_success(array(
+                    'message' => __('メッセージを送信しました', 'ktpwp'),
+                ));
+            } else {
+                wp_send_json_error(__('メッセージの送信に失敗しました', 'ktpwp'));
+            }
+            
+        } catch (Exception $e) {
+            $this->log_ajax_error('Exception during send staff chat message', array(
+                'message' => $e->getMessage(),
+                'order_id' => $_POST['order_id'] ?? 'unknown',
+            ));
+            wp_send_json_error(__('メッセージの送信中にエラーが発生しました', 'ktpwp'));
+        }
     }
 }

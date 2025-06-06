@@ -119,8 +119,16 @@ class KTPWP_Staff_Chat {
             
             foreach ( $missing_columns as $column ) {
                 foreach ( $columns_def as $def ) {
-                    if ( strpos( $def, $column ) === 0 ) {
-                        $wpdb->query( "ALTER TABLE `{$table_name}` ADD COLUMN {$def}" );
+                    if ( strpos( $def, $column . ' ' ) === 0 || strpos( $def, $column . '(' ) === 0 ) {
+                        // Skip adding PRIMARY KEY and INDEX through ALTER TABLE to avoid syntax errors
+                        if ( strpos( $def, 'PRIMARY KEY' ) !== false || strpos( $def, 'KEY ' ) !== false ) {
+                            continue;
+                        }
+                        
+                        $result = $wpdb->query( "ALTER TABLE `{$table_name}` ADD COLUMN {$def}" );
+                        if ( $result === false ) {
+                            error_log( 'KTPWP: Failed to add column: ' . $def . ' - ' . $wpdb->last_error );
+                        }
                         break;
                     }
                 }
@@ -265,6 +273,11 @@ class KTPWP_Staff_Chat {
         
         $display_name = $user_info->display_name ? $user_info->display_name : $user_info->user_login;
         
+        // デバッグログを追加
+        error_log('KTPWP: add_message - order_id: ' . $order_id . ', message: ' . $message);
+        error_log('KTPWP: add_message - table_name: ' . $table_name);
+        error_log('KTPWP: add_message - user_id: ' . $current_user_id . ', display_name: ' . $display_name);
+
         // Start transaction for concurrent access
         $wpdb->query( 'START TRANSACTION' );
         
@@ -325,8 +338,19 @@ class KTPWP_Staff_Chat {
     public function generate_html( $order_id ) {
         global $wpdb;
         
+        // Initialize variables
+        $header_html = '';
+        $scrollable_messages = array();
+        
+        // Check if order_id is valid
+        if ( ! $order_id || $order_id <= 0 ) {
+            return '<div class="order_memo_box box"><h4>■ スタッフチャット</h4><p>注文IDが無効です。</p></div>';
+        }
+        
         // Ensure table exists
-        $this->create_table();
+        if ( ! $this->create_table() ) {
+            return '<div class="order_memo_box box"><h4>■ スタッフチャット</h4><p>データベーステーブルの作成に失敗しました。</p></div>';
+        }
         
         // Get order creation time
         $order_table = $wpdb->prefix . 'ktp_order';
@@ -340,14 +364,11 @@ class KTPWP_Staff_Chat {
         
         // Create initial chat message if none exist
         if ( empty( $messages ) ) {
-            // Get order creator
-            $order_creator = $wpdb->get_row( $wpdb->prepare( 
-                "SELECT user_id FROM `{$order_table}` WHERE id = %d", 
-                $order_id 
-            ) );
+            // For orders without existing chat messages, create initial message with current user
+            $current_user_id = get_current_user_id();
             
-            if ( $order_creator && $order_creator->user_id ) {
-                $this->create_initial_chat( $order_id, $order_creator->user_id );
+            if ( $current_user_id && current_user_can( 'edit_posts' ) ) {
+                $this->create_initial_chat( $order_id, $current_user_id );
                 $messages = $this->get_messages( $order_id );
             }
         }
@@ -357,7 +378,8 @@ class KTPWP_Staff_Chat {
         $html .= '<h4>■ スタッフチャット';
         
         // Check URL parameter for chat open state
-        $chat_should_be_open = isset( $_GET['chat_open'] ) && $_GET['chat_open'] === '1';
+        // デフォルトでは表示状態にする（chat_open=0が明示的に指定された場合のみ非表示）
+        $chat_should_be_open = !isset( $_GET['chat_open'] ) || $_GET['chat_open'] !== '0';
         $aria_expanded = $chat_should_be_open ? 'true' : 'false';
         $button_text = $chat_should_be_open ? esc_html__( '非表示', 'ktpwp' ) : esc_html__( '表示', 'ktpwp' );
         
@@ -376,8 +398,6 @@ class KTPWP_Staff_Chat {
             $html .= '<div class="staff-chat-empty">' . esc_html__( 'メッセージはありません。', 'ktpwp' ) . '</div>';
         } else {
             // Separate fixed header from scrollable messages
-            $header_html = '';
-            $scrollable_messages = array();
             
             foreach ( $messages as $index => $message ) {
                 if ( $index === 0 && intval( $message['is_initial'] ) === 1 ) {
@@ -445,7 +465,9 @@ class KTPWP_Staff_Chat {
         $html .= '</div>'; // .staff-chat-messages
         
         // Message input form (for users with edit permissions only)
-        if ( current_user_can( 'edit_posts' ) ) {
+        $can_edit = current_user_can( 'edit_posts' );
+        
+        if ( $can_edit ) {
             $html .= '<form class="staff-chat-form" method="post" action="" id="staff-chat-form">';
             $html .= '<input type="hidden" name="staff_chat_order_id" value="' . esc_attr( $order_id ) . '">';
             $html .= wp_nonce_field( 'staff_chat_action', 'staff_chat_nonce', true, false );
@@ -463,42 +485,57 @@ class KTPWP_Staff_Chat {
     }
 
     /**
-     * Get latest staff chat messages via AJAX (for real-time updates)
+     * Get messages after specified timestamp
      *
      * @since 1.0.0
      * @param int $order_id Order ID
-     * @param string $last_message_time Last message timestamp
-     * @return array New messages since last check
+     * @param string $last_time Last message timestamp
+     * @return array Array of messages
      */
-    public function get_latest_messages( $order_id, $last_message_time = null ) {
+    public function get_messages_after( $order_id, $last_time = '' ) {
         if ( ! $order_id || $order_id <= 0 ) {
             return array();
         }
         
         // Permission check
-        if ( ! current_user_can( 'edit_posts' ) ) {
+        if ( ! current_user_can( 'read' ) ) {
             return array();
         }
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_order_staff_chat';
         
-        $sql = "SELECT * FROM {$table_name} WHERE order_id = %d";
+        // Build query with proper escaping
+        $sql = "SELECT * FROM `{$table_name}` WHERE order_id = %d";
         $params = array( $order_id );
         
-        if ( $last_message_time ) {
-            $sql .= " AND created_at > %s";
-            $params[] = $last_message_time;
+        if ( ! empty( $last_time ) ) {
+            $sql .= ' AND created_at > %s';
+            $params[] = sanitize_text_field( $last_time );
         }
         
-        $sql .= " ORDER BY created_at ASC";
+        $sql .= ' ORDER BY created_at ASC';
         
-        $messages = $wpdb->get_results( 
-            $wpdb->prepare( $sql, $params ),
-            ARRAY_A
-        );
+        $messages = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A );
         
-        return $messages ? $messages : array();
+        if ( ! $messages ) {
+            return array();
+        }
+        
+        // Format messages for AJAX response
+        $formatted_messages = array();
+        foreach ( $messages as $message ) {
+            $formatted_messages[] = array(
+                'id'                => intval( $message['id'] ),
+                'user_display_name' => esc_html( $message['user_display_name'] ),
+                'message'           => esc_html( $message['message'] ),
+                'created_at'        => $message['created_at'],
+                'timestamp'         => strtotime( $message['created_at'] ),
+                'is_initial'        => intval( $message['is_initial'] ),
+            );
+        }
+        
+        return $formatted_messages;
     }
 
 } // End of KTPWP_Staff_Chat class

@@ -76,12 +76,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (staffChatToggleBtn && staffChatContent) {
         // URLパラメータでチャットを開く状態を確認
         var urlParams = new URLSearchParams(window.location.search);
-        var chatShouldBeOpen = urlParams.get('chat_open') === '1';
+        // デフォルトでは表示状態（chat_open=0が明示的に指定された場合のみ非表示）
+        var chatShouldBeOpen = urlParams.get('chat_open') !== '0';
         var messageSent = urlParams.get('message_sent') === '1';
         
-        // チャットを開くのは、chat_open=1 AND message_sent=1 の場合のみ
-        // （メッセージ送信直後のみ。タブクリック時は開かない）
-        var shouldOpenChat = chatShouldBeOpen && messageSent;
+        // チャットを開くのは、デフォルトまたはメッセージ送信直後
+        var shouldOpenChat = chatShouldBeOpen;
         
         // デバッグモードでのみログ出力
         if (window.ktpDebugMode) {
@@ -170,10 +170,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         
-        // 初期状態を設定（メッセージ送信直後の場合のみチャットを開く）
+        // 初期状態を設定（デフォルトで表示、chat_open=0の場合のみ非表示）
         if (shouldOpenChat) {
             if (window.ktpDebugMode) {
-                console.log('メッセージ送信直後のため、チャットを開きます');
+                console.log('チャットをデフォルト表示状態で初期化');
             }
             staffChatContent.style.display = 'block';
             staffChatToggleBtn.setAttribute('aria-expanded', 'true');
@@ -190,20 +190,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             if (window.ktpDebugMode) {
-                console.log('チャットを閉じた状態で初期化');
+                console.log('chat_open=0が指定されているため、チャットを閉じた状態で初期化');
             }
             staffChatContent.style.display = 'none';
             staffChatToggleBtn.setAttribute('aria-expanded', 'false');
-            
-            // タブクリック時など、不要なパラメータがある場合は削除
-            if (chatShouldBeOpen && !messageSent) {
-                if (window.ktpDebugMode) {
-                    console.log('chat_openパラメータを削除（メッセージ送信後ではないため）');
-                }
-                var newUrl = new URL(window.location);
-                newUrl.searchParams.delete('chat_open');
-                window.history.replaceState({}, '', newUrl);
-            }
         }
         
         // 項目数を取得してボタンテキストに追加
@@ -293,12 +283,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // チャット関連パラメータのクリーンアップ（タブ切り替え時）
-    // message_sent=1がない場合、chat_open=1は不要なので削除
+    // デフォルトで表示になったので、chat_open=1は不要になった
     var currentParams = new URLSearchParams(window.location.search);
     var hasMessageSent = currentParams.get('message_sent') === '1';
-    var hasChatOpen = currentParams.get('chat_open') === '1';
+    var hasChatOpen = currentParams.get('chat_open');
     
-    if (hasChatOpen && !hasMessageSent) {
+    // chat_open=1 または message_sent以外のchat_openパラメータがある場合は削除
+    if (hasChatOpen && hasChatOpen !== '0' && !hasMessageSent) {
         if (window.ktpDebugMode) {
             console.log('タブ処理: 不要なchat_openパラメータを削除');
         }
@@ -516,12 +507,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var chatForm = document.getElementById('staff-chat-form');
     if (chatForm) {
         chatForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // デフォルトのフォーム送信を防ぐ
+            
             var messageInput = document.getElementById('staff-chat-input');
             var submitButton = document.getElementById('staff-chat-submit');
+            var orderId = document.querySelector('input[name="staff_chat_order_id"]')?.value;
             
-            if (messageInput && messageInput.value.trim() === '') {
-                e.preventDefault();
+            if (!messageInput || messageInput.value.trim() === '') {
                 messageInput.focus();
+                return false;
+            }
+            
+            if (!orderId) {
+                console.error('注文IDが見つかりません');
                 return false;
             }
             
@@ -530,6 +528,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButton.disabled = true;
                 submitButton.textContent = '送信中...';
             }
+            
+            // AJAX でメッセージを送信
+            var xhr = new XMLHttpRequest();
+            var url = ajaxurl || window.location.href;
+            var params = 'action=send_staff_chat_message&order_id=' + orderId + '&message=' + encodeURIComponent(messageInput.value.trim());
+            
+            // nonceを追加
+            if (typeof ktpwp_ajax !== 'undefined' && ktpwp_ajax.nonces && ktpwp_ajax.nonces.staff_chat) {
+                params += '&_ajax_nonce=' + ktpwp_ajax.nonces.staff_chat;
+            }
+            
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+            
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    // 送信ボタンを復元
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = '送信';
+                    }
+                    
+                    if (xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                // メッセージをクリア
+                                messageInput.value = '';
+                                updateSubmitButton();
+                                
+                                // 新しいメッセージを即座に取得
+                                setTimeout(pollNewMessages, 100);
+                            } else {
+                                console.error('メッセージ送信エラー:', response.data);
+                                alert('メッセージの送信に失敗しました: ' + (response.data || '不明なエラー'));
+                            }
+                        } catch (e) {
+                            console.error('レスポンス解析エラー:', e);
+                            alert('メッセージの送信中にエラーが発生しました');
+                        }
+                    } else {
+                        console.error('HTTP エラー:', xhr.status);
+                        alert('サーバーエラーが発生しました');
+                    }
+                }
+            };
+            
+            xhr.send(params);
         });
     }
 
@@ -548,7 +594,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Ctrl+Enter または Cmd+Enter で送信
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 if (!submitButton.disabled) {
-                    chatForm.submit();
+                    // フォームのsubmitイベントをトリガー
+                    if (chatForm) {
+                        var event = new Event('submit', { bubbles: true, cancelable: true });
+                        chatForm.dispatchEvent(event);
+                    }
                 }
             }
         });
@@ -616,6 +666,11 @@ if (document.getElementById('staff-chat-messages')) {
         var params = 'action=get_latest_staff_chat&order_id=' + orderId;
         if (lastMessageTime) {
             params += '&last_time=' + encodeURIComponent(lastMessageTime);
+        }
+        
+        // nonceを追加
+        if (typeof ktpwp_ajax !== 'undefined' && ktpwp_ajax.nonces && ktpwp_ajax.nonces.staff_chat) {
+            params += '&_ajax_nonce=' + ktpwp_ajax.nonces.staff_chat;
         }
         
         xhr.open('POST', url, true);

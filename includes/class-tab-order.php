@@ -300,20 +300,6 @@ class Kntan_Order_Class {
     }
 
     /**
-     * Get latest staff chat messages using new class structure
-     * 
-     * @deprecated Use KTPWP_Staff_Chat::get_latest_messages() instead
-     * @since 1.0.0
-     * @param int $order_id Order ID
-     * @param string|null $last_message_time Timestamp of last message
-     * @return array Array of chat messages
-     */
-    public function Get_Latest_Staff_Chat_Messages( $order_id, $last_message_time = null ) {
-        $staff_chat = KTPWP_Staff_Chat::get_instance();
-        return $staff_chat->get_latest_messages( $order_id, $last_message_time );
-    }
-
-    /**
      * Display order tab view
      *
      * @since 1.0.0
@@ -1265,7 +1251,11 @@ $content .= '</div>';
                 $content .= '</div>'; // #cost-items-content 終了
                 $content .= '</div>'; // .order_cost_box 終了
                 // スタッフチャットセクションを追加（タイトルなし）
-                $content .= $this->Generate_Staff_Chat_HTML( $order_id );
+                $content .= '<!-- DEBUG: スタッフチャット開始 -->';
+                $staff_chat_html = $this->Generate_Staff_Chat_HTML( $order_id );
+                $content .= '<!-- DEBUG: スタッフチャットHTML長: ' . strlen($staff_chat_html) . ' -->';
+                $content .= $staff_chat_html;
+                $content .= '<!-- DEBUG: スタッフチャット終了 -->';
                 // 受注書内容セクションの終了
                 $content .= '</div>'; // .order_contents 終了
 
