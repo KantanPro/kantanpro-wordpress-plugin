@@ -3,7 +3,7 @@
  * Plugin Name: KantanPro
  * Plugin URI: https://ktpwp.com/
  * Description: 包括的なビジネス管理プラグイン。ショートコード[ktpwp_all_tab]で7つのタブ（仕事リスト・伝票処理・得意先・サービス・協力会社・レポート・設定）による完全なワークフロー管理を実現。
- * Version: beta 1.0.0
+ * Version: beta
  * Author: KantanPro
  * Author URI: https://ktpwp.com/blog/
  * License: GPL v2 or later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // プラグイン定数定義
 if ( ! defined( 'KTPWP_PLUGIN_VERSION' ) ) {
-    define( 'KTPWP_PLUGIN_VERSION', 'beta 1.0.0' );
+    define( 'KTPWP_PLUGIN_VERSION', 'beta' );
 }
 if ( ! defined( 'KTPWP_PLUGIN_NAME' ) ) {
     define( 'KTPWP_PLUGIN_NAME', 'KantanPro' );
@@ -97,17 +97,6 @@ function ktpwp_autoload_classes() {
             $full_path = MY_PLUGIN_PATH . $file_path;
             if ( file_exists( $full_path ) ) {
                 require_once $full_path;
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( "KTPWP Autoloader: Loaded {$class_name} from {$file_path}" );
-                }
-            } else {
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( "KTPWP Autoloader: File not found for {$class_name}: {$full_path}" );
-                }
-            }
-        } else {
-            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                error_log( "KTPWP Autoloader: Class {$class_name} already exists" );
             }
         }
     }
@@ -171,15 +160,7 @@ function ktpwp_add_security_headers() {
 }
 add_action( 'admin_init', 'ktpwp_add_security_headers' );
 
-// プラグインのアクティベーション時の処理を登録
-// register_activation_hook(KTPWP_PLUGIN_FILE, 'ktp_table_setup'); // テーブル作成処理
-register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate')); // 設定クラスのアクティベート処理
-
-// プラグインの有効化時にデバッグログを追加
-add_action( 'init', function() {
-    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-    }
-} );
+register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate'));
 
 // 翻訳ファイルの読み込み（WordPressガイドラインに準拠）
 function ktpwp_load_textdomain() {
@@ -197,9 +178,6 @@ class KTPWP_Redirect {
     }
 
     public function handle_redirect() {
-        // デバッグ用ログ
-
-        // ショートコードが含まれるページの場合はリダイレクトしない
         if (isset($_GET['tab_name']) || $this->has_ktpwp_shortcode()) {
             return;
         }
@@ -221,7 +199,6 @@ class KTPWP_Redirect {
                         $clean_external_url = $parsed['scheme'] . '://' . $host . (isset($parsed['path']) ? $parsed['path'] : '');
                         wp_redirect($clean_external_url, 301);
                         exit;
-                    } else {
                     }
                 }
             }
@@ -390,9 +367,6 @@ function ktpwp_handle_form_redirect() {
         // 新しいパラメータを追加してリダイレクト
         $redirect_url = add_query_arg($redirect_params, $clean_url);
 
-        // デバッグ用：リダイレクトURLをログに記録
-
-        // リダイレクト実行
         wp_redirect($redirect_url, 302);
         exit;
     }
@@ -426,11 +400,7 @@ function ktpwp_handle_form_redirect() {
     */
 }
 
-// WordPress初期化時に処理を実行（より早いタイミングで実行）
-add_action('wp_loaded', 'ktpwp_handle_form_redirect', 1); // コメントアウト解除
-
-// リダイレクト処理を初期化
-// new KTPWP_Redirect(); // This line is duplicated, already commented out above.
+add_action('wp_loaded', 'ktpwp_handle_form_redirect', 1);
 
 
 // ファイルをインクルード
@@ -439,9 +409,7 @@ if (file_exists(MY_PLUGIN_PATH . 'includes/class-ktp-settings.php')) {
     include_once MY_PLUGIN_PATH . 'includes/class-ktp-settings.php';
 } else {
     add_action( 'admin_notices', function() {
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( 'KTPWP Critical Error: includes/class-ktp-settings.php not found.' );
-        }
+        echo '<div class="notice notice-error"><p>' . __('KTPWP Critical Error: includes/class-ktp-settings.php not found.', 'ktpwp') . '</p></div>';
     } );
 }
 
@@ -534,19 +502,6 @@ add_action( 'admin_enqueue_scripts', 'ktpwp_scripts_and_styles' );
  * Ajax ハンドラーを初期化（旧システム用）
  */
 function ktpwp_init_ajax_handlers() {
-    // 旧オーダークラスのAJAXハンドラー - KTPWP_Ajaxクラスで処理されるためコメントアウト
-    // require_once plugin_dir_path(__FILE__) . 'includes/class-tab-order.php';
-
-    // インスタンスを作成（Ajaxハンドラー登録のため）
-    // $order_instance = new Kntan_Order_Class();
-
-    // Ajaxハンドラーを登録 - KTPWP_Ajaxクラスで処理
-    // add_action('wp_ajax_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
-    // add_action('wp_ajax_nopriv_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
-
-    // 新規アイテム作成用Ajaxハンドラーを登録 - KTPWP_Ajaxクラスで処理
-    // add_action('wp_ajax_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
-    // add_action('wp_ajax_nopriv_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
 }
 add_action('init', 'ktpwp_init_ajax_handlers');
 
@@ -578,22 +533,16 @@ function ktp_table_setup() {
         $client = new Kntan_Client_Class();
         $client->Create_Table('client');
         // $client->Update_Table('client');
-    }
-    if (class_exists('Kntan_Service_Class')) {
-        $service = new Kntan_Service_Class();
-        $service->Create_Table('service');
-        // $service->Update_Table('service');
-    }
-    if (class_exists('Kantan_Supplier_Class')) {
-        $supplier = new Kantan_Supplier_Class();
-        $supplier->Create_Table('supplier');
-        // $supplier->Update_Table('supplier');
-    }
-    if (class_exists('KTPWP_Setting_Class')) {
-        $setting = new KTPWP_Setting_Class();
-        $setting->Create_Table('setting');
-        // $setting->Update_Table('setting');
-    }
+    }        if (class_exists('Kntan_Service_Class')) {
+            $service = new Kntan_Service_Class();
+            $service->Create_Table('service');
+        }        if (class_exists('Kantan_Supplier_Class')) {
+            $supplier = new Kantan_Supplier_Class();
+            $supplier->Create_Table('supplier');
+        }        if (class_exists('KTPWP_Setting_Class')) {
+            $setting = new KTPWP_Setting_Class();
+            $setting->Create_Table('setting');
+        }
 }
 register_activation_hook(KTPWP_PLUGIN_FILE, 'ktp_table_setup'); // テーブル作成処理
 register_activation_hook(KTPWP_PLUGIN_FILE, array('KTP_Settings', 'activate')); // 設定クラスのアクティベート処理
@@ -605,9 +554,8 @@ function check_activation_key() {
 }
 
 function add_htmx_to_head() {
-    // echo '<script src="https://unpkg.com/htmx.org@1.6.1"></script>';
 }
-// add_action('wp_head', 'add_htmx_to_head');
+add_action('wp_head', 'add_htmx_to_head');
 
 function KTPWP_Index(){
 
@@ -710,41 +658,22 @@ function KTPWP_Index(){
             }
 
             // デバッグ：タブ処理開始
-            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            }
 
             switch ($tab_name) {
                 case 'list':
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
                     $list = new Kantan_List_Class();
                     $list_content = $list->List_Tab_View($tab_name);
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
                     break;
                 case 'order':
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
                     $order = new Kntan_Order_Class();
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
                     $order_content = $order->Order_Tab_View($tab_name);
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
-                    // Nullチェックを追加して空文字列で初期化
                     $order_content = $order_content ?? '';
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    }
                     break;
                 case 'client':
                     $client = new Kntan_Client_Class();
                     if (current_user_can('manage_options')) {
                         $client->Create_Table($tab_name);
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        }
                         $client->Update_Table($tab_name);
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        }
                     }
                     $client_content = $client->View_Table($tab_name);
                     break;
@@ -757,32 +686,12 @@ function KTPWP_Index(){
                     $service_content = $service->View_Table($tab_name);
                     break;
                 case 'supplier':
-                    // Enhanced debug logging for supplier processing
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        error_log( 'KTPWP DEBUG: Entering supplier case. REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD'] );
-                        error_log( 'KTPWP DEBUG: GET parameters: ' . print_r( $_GET, true ) );
-                        if ( ! empty( $_POST ) ) {
-                            error_log( 'KTPWP DEBUG: POST data detected: ' . print_r( $_POST, true ) );
-                        } else {
-                            error_log( 'KTPWP DEBUG: No POST data found' );
-                        }
-                        error_log( 'KTPWP DEBUG: Current user can manage options: ' . ( current_user_can('manage_options') ? 'YES' : 'NO' ) );
-                    }
-
                     $supplier = new KTPWP_Supplier_Class();
                     if (current_user_can('manage_options')) {
                         $supplier->Create_Table($tab_name);
 
-                        // Only call Update_Table if POST data exists
                         if ( ! empty( $_POST ) ) {
-                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                                error_log( 'KTPWP DEBUG: Calling supplier Update_Table with POST data' );
-                            }
                             $supplier->Update_Table($tab_name);
-                        } else {
-                            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                                error_log( 'KTPWP DEBUG: Skipping Update_Table - no POST data' );
-                            }
                         }
                     }
                     $supplier_content = $supplier->View_Table($tab_name);
@@ -1012,12 +921,6 @@ if (!class_exists('Kantan_Login_Error')) {
 if (!class_exists('Kntan_Report_Class')) {
     include_once(MY_PLUGIN_PATH . 'includes/class-tab-report.php');
 }
-
-if (defined('WP_DEBUG') && WP_DEBUG) {
-}
-
-// ktp-js.js の読み込みをデバッグログに記録
-error_log('KTPWP DEBUG: Enqueuing ktp-js.js');
 
 /**
  * Contact Form 7の送信データをwp_ktp_clientテーブルに登録する

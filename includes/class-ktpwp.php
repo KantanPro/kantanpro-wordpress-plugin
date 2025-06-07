@@ -1,7 +1,7 @@
 <?php
 /**
  * 後方互換性ファイル
- * 
+ *
  * クラス名の互換性を保持するためのブリッジファイル
  *
  * @package KTPWP
@@ -22,24 +22,24 @@ require_once KTPWP_PLUGIN_DIR . 'includes/class-ktpwp-main.php';
  * 旧KTPWP_Mainクラスとの互換性を維持するためのクラス
  */
 class KTPWP {
-    
+
     /**
      * シングルトンインスタンス
-     * 
+     *
      * @var KTPWP
      */
     private static $instance = null;
-    
+
     /**
      * メインプラグインクラスのインスタンス
      *
      * @var KTPWP_Main
      */
     private $main;
-    
+
     /**
      * インスタンス取得
-     * 
+     *
      * @return KTPWP (実際にはKTPWP_Mainクラスを返す)
      */
     public static function get_instance() {
@@ -48,7 +48,7 @@ class KTPWP {
         }
         return self::$instance;
     }
-    
+
     /**
      * コンストラクタ
      */
@@ -56,7 +56,7 @@ class KTPWP {
         // 新しいメインクラスをインスタンス化
         $this->main = KTPWP_Main::get_instance();
     }
-    
+
     /**
      * マジックメソッド: 存在しないメソッドはメインクラスに移譲
      *
@@ -68,14 +68,11 @@ class KTPWP {
         if (method_exists($this->main, $name)) {
             return call_user_func_array(array($this->main, $name), $arguments);
         }
-        
-        // 該当するメソッドがない場合はエラーログを出力
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: Method ' . $name . ' does not exist.');
-        }
+
+
         return null;
     }
-    
+
     /**
      * マジックメソッド: 存在しないスタティックメソッドはメインクラスに移譲
      *
@@ -88,14 +85,11 @@ class KTPWP {
         if (method_exists($instance, $name)) {
             return call_user_func_array(array($instance, $name), $arguments);
         }
-        
-        // 該当するメソッドがない場合はエラーログを出力
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: Static method ' . $name . ' does not exist.');
-        }
+
+
         return null;
     }
-    
+
     /**
      * メインクラスのプロパティにアクセスするマジックメソッド
      *
@@ -106,14 +100,11 @@ class KTPWP {
         if (property_exists($this->main, $name)) {
             return $this->main->$name;
         }
-        
-        // 該当するプロパティがない場合はエラーログを出力
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP: Property ' . $name . ' does not exist.');
-        }
+
+
         return null;
     }
-    
+
     /**
      * メインインスタンスを直接取得
      *
@@ -122,46 +113,46 @@ class KTPWP {
     public function get_main_instance() {
         return $this->main;
     }
-    
+
     /**
      * ローダーインスタンスを取得
-     * 
+     *
      * @return KTPWP_Loader
      */
     public function get_loader() {
         return $this->main->get_loader();
     }
-    
+
     /**
      * セキュリティインスタンスを取得
-     * 
+     *
      * @return KTPWP_Security
      */
     public function get_security() {
         return $this->main->get_security();
     }
-    
+
     /**
      * アセットインスタンスを取得
-     * 
+     *
      * @return KTPWP_Assets
      */
     public function get_assets() {
         return $this->main->get_assets();
     }
-    
+
     /**
      * ショートコードインスタンスを取得
-     * 
+     *
      * @return KTPWP_Shortcodes
      */
     public function get_shortcodes() {
         return $this->main->get_shortcodes();
     }
-    
+
     /**
      * Ajaxインスタンスを取得
-     * 
+     *
      * @return KTPWP_Ajax
      */
     public function get_ajax() {
@@ -170,7 +161,7 @@ class KTPWP {
 
     /**
      * リダイレクトインスタンスを取得
-     * 
+     *
      * @return KTPWP_Redirect
      */
     public function get_redirect() {
@@ -179,7 +170,7 @@ class KTPWP {
 
     /**
      * Contact Formインスタンスを取得
-     * 
+     *
      * @return KTPWP_Contact_Form
      */
     public function get_contact_form() {
@@ -188,7 +179,7 @@ class KTPWP {
 
     /**
      * GitHub Updaterインスタンスを取得
-     * 
+     *
      * @return KTPWP_GitHub_Updater
      */
     public function get_github_updater() {
@@ -197,7 +188,7 @@ class KTPWP {
 
     /**
      * データベースインスタンスを取得
-     * 
+     *
      * @return KTPWP_Database
      */
     public function get_database() {

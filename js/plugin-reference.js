@@ -3,12 +3,12 @@
  * プラグインリファレンスモーダル用JavaScript
  */
 
-(function($) {
+(function ($) {
     'use strict';
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         // リファレンスリンクのクリックイベント
-        $(document).on('click', '.ktpwp-reference-link', function(e) {
+        $(document).on('click', '.ktpwp-reference-link', function (e) {
             e.preventDefault();
             openReferenceModal();
         });
@@ -64,14 +64,14 @@
         }
 
         // モーダルを閉じる
-        $(document).on('click', '.ktpwp-modal-close, .ktpwp-modal-overlay', function(e) {
+        $(document).on('click', '.ktpwp-modal-close, .ktpwp-modal-overlay', function (e) {
             if (e.target === this) {
                 closeReferenceModal();
             }
         });
 
         // ESCキーでモーダルを閉じる
-        $(document).on('keydown', function(e) {
+        $(document).on('keydown', function (e) {
             if (e.keyCode === 27 && $('#ktpwp-reference-modal').is(':visible')) {
                 closeReferenceModal();
             }
@@ -84,20 +84,20 @@
         }
 
         // ナビゲーションクリックイベント
-        $(document).on('click', '.ktpwp-reference-nav a', function(e) {
+        $(document).on('click', '.ktpwp-reference-nav a', function (e) {
             e.preventDefault();
             var section = $(this).data('section');
-            
+
             // アクティブ状態を切り替え
             $('.ktpwp-reference-nav a').removeClass('active');
             $(this).addClass('active');
-            
+
             // セクションを読み込み
             loadReferenceSection(section);
         });
 
         // キャッシュクリアボタンクリックイベント
-        $(document).on('click', '.ktpwp-clear-cache-btn', function(e) {
+        $(document).on('click', '.ktpwp-clear-cache-btn', function (e) {
             e.preventDefault();
             clearReferenceCache();
         });
@@ -106,11 +106,11 @@
         function loadReferenceSection(section) {
             var $loading = $('#ktpwp-reference-loading');
             var $content = $('#ktpwp-reference-text');
-            
+
             // ローディング表示
             $loading.show();
             $content.hide();
-            
+
             // Ajax でセクションデータを取得（キャッシュ無効化）
             $.ajax({
                 url: ktpwp_reference.ajax_url,
@@ -122,18 +122,18 @@
                     section: section,
                     _timestamp: Date.now() // キャッシュバスター
                 },
-                success: function(response) {
+                success: function (response) {
                     $loading.hide();
                     if (response.success) {
                         $content.html(response.data.content).show();
-                        
+
                         // リファレンス更新情報を表示
                         updateReferenceInfo(response.data);
                     } else {
                         $content.html('<p class="error">' + response.data + '</p>').show();
                     }
                 },
-                error: function() {
+                error: function () {
                     $loading.hide();
                     $content.html('<p class="error">' + ktpwp_reference.strings.error_loading + '</p>').show();
                 }
@@ -147,15 +147,15 @@
                 var infoHTML = `
                     <div class="ktpwp-reference-info">
                         <small>
-                            バージョン: ${data.version} | 
+                            バージョン: ${data.version} |
                             最終更新: ${lastUpdated.toLocaleDateString('ja-JP')} ${lastUpdated.toLocaleTimeString('ja-JP')}
                         </small>
                     </div>
                 `;
-                
+
                 // 既存の情報があれば削除
                 $('.ktpwp-reference-info').remove();
-                
+
                 // 新しい情報をヘッダーに追加
                 $('.ktpwp-modal-header').append(infoHTML);
             }
@@ -171,7 +171,7 @@
                     action: 'ktpwp_clear_reference_cache',
                     nonce: ktpwp_reference.nonce
                 },
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         // 現在のセクションを再読み込み
                         var currentSection = $('.ktpwp-reference-nav a.active').data('section') || 'overview';
@@ -185,9 +185,9 @@
         function clearReferenceCache() {
             var $btn = $('.ktpwp-clear-cache-btn');
             var originalText = $btn.text();
-            
+
             $btn.text('クリア中...').prop('disabled', true);
-            
+
             $.ajax({
                 url: ktpwp_reference.ajax_url,
                 type: 'POST',
@@ -197,15 +197,14 @@
                     nonce: ktpwp_reference.nonce,
                     _timestamp: Date.now()
                 },
-                success: function(response) {
+                success: function (response) {
                     $btn.text(originalText).prop('disabled', false);
-                    console.log('Cache clear response:', response);
-                    
+
                     if (response.success) {
                         // 現在のアクティブセクションを再読み込み
                         var activeSection = $('.ktpwp-reference-nav a.active').data('section') || 'overview';
                         loadReferenceSection(activeSection);
-                        
+
                         // 成功メッセージを表示
                         showCacheMessage(response.data.message || 'キャッシュをクリアしました', 'success');
                     } else {
@@ -213,9 +212,8 @@
                         showCacheMessage(errorMsg, 'error');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     $btn.text(originalText).prop('disabled', false);
-                    console.error('Cache clear error:', status, error, xhr.responseText);
                     showCacheMessage('キャッシュクリアでエラーが発生しました: ' + error, 'error');
                 }
             });
@@ -225,11 +223,11 @@
         function showCacheMessage(message, type) {
             var messageClass = type === 'success' ? 'success' : 'error';
             var $message = $('<div class="ktpwp-cache-message ' + messageClass + '">' + message + '</div>');
-            
+
             $('.ktpwp-modal-header').append($message);
-            
-            setTimeout(function() {
-                $message.fadeOut(function() {
+
+            setTimeout(function () {
+                $message.fadeOut(function () {
                     $message.remove();
                 });
             }, 3000);

@@ -14,7 +14,6 @@
         let ajaxUrl = ajaxurl;
         if (!ajaxUrl) {
             ajaxUrl = '/wp-admin/admin-ajax.php';
-            console.warn('ajaxurl not defined, using fallback');
         }
         
         const ajaxData = {
@@ -27,28 +26,21 @@
             nonce: ktp_ajax_nonce || ''
         };
         
-        console.log('Sending Ajax request:', ajaxData);
-        console.log('Ajax URL:', ajaxUrl);
         
         $.ajax({
             url: ajaxUrl,
             type: 'POST',
             data: ajaxData,
             success: function(response) {
-                console.log('Ajax response received:', response);
                 try {
                     const result = typeof response === 'string' ? JSON.parse(response) : response;
                     if (result.success) {
-                        console.log('Auto-saved successfully');
                     } else {
-                        console.error('Auto-save failed:', result.message);
                     }
                 } catch (e) {
-                    console.error('Auto-save response parse error:', e, 'Raw response:', response);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Auto-save Ajax error:', {
                     status: status,
                     error: error,
                     responseText: xhr.responseText,
@@ -63,8 +55,6 @@
         let ajaxUrl = ajaxurl;
         if (!ajaxUrl) {
             ajaxUrl = '/wp-admin/admin-ajax.php';
-            if (window.ktpDebugMode) {
-                console.warn('ajaxurl not defined, using fallback');
             }
         }
         
@@ -77,8 +67,6 @@
             nonce: ktp_ajax_nonce || ''
         };
         
-        if (window.ktpDebugMode) {
-            console.log('Creating new item:', ajaxData);
         }
         
         $.ajax({
@@ -86,31 +74,21 @@
             type: 'POST',
             data: ajaxData,
             success: function(response) {
-                if (window.ktpDebugMode) {
-                    console.log('New item creation response:', response);
                 }
                 try {
                     const result = typeof response === 'string' ? JSON.parse(response) : response;
                     if (result.success && result.item_id) {
                         // 新しいIDをhidden inputに設定
                         $row.find('input[name*="[id]"]').val(result.item_id);
-                        if (window.ktpDebugMode) {
-                            console.log('New item created with ID:', result.item_id);
                         }
                     } else {
-                        if (window.ktpDebugMode) {
-                            console.error('New item creation failed:', result.message);
                         }
                     }
                 } catch (e) {
-                    if (window.ktpDebugMode) {
-                        console.error('New item creation response parse error:', e, 'Raw response:', response);
                     }
                 }
             },
             error: function(xhr, status, error) {
-                if (window.ktpDebugMode) {
-                    console.error('New item creation Ajax error:', {
                         status: status,
                         error: error,
                         responseText: xhr.responseText,
@@ -283,7 +261,6 @@
     // ページ読み込み完了時の初期化
     $(document).ready(function() {
         // デバッグモードを有効化
-        window.ktpDebugMode = true;
         
         // 並び替え（sortable）有効化
         $('.invoice-items-table tbody').sortable({
@@ -377,8 +354,6 @@
             const itemId = $row.find('input[name*="[id]"]').val();
             const orderId = $('input[name="order_id"]').val() || $('#order_id').val();
             
-            if (window.ktpDebugMode) {
-                console.log('Auto-save debug:', {
                     productName: productName,
                     itemId: itemId,
                     orderId: orderId,
@@ -397,8 +372,6 @@
                     window.autoSaveItem('invoice', itemId, 'product_name', productName, orderId);
                 }
             } else {
-                if (window.ktpDebugMode) {
-                    console.log('Auto-save skipped - missing required data');
                 }
             }
         });
@@ -414,8 +387,6 @@
             // 金額を再計算
             calculateAmount($row);
             
-            if (window.ktpDebugMode) {
-                console.log('Invoice price auto-save debug:', {
                     price: price,
                     itemId: itemId,
                     orderId: orderId,
@@ -434,8 +405,6 @@
                     window.autoSaveItem('invoice', itemId, 'price', price, orderId);
                 }
             } else {
-                if (window.ktpDebugMode) {
-                    console.log('Invoice price auto-save skipped - missing required data');
                 }
             }
         });
@@ -451,8 +420,6 @@
             // 金額を再計算
             calculateAmount($row);
             
-            if (window.ktpDebugMode) {
-                console.log('Invoice quantity auto-save debug:', {
                     quantity: quantity,
                     itemId: itemId,
                     orderId: orderId,
@@ -471,8 +438,6 @@
                     window.autoSaveItem('invoice', itemId, 'quantity', quantity, orderId);
                 }
             } else {
-                if (window.ktpDebugMode) {
-                    console.log('Invoice quantity auto-save skipped - missing required data');
                 }
             }
         });
@@ -485,8 +450,6 @@
             const itemId = $row.find('input[name*="[id]"]').val();
             const orderId = $('input[name="order_id"]').val() || $('#order_id').val();
             
-            if (window.ktpDebugMode) {
-                console.log('Invoice remarks auto-save debug:', {
                     remarks: remarks,
                     itemId: itemId,
                     orderId: orderId,
@@ -505,8 +468,6 @@
                     window.autoSaveItem('invoice', itemId, 'remarks', remarks, orderId);
                 }
             } else {
-                if (window.ktpDebugMode) {
-                    console.log('Invoice remarks auto-save skipped - missing required data');
                 }
             }
         });
@@ -519,8 +480,6 @@
             const itemId = $row.find('input[name*="[id]"]').val();
             const orderId = $('input[name="order_id"]').val() || $('#order_id').val();
             
-            if (window.ktpDebugMode) {
-                console.log('Invoice unit auto-save debug:', {
                     unit: unit,
                     itemId: itemId,
                     orderId: orderId,
@@ -539,8 +498,6 @@
                     window.autoSaveItem('invoice', itemId, 'unit', unit, orderId);
                 }
             } else {
-                if (window.ktpDebugMode) {
-                    console.log('Invoice unit auto-save skipped - missing required data');
                 }
             }
         });

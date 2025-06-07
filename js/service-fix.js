@@ -3,10 +3,10 @@
  * CSSの崩れを修正するJavaScript
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // KTPサービスリスト関連のクラスを持つ要素を修正
     // 特にktpwp-service-uiクラスから生成されたHTMLとの互換性を確保
-    
+
     // リスト項目のリンクにスタイルを適用
     const serviceLinks = document.querySelectorAll('.ktp_data_list_box a, .data_list_box a');
     serviceLinks.forEach(link => {
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.style.color = 'inherit';
         link.style.display = 'block';
     });
-    
+
     // サービスリストのボックスに正しいスタイルを適用
     const listBoxes = document.querySelectorAll('.ktp_data_list_box, .data_list_box');
     listBoxes.forEach(box => {
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         box.style.width = '100%';
         box.style.display = 'block';
     });
-    
+
     // タイトル部分のスタイル修正
     const titles = document.querySelectorAll('.data_list_title');
     titles.forEach(title => {
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         title.style.justifyContent = 'space-between';
         title.style.alignItems = 'center';
     });
-    
+
     // リスト項目のスタイル修正
     const listItems = document.querySelectorAll('.ktp_data_list_item, .data_list_item');
     listItems.forEach((item, index) => {
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
         item.style.transition = 'background-color 0.2s ease';
         item.style.position = 'relative';
         item.style.fontSize = '14px';
-        
+
         // 交互に色をつける
         if (index % 2 === 0) {
             item.style.backgroundColor = '#f9fafb';
@@ -56,10 +56,10 @@ document.addEventListener('DOMContentLoaded', function() {
             item.style.backgroundColor = '#ffffff';
         }
     });
-    
+
     // ホバー効果を追加
     serviceLinks.forEach(link => {
-        link.addEventListener('mouseenter', function() {
+        link.addEventListener('mouseenter', function () {
             const item = this.querySelector('.ktp_data_list_item, .data_list_item');
             if (item) {
                 item.style.backgroundColor = '#f0f7ff';
@@ -67,8 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.style.zIndex = '1';
             }
         });
-        
-        link.addEventListener('mouseleave', function() {
+
+        link.addEventListener('mouseleave', function () {
             const item = this.querySelector('.ktp_data_list_item, .data_list_item');
             const index = Array.from(serviceLinks).indexOf(this);
             if (item) {
@@ -82,6 +82,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    console.log('KTPWP: サービスリスト表示のスタイルを修正しました');
 });

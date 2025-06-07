@@ -340,7 +340,6 @@ class KTP_Settings {
 
         // デバッグ用: テーブル作成/更新が試行されたことをログに記録
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-            error_log( 'KTPWP Debug: create_or_update_tables executed.' );
             // テーブル構造の確認 (デバッグ時のみ)
         }
     }

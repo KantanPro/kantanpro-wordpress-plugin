@@ -34,7 +34,7 @@ class KTPWP_Supplier_Data {
      */
     public function create_table( $tab_name ) {
         global $wpdb;
-        
+
         if ( empty( $tab_name ) ) {
             error_log( 'KTPWP: Empty tab_name provided to create_table method' );
             return false;
@@ -43,18 +43,18 @@ class KTPWP_Supplier_Data {
         $table_name = $wpdb->prefix . 'ktp_' . sanitize_key( $tab_name );
         $my_table_version = '1.1'; // Increment version for representative_name field
         $option_name = 'ktp_' . $tab_name . '_table_version';
-        
+
         // Check if table needs to be created or updated
         $installed_version = get_option( $option_name );
-        
+
         if ( $installed_version !== $my_table_version ) {
             $default_company = __( 'Regular Supplier', 'ktpwp' );
             $default_tax = __( 'Tax Included', 'ktpwp' );
             $default_category = __( 'General', 'ktpwp' );
-            
+
             // Get charset collate
             $charset_collate = $wpdb->get_charset_collate();
-            
+
             $sql = $wpdb->prepare(
                 "CREATE TABLE %i (
                     id MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
@@ -89,23 +89,23 @@ class KTPWP_Supplier_Data {
 
             // Include upgrade functions
             require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-            
+
             if ( function_exists( 'dbDelta' ) ) {
                 $result = dbDelta( $sql );
-                
+
                 if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
                     error_log( 'KTPWP: Table creation result for ' . $table_name . ': ' . print_r( $result, true ) );
                 }
-                
+
                 if ( ! empty( $result ) ) {
                     add_option( 'ktp_' . $tab_name . '_table_version', $my_table_version );
                     return true;
                 }
-                
+
                 error_log( 'KTPWP: Failed to create table ' . $table_name );
                 return false;
             }
-            
+
             error_log( 'KTPWP: dbDelta function not available' );
             return false;
         }
@@ -130,14 +130,9 @@ class KTPWP_Supplier_Data {
         global $wpdb;
         $table_name = $wpdb->prefix . 'ktp_' . sanitize_key( $tab_name );
 
-        // Debug: Log the POST data received
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( 'KTPWP DEBUG: update_table called with POST data: ' . print_r( $post_data, true ) );
-        }
-
         // Security: CSRF protection - verify nonce on POST requests
         if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
-            if ( ! isset( $post_data['ktp_supplier_nonce'] ) || 
+            if ( ! isset( $post_data['ktp_supplier_nonce'] ) ||
                  ! wp_verify_nonce( $post_data['ktp_supplier_nonce'], 'ktp_supplier_action' ) ) {
                 error_log( 'KTPWP: Nonce verification failed' );
                 wp_die( __( 'Security check failed. Please refresh the page and try again.', 'ktpwp' ) );
@@ -157,40 +152,19 @@ class KTPWP_Supplier_Data {
         switch ( $query_post ) {
             case 'delete':
                 // Handle delete operation
-                // Debug: Log that we're handling a delete operation
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( 'KTPWP DEBUG: Starting delete operation for data_id: ' . $data_id );
-                }
-                
                 if ( $data_id > 0 ) {
                     $delete_result = $wpdb->delete( $table_name, array( 'id' => $data_id ), array( '%d' ) );
-                    
-                    // Debug: Log delete result
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        error_log( 'KTPWP DEBUG: Delete result: ' . ($delete_result !== false ? 'SUCCESS' : 'FAILED') );
-                        if ( $wpdb->last_error ) {
-                            error_log( 'KTPWP DEBUG: Database error: ' . $wpdb->last_error );
-                        }
-                    }
-                    
+
                     if ( $delete_result === false ) {
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                            error_log( 'KTPWP Supplier Delete error: ' . $wpdb->last_error ); 
-                        }
                         echo '<script>
                         document.addEventListener("DOMContentLoaded", function() {
                             showErrorNotification("' . esc_js( __( '削除に失敗しました。SQLエラー: ', 'ktpwp' ) ) . esc_js( $wpdb->last_error ) . '");
                         });
                         </script>';
                     } else {
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                            error_log( 'KTPWP Debug: supplier delete completed. data_id=' . $data_id ); 
-                        }
-
-                        // Clear cookie
                         $cookie_name = 'ktp_' . $tab_name . '_id';
                         setcookie( $cookie_name, '', time() - 3600, "/" );
-                        
+
                         // Prepare redirect URL
                         global $wp;
                         $current_page_id = get_queried_object_id();
@@ -202,7 +176,7 @@ class KTPWP_Supplier_Data {
                             'tab_name' => $tab_name,
                             'message' => 'deleted'
                         ), $base_page_url );
-                        
+
                         echo '<script>
                             document.addEventListener("DOMContentLoaded", function() {
                                 showSuccessNotification("' . esc_js( esc_html__( '協力会社を削除しました。', 'ktpwp' ) ) . '");
@@ -218,15 +192,10 @@ class KTPWP_Supplier_Data {
 
             case 'update':
                 // Handle update operation
-                // Debug: Log that we're handling an update operation
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( 'KTPWP DEBUG: Starting update operation for data_id: ' . $data_id );
-                }
-                
                 if ( $data_id > 0 ) {
                     // Sanitize all POST data for update operation
                     $sanitized_data = $this->sanitize_supplier_data( $post_data );
-                    
+
                     // Build search_field value
                     $search_field_value = implode(', ', [
                         current_time( 'timestamp' ),
@@ -251,9 +220,9 @@ class KTPWP_Supplier_Data {
                     ]);
 
                     // Perform database update
-                    $update_result = $wpdb->update( 
-                        $table_name, 
-                        array( 
+                    $update_result = $wpdb->update(
+                        $table_name,
+                        array(
                             'time' => current_time( 'timestamp' ),
                             'company_name' => $sanitized_data['company_name'],
                             'name' => $sanitized_data['user_name'],
@@ -280,32 +249,16 @@ class KTPWP_Supplier_Data {
                         array( '%d' )
                     );
 
-                    // Debug: Log update result
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                        error_log( 'KTPWP DEBUG: Update result: ' . ($update_result !== false ? 'SUCCESS' : 'FAILED') );
-                        if ( $wpdb->last_error ) {
-                            error_log( 'KTPWP DEBUG: Database error: ' . $wpdb->last_error );
-                        }
-                    }
-                    
                     if ( $update_result === false ) {
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                            error_log( 'KTPWP Supplier Update error: ' . $wpdb->last_error ); 
-                        }
                         echo '<script>
                         document.addEventListener("DOMContentLoaded", function() {
                             showErrorNotification("' . esc_js( __( '更新に失敗しました。SQLエラー: ', 'ktpwp' ) ) . esc_js( $wpdb->last_error ) . '");
                         });
                         </script>';
                     } else {
-                        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                            error_log( 'KTPWP Debug: supplier update completed. data_id=' . $data_id ); 
-                        }
-
-                        // Set cookie for the updated record
                         $cookie_name = 'ktp_' . $tab_name . '_id';
                         setcookie( $cookie_name, $data_id, time() + (86400 * 30), "/" );
-                        
+
                         // Prepare redirect URL
                         global $wp;
                         $current_page_id = get_queried_object_id();
@@ -318,7 +271,7 @@ class KTPWP_Supplier_Data {
                             'data_id' => $data_id,
                             'message' => 'updated'
                         ), $base_page_url );
-                        
+
                         echo '<script>
                             document.addEventListener("DOMContentLoaded", function() {
                                 showSuccessNotification("' . esc_js( esc_html__( '協力会社情報を更新しました。', 'ktpwp' ) ) . '");
@@ -334,26 +287,17 @@ class KTPWP_Supplier_Data {
 
             case 'insert':
                 // Handle insert operation
-                // Debug: Log that we're handling an insert operation
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( 'KTPWP DEBUG: Starting insert operation' );
-                }
-                
+
                 // Check if table exists before attempting insert
                 $table_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name ) ) === $table_name;
                 if ( ! $table_exists ) {
                     error_log( 'KTPWP ERROR: Table does not exist: ' . $table_name );
                     wp_die( __( 'Database table does not exist. Please contact the administrator.', 'ktpwp' ) );
                 }
-                
+
                 // Sanitize all POST data for insert operation
                 $sanitized_data = $this->sanitize_supplier_data( $post_data );
-                
-                // Debug: Log sanitized data
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( 'KTPWP DEBUG: Sanitized data: ' . print_r( $sanitized_data, true ) );
-                }
-                
+
                 // Build search_field value
                 $search_field_value = implode(', ', [
                     current_time( 'timestamp' ),
@@ -378,9 +322,9 @@ class KTPWP_Supplier_Data {
                 ]);
 
                 // Perform database insert
-                $insert_result = $wpdb->insert( 
-                    $table_name, 
-                    array( 
+                $insert_result = $wpdb->insert(
+                    $table_name,
+                    array(
                         'time' => current_time( 'timestamp' ),
                         'company_name' => $sanitized_data['company_name'],
                         'name' => $sanitized_data['user_name'],
@@ -401,24 +345,10 @@ class KTPWP_Supplier_Data {
                         'memo' => $sanitized_data['memo'],
                         'category' => $sanitized_data['category'],
                         'search_field' => $search_field_value
-                    ) 
+                    )
                 );
 
-                // Debug: Log insert result and any errors
-                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                    error_log( 'KTPWP DEBUG: Insert result: ' . ($insert_result ? 'SUCCESS' : 'FAILED') );
-                    if ( $wpdb->last_error ) {
-                        error_log( 'KTPWP DEBUG: Database error: ' . $wpdb->last_error );
-                    }
-                    if ( $insert_result === false ) {
-                        error_log( 'KTPWP DEBUG: Failed to insert data into table: ' . $table_name );
-                    }
-                }
-                
                 if ( $insert_result === false ) {
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                        error_log( 'KTPWP Supplier Insert error: ' . $wpdb->last_error ); 
-                    }
                     echo '<script>
                     document.addEventListener("DOMContentLoaded", function() {
                         showErrorNotification("' . esc_js( __( '追加に失敗しました。SQLエラー: ', 'ktpwp' ) ) . esc_js( $wpdb->last_error ) . '");
@@ -428,14 +358,10 @@ class KTPWP_Supplier_Data {
                     // Get the ID of the inserted record
                     $new_data_id = $wpdb->insert_id;
 
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                        error_log( 'KTPWP Debug: supplier insert completed. data_id=' . $new_data_id ); 
-                    }
-
                     // Set cookie for the new record
                     $cookie_name = 'ktp_' . $tab_name . '_id';
                     setcookie( $cookie_name, $new_data_id, time() + (86400 * 30), "/" );
-                    
+
                     // Prepare redirect URL
                     global $wp;
                     $current_page_id = get_queried_object_id();
@@ -448,29 +374,7 @@ class KTPWP_Supplier_Data {
                         'data_id' => $new_data_id,
                         'message' => 'added'
                     ), $base_page_url );
-                    
-                    // Success: redirect with message parameter instead of JavaScript
-                    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { 
-                        error_log( 'KTPWP Debug: supplier insert completed. data_id=' . $new_data_id ); 
-                    }
 
-                    // Set cookie for the new record
-                    $cookie_name = 'ktp_' . $tab_name . '_id';
-                    setcookie( $cookie_name, $new_data_id, time() + (86400 * 30), "/" );
-                    
-                    // Prepare redirect URL with success message
-                    global $wp;
-                    $current_page_id = get_queried_object_id();
-                    $base_page_url = get_permalink( $current_page_id );
-                    if ( ! $base_page_url ) {
-                        $base_page_url = home_url( add_query_arg( array(), $wp->request ) );
-                    }
-                    $redirect_url = add_query_arg( array(
-                        'tab_name' => $tab_name,
-                        'data_id' => $new_data_id,
-                        'message' => 'added'
-                    ), $base_page_url );
-                    
                     // Use WordPress redirect function
                     wp_safe_redirect( $redirect_url );
                     exit;

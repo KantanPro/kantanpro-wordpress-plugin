@@ -576,7 +576,6 @@ class Kntan_Client_Class {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['delete', 'insert', 'search', 'duplicate', 'istmode', 'srcmode'])) {
             $action = 'update';
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('KTPWP Client Debug: Dangerous action blocked for GET request, reset to update');
             }
         }
         

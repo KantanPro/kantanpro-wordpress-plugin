@@ -481,16 +481,11 @@ class Kntan_Service_Class {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['duplicate', 'delete', 'insert', 'search', 'search_execute', 'upload_image'])) {
             $action = 'update';
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('KTPWP Service Debug: Dangerous action blocked for GET request, reset to update');
             }
         }
         
         // デバッグ: タブクリック時の動作をログに記録
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP Service Debug: Final action = "' . $action . '"');
-            error_log('KTPWP Service Debug: POST query_post = ' . (isset($_POST['query_post']) ? '"' . $_POST['query_post'] . '"' : 'not set'));
-            error_log('KTPWP Service Debug: GET query_post = ' . (isset($_GET['query_post']) ? '"' . $_GET['query_post'] . '"' : 'not set'));
-            error_log('KTPWP Service Debug: Request method = ' . $_SERVER['REQUEST_METHOD']);
         }
         
         // 初期化
@@ -510,43 +505,30 @@ class Kntan_Service_Class {
             $cookie_name = 'ktp_' . $name . '_id';
             
             // デバッグログ：初期状態の確認
-            error_log('KTPWP Service Debug: 初期データ取得開始');
-            error_log('KTPWP Service Debug: GET data_id = ' . (isset($_GET['data_id']) ? $_GET['data_id'] : 'not set'));
-            error_log('KTPWP Service Debug: Cookie ' . $cookie_name . ' = ' . (isset($_COOKIE[$cookie_name]) ? $_COOKIE[$cookie_name] : 'not set'));
-            error_log('KTPWP Service Debug: Table name = ' . $table_name);
             
             if (isset($_GET['data_id']) && $_GET['data_id'] !== '') {
                 $query_id = filter_input(INPUT_GET, 'data_id', FILTER_SANITIZE_NUMBER_INT);
-                error_log('KTPWP Service Debug: GETパラメータからquery_id設定: ' . $query_id);
                 // GETパラメータで取得したIDをクッキーに保存
                 setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
-                error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を ' . $query_id . ' に更新');
             } elseif (isset($_COOKIE[$cookie_name]) && $_COOKIE[$cookie_name] !== '') {
                 $cookie_id = filter_input(INPUT_COOKIE, $cookie_name, FILTER_SANITIZE_NUMBER_INT);
                 // クッキーIDがDBに存在するかチェック
                 $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE id = %d", $cookie_id));
-                error_log('KTPWP Service Debug: クッキーID ' . $cookie_id . ' の存在確認結果: ' . $exists);
                 if ($exists) {
                     $query_id = $cookie_id;
-                    error_log('KTPWP Service Debug: クッキーからquery_id設定: ' . $query_id);
                 } else {
                     // 存在しなければ最新ID（降順トップ）
                     $last_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
                     $query_id = $last_id_row ? $last_id_row->id : 1;
-                    error_log('KTPWP Service Debug: クッキーID存在せず、最新IDを設定: ' . $query_id);
                     // 最新IDをクッキーに保存
                     setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
-                    error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を最新ID ' . $query_id . ' に更新');
                 }
             } else {
                 // data_id未指定時は必ずID最新のサービスを表示（降順トップ）
                 $last_id_row = $wpdb->get_row("SELECT id FROM {$table_name} ORDER BY id DESC LIMIT 1");
                 $query_id = $last_id_row ? $last_id_row->id : 1;
-                error_log('KTPWP Service Debug: パラメータ・クッキー未設定、最新IDを設定: ' . $query_id);
-                error_log('KTPWP Service Debug: 取得した最新データ: ' . ($last_id_row ? print_r($last_id_row, true) : 'null'));
                 // 最新IDをクッキーに保存
                 setcookie($cookie_name, $query_id, time() + (86400 * 30), '/');
-                error_log('KTPWP Service Debug: クッキー ' . $cookie_name . ' を初期最新ID ' . $query_id . ' に設定');
             }
 
             // データを取得し変数に格納

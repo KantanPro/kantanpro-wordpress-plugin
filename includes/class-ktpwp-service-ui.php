@@ -145,8 +145,6 @@ class KTPWP_Service_UI {
                 error_log('KTPWP: Error retrieving service data: ' . $e->getMessage());
             }
             error_log('KTPWP: Exception Trace: ' . $e->getTraceAsString());
-            error_log('KTPWP: Debugging search_args: ' . print_r($search_args, true));
-            error_log('KTPWP: Debugging table_name: ' . $table_name);
             $services = array();
             $total_services = 0;
             $total_pages = 1;

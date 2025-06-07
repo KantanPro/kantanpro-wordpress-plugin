@@ -73,9 +73,9 @@ class KTPWP_Ajax {
         add_action('wp_enqueue_scripts', array($this, 'localize_ajax_scripts'), 99);
         add_action('admin_enqueue_scripts', array($this, 'localize_ajax_scripts'), 99);
 
-        // スクリプトのローカライズをより確実にするために追加
-        add_action('wp_footer', array($this, 'ensure_ajax_localization'), 5);
-        add_action('admin_footer', array($this, 'ensure_ajax_localization'), 5);
+        // フッターでのスクリプト出力は AJAX リクエスト中のみに制限
+        add_action('wp_footer', array($this, 'conditional_ajax_localization'), 5);
+        add_action('admin_footer', array($this, 'conditional_ajax_localization'), 5);
     }
 
     /**
@@ -98,9 +98,7 @@ class KTPWP_Ajax {
         add_action('wp_ajax_nopriv_get_logged_in_users', array($this, 'ajax_get_logged_in_users'));
         $this->registered_handlers[] = 'get_logged_in_users';
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('KTPWP Ajax: Registered handlers - ' . implode(', ', $this->registered_handlers));
-        }
+
     }
 
     /**
@@ -124,10 +122,6 @@ class KTPWP_Ajax {
                 add_action('wp_ajax_ktp_create_new_item', array($this, 'ajax_create_new_item'));
                 add_action('wp_ajax_nopriv_ktp_create_new_item', array($this, 'ajax_create_new_item'));
                 $this->registered_handlers[] = 'ktp_create_new_item';
-            } else {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('KTPWP Ajax Error: Kntan_Order_Class not found');
-                }
             }
         }
     }
@@ -152,14 +146,6 @@ class KTPWP_Ajax {
                 add_action('wp_ajax_send_staff_chat_message', array($this, 'ajax_send_staff_chat_message'));
                 add_action('wp_ajax_nopriv_send_staff_chat_message', array($this, 'ajax_require_login'));
                 $this->registered_handlers[] = 'send_staff_chat_message';
-            } else {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('KTPWP Ajax Error: KTPWP_Staff_Chat class not found');
-                }
-            }
-        } else {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('KTPWP Ajax Error: class-ktpwp-staff-chat.php not found');
             }
         }
     }
@@ -206,6 +192,27 @@ class KTPWP_Ajax {
             wp_add_inline_script('ktp-order-inline-projectname', 'var ktpwp_inline_edit_nonce = ' . json_encode(array(
                 'nonce' => $ajax_data['nonces']['project_name']
             )) . ';');
+        }
+    }
+
+    /**
+     * 条件付きAJAX設定の確保（非AJAX時の出力を防ぐ）
+     */
+    public function conditional_ajax_localization() {
+        // AJAX リクエスト中、またはWordPressコアの処理中は何も出力しない
+        if (wp_doing_ajax() || defined('DOING_AJAX') || headers_sent()) {
+            return;
+        }
+
+        // ページ編集画面でない場合は実行しない
+        global $pagenow;
+        if (!in_array($pagenow, array('post.php', 'post-new.php', 'admin.php'))) {
+            return;
+        }
+
+        // KTPWPのスクリプトが読み込まれている場合のみ実行
+        if (wp_script_is('ktp-js', 'done') || wp_script_is('ktp-js', 'enqueued')) {
+            $this->ensure_ajax_localization();
         }
     }
 
@@ -802,68 +809,130 @@ class KTPWP_Ajax {
     }
 
     /**
-     * 完全にクリーンなJSON レスポンスを送信
-     * wp_send_json_* 関数の代替（汚染される場合の最終手段）
+     * WordPress 互換性を保持したクリーンな JSON レスポンスを送信
+     * wp_send_json_* 関数の改良版（WordPress コア機能との競合を避ける）
      */
     private function send_clean_json_response($data) {
-        // すべての出力バッファをクリア
-        while (ob_get_level()) {
-            ob_end_clean();
+        // WordPress 標準の JSON レスポンス関数が利用可能で、
+        // 既に出力が汚染されていない場合は、標準関数を使用
+        if (function_exists('wp_send_json') && ob_get_length() === false) {
+            wp_send_json($data);
+            return;
+        }
+
+        // 出力バッファが汚染されている場合のみクリーニングを実行
+        $buffer_content = '';
+        $buffer_level = ob_get_level();
+
+        if ($buffer_level > 0) {
+            $buffer_content = ob_get_contents();
+            // 意味のある出力があるかチェック（空白や改行のみの場合は無視）
+            $meaningful_content = trim($buffer_content);
+
+            if (!empty($meaningful_content)) {
+                // 汚染されている場合のみバッファをクリア
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+            }
         }
 
         // HTTPヘッダーが送信されていない場合のみ設定
         if (!headers_sent()) {
-            // キャッシュ無効化
-            header('Cache-Control: no-cache, must-revalidate, max-age=0');
-            header('Pragma: no-cache');
-            header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
+            // WordPress 標準に準拠したヘッダー設定
+            status_header(200);
+            header('Content-Type: application/json; charset=' . get_option('blog_charset'));
 
-            // コンテンツタイプを明示的に設定
-            header('Content-Type: application/json; charset=utf-8');
+            // キャッシュ制御
+            nocache_headers();
 
-            // Cross-Origin対応
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type');
+            // セキュリティヘッダー
+            if (is_ssl()) {
+                header('Vary: Accept-Encoding');
+            }
         }
 
-        // JSONエンコード
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // JSONエンコード（WordPress 標準オプション使用）
+        $json = wp_json_encode($data);
 
         if ($json === false) {
             // JSON エンコードに失敗した場合のフォールバック
             $fallback_data = array(
                 'success' => false,
-                'data' => 'JSON encoding failed: ' . json_last_error_msg()
+                'data' => null,
+                'message' => 'JSON encoding failed: ' . json_last_error_msg()
             );
-            $json = json_encode($fallback_data);
+            $json = wp_json_encode($fallback_data);
         }
 
         // JSONを出力
         echo $json;
 
-        // WordPress処理を終了
-        wp_die();
+        // WordPress 標準の終了処理を使用（shutdown フックを実行）
+        wp_die('', '', array('response' => 200));
     }
 
     /**
      * 出力に干渉する可能性のあるWordPressフックを一時的に無効化
      */
     private function disable_potentially_interfering_hooks() {
-        // デバッグバーや他のプラグインの出力を防ぐ
+        // デバッグバーや他のプラグインの出力を防ぐ（安全なフックのみ削除）
         remove_all_actions('wp_footer');
         remove_all_actions('admin_footer');
         remove_all_actions('in_admin_footer');
         remove_all_actions('admin_print_footer_scripts');
         remove_all_actions('wp_print_footer_scripts');
 
-        // WordPressの自動出力を防ぐ
-        remove_all_actions('shutdown');
+        // WordPress コアの重要な処理を破壊しないよう、shutdown フックは保持
+        // remove_all_actions('shutdown'); // コメントアウト：WordPress コア機能に必要
 
-        // 他のプラグインのAJAX干渉を防ぐ
+        // 他のプラグインのAJAX干渉を防ぐ（安全な範囲で）
         if (class_exists('WP_Debug_Bar')) {
             remove_all_actions('wp_before_admin_bar_render');
             remove_all_actions('wp_after_admin_bar_render');
+        }
+
+        // より安全な方法：特定のプラグインによる出力のみを無効化
+        $this->disable_specific_plugin_outputs();
+    }
+
+    /**
+     * 特定のプラグインによる出力のみを無効化（WordPress コア機能は保持）
+     */
+    private function disable_specific_plugin_outputs() {
+        global $wp_filter;
+
+        // 問題を引き起こす可能性のある特定のプラグインフックのみを対象とする
+        $problematic_hooks = array(
+            'wp_footer' => array('debug_bar', 'query_monitor', 'wp_debug_bar'),
+            'admin_footer' => array('debug_bar', 'query_monitor'),
+            'shutdown' => array('debug_bar_output', 'query_monitor_output')
+        );
+
+        foreach ($problematic_hooks as $hook_name => $plugin_patterns) {
+            if (isset($wp_filter[$hook_name])) {
+                foreach ($wp_filter[$hook_name]->callbacks as $priority => $callbacks) {
+                    foreach ($callbacks as $callback_id => $callback_data) {
+                        // コールバック関数名または関数オブジェクトをチェック
+                        $function_name = '';
+                        if (is_string($callback_data['function'])) {
+                            $function_name = $callback_data['function'];
+                        } elseif (is_array($callback_data['function']) && count($callback_data['function']) === 2) {
+                            $class_name = is_object($callback_data['function'][0]) ?
+                                get_class($callback_data['function'][0]) : $callback_data['function'][0];
+                            $function_name = $class_name . '::' . $callback_data['function'][1];
+                        }
+
+                        // 問題のあるパターンに一致する場合のみ削除
+                        foreach ($plugin_patterns as $pattern) {
+                            if (stripos($function_name, $pattern) !== false) {
+                                remove_action($hook_name, $callback_data['function'], $priority);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

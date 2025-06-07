@@ -101,20 +101,15 @@ class KTPWP_Supplier_Class {
     public function Update_Table( $tab_name ) {
         // Enhanced debug logging
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( 'KTPWP DEBUG: KTPWP_Supplier_Class::Update_Table called for tab: ' . $tab_name );
-            error_log( 'KTPWP DEBUG: POST data in Update_Table: ' . print_r( $_POST, true ) );
-            error_log( 'KTPWP DEBUG: $_POST is empty: ' . ( empty( $_POST ) ? 'YES' : 'NO' ) );
         }
         
         // Only proceed if POST data exists
         if ( ! empty( $_POST ) ) {
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                error_log( 'KTPWP DEBUG: Calling supplier_data->update_table()' );
             }
             $this->supplier_data->update_table( $tab_name, $_POST );
         } else {
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-                error_log( 'KTPWP DEBUG: Skipping supplier_data->update_table() - no POST data' );
             }
         }
     }
@@ -361,7 +356,6 @@ class KTPWP_Supplier_Class {
                 // 追加直後のIDを $wpdb->insert_id から取得する
                 $data_id = $wpdb->insert_id;
 
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('KTPWP Debug: insert completed. data_id=' . $data_id); }
 
                 // 追加後のリダイレクト処理
                 $cookie_name = 'ktp_' . $tab_name . '_id';
@@ -810,7 +804,6 @@ class KTPWP_Supplier_Class {
         if ($_SERVER['REQUEST_METHOD'] === 'GET' && in_array($action, ['delete', 'insert', 'search', 'duplicate', 'istmode', 'srcmode'])) {
             $action = 'update';
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('KTPWP Supplier Debug: Dangerous action blocked for GET request, reset to update');
             }
         }
 
