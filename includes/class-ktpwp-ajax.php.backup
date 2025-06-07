@@ -114,20 +114,19 @@ class KTPWP_Ajax {
             require_once $order_class_file;
 
             if (class_exists('Kntan_Order_Class')) {
-                // 直接このクラスのメソッドを使用して循環参照を回避
-                // 自動保存
-                add_action('wp_ajax_ktp_auto_save_item', array($this, 'ajax_auto_save_item'));
-                add_action('wp_ajax_nopriv_ktp_auto_save_item', array($this, 'ajax_auto_save_item'));
-                $this->registered_handlers[] = 'ktp_auto_save_item';
+            // 直接このクラスのメソッドを使用して循環参照を回避
+            // 自動保存
+            add_action('wp_ajax_ktp_auto_save_item', array($this, 'ajax_auto_save_item'));
+            add_action('wp_ajax_nopriv_ktp_auto_save_item', array($this, 'ajax_auto_save_item'));
+            $this->registered_handlers[] = 'ktp_auto_save_item';
 
-                // 新規アイテム作成
-                add_action('wp_ajax_ktp_create_new_item', array($this, 'ajax_create_new_item'));
-                add_action('wp_ajax_nopriv_ktp_create_new_item', array($this, 'ajax_create_new_item'));
-                $this->registered_handlers[] = 'ktp_create_new_item';
-            } else {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('KTPWP Ajax Error: Kntan_Order_Class not found');
-                }
+            // 新規アイテム作成
+            add_action('wp_ajax_ktp_create_new_item', array($this, 'ajax_create_new_item'));
+            add_action('wp_ajax_nopriv_ktp_create_new_item', array($this, 'ajax_create_new_item'));
+            $this->registered_handlers[] = 'ktp_create_new_item';
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('KTPWP Ajax Error: Kntan_Order_Class not found');
             }
         }
     }
@@ -340,10 +339,12 @@ class KTPWP_Ajax {
         $order_items = KTPWP_Order_Items::get_instance();
 
         try {
+            $update_data = array($field_name => $field_value);
+
             if ($item_type === 'invoice') {
-                $result = $order_items->update_item_field('invoice', $item_id, $field_name, $field_value);
+                $result = $order_items->update_invoice_item($item_id, $update_data);
             } else {
-                $result = $order_items->update_item_field('cost', $item_id, $field_name, $field_value);
+                $result = $order_items->update_cost_item($item_id, $update_data);
             }
 
             if ($result) {
@@ -606,21 +607,9 @@ class KTPWP_Ajax {
      */
     public function ajax_get_latest_staff_chat() {
         try {
-            // 出力バッファをクリア
-            while (ob_get_level()) {
-                ob_end_clean();
-            }
-            ob_start();
-
-            // フック干渉を無効化
-            $this->disable_potentially_interfering_hooks();
-
             // ログインチェック
             if (!is_user_logged_in()) {
-                $this->send_clean_json_response(array(
-                    'success' => false,
-                    'data' => __('ログインが必要です', 'ktpwp')
-                ));
+                wp_send_json_error(__('ログインが必要です', 'ktpwp'));
                 return;
             }
 
@@ -631,10 +620,7 @@ class KTPWP_Ajax {
                     'received_nonce' => $nonce,
                     'expected_action' => $this->nonce_names['staff_chat']
                 ));
-                $this->send_clean_json_response(array(
-                    'success' => false,
-                    'data' => __('セキュリティトークンが無効です', 'ktpwp')
-                ));
+                wp_send_json_error(__('セキュリティトークンが無効です', 'ktpwp'));
                 return;
             }
 
@@ -643,19 +629,13 @@ class KTPWP_Ajax {
             $last_time = $this->sanitize_ajax_input('last_time', 'text');
 
             if (empty($order_id)) {
-                $this->send_clean_json_response(array(
-                    'success' => false,
-                    'data' => __('注文IDが必要です', 'ktpwp')
-                ));
+                wp_send_json_error(__('注文IDが必要です', 'ktpwp'));
                 return;
             }
 
             // 権限チェック
             if (!current_user_can('read')) {
-                $this->send_clean_json_response(array(
-                    'success' => false,
-                    'data' => __('権限がありません', 'ktpwp')
-                ));
+                wp_send_json_error(__('権限がありません', 'ktpwp'));
                 return;
             }
 
@@ -669,32 +649,14 @@ class KTPWP_Ajax {
             // 最新メッセージを取得
             $messages = $staff_chat->get_messages_after($order_id, $last_time);
 
-            // バッファをクリーン
-            $output = ob_get_clean();
-            if (!empty($output)) {
-                error_log('KTPWP Ajax get_latest_staff_chat: Unexpected output cleaned: ' . $output);
-            }
-
-            $this->send_clean_json_response(array(
-                'success' => true,
-                'data' => $messages
-            ));
+            wp_send_json_success($messages);
 
         } catch (Exception $e) {
-            // バッファをクリーン
-            while (ob_get_level()) {
-                ob_end_clean();
-            }
-
             $this->log_ajax_error('Exception during get latest staff chat', array(
                 'message' => $e->getMessage(),
                 'order_id' => $_POST['order_id'] ?? 'unknown',
             ));
-
-            $this->send_clean_json_response(array(
-                'success' => false,
-                'data' => __('メッセージの取得中にエラーが発生しました', 'ktpwp')
-            ));
+            wp_send_json_error(__('メッセージの取得中にエラーが発生しました', 'ktpwp'));
         }
     }
 
@@ -702,40 +664,34 @@ class KTPWP_Ajax {
      * Ajax: スタッフチャットメッセージ送信
      */
     public function ajax_send_staff_chat_message() {
-        // WordPress出力バッファ完全クリア
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // 新しいバッファを開始（レスポンス汚染防止）
-        ob_start();
-
-        // エラー出力を抑制（JSON汚染防止）
-        if (!defined('WP_DEBUG') || !WP_DEBUG) {
-            error_reporting(0);
-            ini_set('display_errors', 0);
-        }
-
-        // 汚染される可能性のあるWordPressフックを一時的に無効化
-        $this->disable_potentially_interfering_hooks();
+        // デバッグログ開始
+        error_log('KTPWP: ajax_send_staff_chat_message called');
+        error_log('KTPWP: POST data: ' . print_r($_POST, true));
+        error_log('KTPWP: User logged in: ' . (is_user_logged_in() ? 'yes' : 'no'));
 
         try {
             // ログインチェック
             if (!is_user_logged_in()) {
+                error_log('KTPWP: User not logged in');
                 wp_send_json_error(__('ログインが必要です', 'ktpwp'));
                 return;
             }
 
             // Nonce検証（_ajax_nonceパラメータで送信される）
             $nonce = $_POST['_ajax_nonce'] ?? '';
+            error_log('KTPWP: Received nonce: ' . $nonce);
+            error_log('KTPWP: Expected nonce action: ' . $this->nonce_names['staff_chat']);
 
             // nonce検証を試行するが、失敗してもログインユーザーなら許可
             $nonce_valid = wp_verify_nonce($nonce, $this->nonce_names['staff_chat']);
             if (!$nonce_valid) {
+                error_log('KTPWP: Nonce verification failed, but allowing logged-in user');
                 // 一時的にnonce検証をスキップ - 本番環境では適切なnonce設定が必要
                 if (defined('WP_DEBUG') && WP_DEBUG) {
-                    // デバッグモードでもエラーログのみに出力
+                    error_log('KTPWP: DEBUG MODE - Allowing without nonce for logged-in user');
                 }
+            } else {
+                error_log('KTPWP: Nonce verification passed');
             }
 
             // パラメータの取得とサニタイズ
@@ -764,106 +720,19 @@ class KTPWP_Ajax {
             $result = $staff_chat->add_message($order_id, $message);
 
             if ($result) {
-                // バッファをクリーンにしてからJSONを送信
-                $output = ob_get_clean();
-                if (!empty($output)) {
-                    // デバッグ用：予期しない出力があればログに記録
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log('KTPWP Ajax: Unexpected output cleaned: ' . $output);
-                    }
-                }
-
-                // 最終的なクリーンアップ
-                $this->send_clean_json_response(array(
-                    'success' => true,
-                    'data' => array(
-                        'message' => __('メッセージを送信しました', 'ktpwp'),
-                    )
+                wp_send_json_success(array(
+                    'message' => __('メッセージを送信しました', 'ktpwp'),
                 ));
             } else {
-                ob_end_clean();
-                $this->send_clean_json_response(array(
-                    'success' => false,
-                    'data' => __('メッセージの送信に失敗しました', 'ktpwp')
-                ));
+                wp_send_json_error(__('メッセージの送信に失敗しました', 'ktpwp'));
             }
 
         } catch (Exception $e) {
-            ob_end_clean();
             $this->log_ajax_error('Exception during send staff chat message', array(
                 'message' => $e->getMessage(),
                 'order_id' => $_POST['order_id'] ?? 'unknown',
             ));
-            $this->send_clean_json_response(array(
-                'success' => false,
-                'data' => __('メッセージの送信中にエラーが発生しました', 'ktpwp')
-            ));
-        }
-    }
-
-    /**
-     * 完全にクリーンなJSON レスポンスを送信
-     * wp_send_json_* 関数の代替（汚染される場合の最終手段）
-     */
-    private function send_clean_json_response($data) {
-        // すべての出力バッファをクリア
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // HTTPヘッダーが送信されていない場合のみ設定
-        if (!headers_sent()) {
-            // キャッシュ無効化
-            header('Cache-Control: no-cache, must-revalidate, max-age=0');
-            header('Pragma: no-cache');
-            header('Expires: Wed, 11 Jan 1984 05:00:00 GMT');
-
-            // コンテンツタイプを明示的に設定
-            header('Content-Type: application/json; charset=utf-8');
-
-            // Cross-Origin対応
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type');
-        }
-
-        // JSONエンコード
-        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-        if ($json === false) {
-            // JSON エンコードに失敗した場合のフォールバック
-            $fallback_data = array(
-                'success' => false,
-                'data' => 'JSON encoding failed: ' . json_last_error_msg()
-            );
-            $json = json_encode($fallback_data);
-        }
-
-        // JSONを出力
-        echo $json;
-
-        // WordPress処理を終了
-        wp_die();
-    }
-
-    /**
-     * 出力に干渉する可能性のあるWordPressフックを一時的に無効化
-     */
-    private function disable_potentially_interfering_hooks() {
-        // デバッグバーや他のプラグインの出力を防ぐ
-        remove_all_actions('wp_footer');
-        remove_all_actions('admin_footer');
-        remove_all_actions('in_admin_footer');
-        remove_all_actions('admin_print_footer_scripts');
-        remove_all_actions('wp_print_footer_scripts');
-
-        // WordPressの自動出力を防ぐ
-        remove_all_actions('shutdown');
-
-        // 他のプラグインのAJAX干渉を防ぐ
-        if (class_exists('WP_Debug_Bar')) {
-            remove_all_actions('wp_before_admin_bar_render');
-            remove_all_actions('wp_after_admin_bar_render');
+            wp_send_json_error(__('メッセージの送信中にエラーが発生しました', 'ktpwp'));
         }
     }
 }

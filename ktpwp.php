@@ -36,6 +36,12 @@ if ( ! defined( 'KTPWP_PLUGIN_DESCRIPTION' ) ) {
 if ( ! defined( 'KTPWP_PLUGIN_FILE' ) ) {
     define( 'KTPWP_PLUGIN_FILE', __FILE__ );
 }
+if ( ! defined( 'KTPWP_PLUGIN_DIR' ) ) {
+    define( 'KTPWP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+if ( ! defined( 'KTPWP_PLUGIN_URL' ) ) {
+    define( 'KTPWP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
 if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
     define( 'MY_PLUGIN_VERSION', KTPWP_PLUGIN_VERSION );
 }
@@ -61,10 +67,26 @@ function ktpwp_autoload_classes() {
         'KTPWP_Setting_Class'   => 'includes/class-tab-setting.php',
         'KTPWP_Plugin_Reference' => 'includes/class-plugin-reference.php',
         // 新しいクラス構造
+        'KTPWP'                 => 'includes/class-ktpwp.php',
+        'KTPWP_Main'            => 'includes/class-ktpwp-main.php',
+        'KTPWP_Loader'          => 'includes/class-ktpwp-loader.php',
+        'KTPWP_Security'        => 'includes/class-ktpwp-security.php',
+        'KTPWP_Ajax'            => 'includes/class-ktpwp-ajax.php',
+        'KTPWP_Assets'          => 'includes/class-ktpwp-assets.php',
+        'KTPWP_Nonce_Manager'   => 'includes/class-ktpwp-nonce-manager.php',
+        'KTPWP_Shortcodes'      => 'includes/class-ktpwp-shortcodes.php',
+        'KTPWP_Redirect'        => 'includes/class-ktpwp-redirect.php',
+        'KTPWP_Contact_Form'    => 'includes/class-ktpwp-contact-form.php',
+        'KTPWP_GitHub_Updater'  => 'includes/class-ktpwp-github-updater.php',
+        'KTPWP_Database'        => 'includes/class-ktpwp-database.php',
         'KTPWP_Order'           => 'includes/class-ktpwp-order.php',
         'KTPWP_Order_Items'     => 'includes/class-ktpwp-order-items.php',
         'KTPWP_Order_UI'        => 'includes/class-ktpwp-order-ui.php',
         'KTPWP_Staff_Chat'      => 'includes/class-ktpwp-staff-chat.php',
+        'KTPWP_Service_DB'      => 'includes/class-ktpwp-service-db.php',
+        'KTPWP_Service_UI'      => 'includes/class-ktpwp-service-ui.php',
+        'KTPWP_UI_Generator'    => 'includes/class-ktpwp-ui-generator.php',
+        'KTPWP_Graph_Renderer'  => 'includes/class-ktpwp-graph-renderer.php',
         // クライアント管理の新クラス
         'KTPWP_Client_DB'       => 'includes/class-ktpwp-client-db.php',
         'KTPWP_Client_UI'       => 'includes/class-ktpwp-client-ui.php',
@@ -75,6 +97,17 @@ function ktpwp_autoload_classes() {
             $full_path = MY_PLUGIN_PATH . $file_path;
             if ( file_exists( $full_path ) ) {
                 require_once $full_path;
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( "KTPWP Autoloader: Loaded {$class_name} from {$file_path}" );
+                }
+            } else {
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( "KTPWP Autoloader: File not found for {$class_name}: {$full_path}" );
+                }
+            }
+        } else {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( "KTPWP Autoloader: Class {$class_name} already exists" );
             }
         }
     }
@@ -82,6 +115,11 @@ function ktpwp_autoload_classes() {
 
 // クラスの読み込み実行
 ktpwp_autoload_classes();
+
+// メインクラスの初期化
+if ( class_exists( 'KTPWP_Main' ) ) {
+    KTPWP_Main::get_instance();
+}
 
 // プラグインリファレンス機能の初期化
 if ( class_exists( 'KTPWP_Plugin_Reference' ) ) {
@@ -151,7 +189,7 @@ add_action( 'init', 'ktpwp_load_textdomain' );
 
 // リダイレクト処理クラス
 class KTPWP_Redirect {
-    
+
     public function __construct() {
         add_action('template_redirect', array($this, 'handle_redirect'));
         add_filter('post_link', array($this, 'custom_post_link'), 10, 2);
@@ -160,15 +198,15 @@ class KTPWP_Redirect {
 
     public function handle_redirect() {
         // デバッグ用ログ
-        
+
         // ショートコードが含まれるページの場合はリダイレクトしない
         if (isset($_GET['tab_name']) || $this->has_ktpwp_shortcode()) {
             return;
         }
-        
+
         if (is_single() || is_page()) {
             $post = get_queried_object();
-            
+
             if ($post && $this->should_redirect($post)) {
                 $external_url = $this->get_external_url($post);
                 if ($external_url) {
@@ -198,7 +236,7 @@ class KTPWP_Redirect {
         if (!$post || !isset($post->post_content)) {
             return false;
         }
-        
+
         return (
             has_shortcode($post->post_content, 'kantanAllTab') ||
             has_shortcode($post->post_content, 'ktpwp_all_tab')
@@ -217,7 +255,7 @@ class KTPWP_Redirect {
         if ($this->has_ktpwp_shortcode()) {
             return false;
         }
-        
+
         // KTPWPのクエリパラメータがある場合はリダイレクトしない
         if (isset($_GET['tab_name']) || isset($_GET['from_client']) || isset($_GET['order_id'])) {
             return false;
@@ -248,16 +286,16 @@ class KTPWP_Redirect {
         }
 
         $external_url = get_post_meta($post->ID, 'external_url', true);
-        
+
         if (empty($external_url)) {
             // デフォルトのベースURL
             $base_url = 'https://ktpwp.com/blog/';
-            
+
             if ($post->post_type === 'blog') {
                 $external_url = $base_url;
             } elseif ($post->post_type === 'post') {
                 $categories = wp_get_post_categories($post->ID, array('fields' => 'slugs'));
-                
+
                 if (in_array('blog', $categories)) {
                     $external_url = $base_url;
                 } elseif (in_array('news', $categories)) {
@@ -267,12 +305,12 @@ class KTPWP_Redirect {
                 }
             }
         }
-        
+
         // URLからクエリパラメータを除去
         if ($external_url) {
             $external_url = strtok($external_url, '?');
         }
-        
+
         return $external_url;
     }
 
@@ -287,7 +325,7 @@ class KTPWP_Redirect {
         if ($post->post_type === 'post') {
             $categories = wp_get_post_categories($post->ID, array('fields' => 'slugs'));
             $redirect_categories = array('blog', 'news', 'column');
-            
+
             if (!empty(array_intersect($categories, $redirect_categories))) {
                 $external_url = $this->get_external_url($post);
                 if ($external_url) {
@@ -301,7 +339,7 @@ class KTPWP_Redirect {
 
     public function custom_page_link($permalink, $post_id) {
         $post = get_post($post_id);
-        
+
         if ($post && $this->should_redirect($post)) {
             $external_url = $this->get_external_url($post);
             if ($external_url) {
@@ -358,7 +396,7 @@ function ktpwp_handle_form_redirect() {
         wp_redirect($redirect_url, 302);
         exit;
     }
-    
+
     // 受注書削除処理のPOSTパラメータをGETに変換 - 削除処理の問題を修正するため無効化
     // 削除処理はクラス内で直接POSTで処理する
     /*
@@ -428,10 +466,10 @@ function ktpwp_scripts_and_styles() {
     wp_enqueue_style('ktp-progress-select', plugins_url('css/progress-select.css', __FILE__) . '?v=' . time(), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
     // 設定タブ用のスタイルシートを追加
     wp_enqueue_style('ktp-setting-tab', plugins_url('css/ktp-setting-tab.css', __FILE__) . '?v=' . time(), array('ktp-css'), KTPWP_PLUGIN_VERSION, 'all');
-    
+
     // Material Symbols アイコンフォントをプリロードとして読み込み
     wp_enqueue_style('material-symbols-outlined', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0', array(), '1.0.0', 'all');
-    
+
     // Google Fontsのプリロード設定
     add_action('wp_head', function() {
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
@@ -493,22 +531,22 @@ add_action( 'wp_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 add_action( 'admin_enqueue_scripts', 'ktpwp_scripts_and_styles' );
 
 /**
- * Ajax ハンドラーを初期化
+ * Ajax ハンドラーを初期化（旧システム用）
  */
 function ktpwp_init_ajax_handlers() {
-    // クラスファイルを読み込み
-    require_once plugin_dir_path(__FILE__) . 'includes/class-tab-order.php';
-    
+    // 旧オーダークラスのAJAXハンドラー - KTPWP_Ajaxクラスで処理されるためコメントアウト
+    // require_once plugin_dir_path(__FILE__) . 'includes/class-tab-order.php';
+
     // インスタンスを作成（Ajaxハンドラー登録のため）
-    $order_instance = new Kntan_Order_Class();
-    
-    // Ajaxハンドラーを登録
-    add_action('wp_ajax_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
-    add_action('wp_ajax_nopriv_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
-    
-    // 新規アイテム作成用Ajaxハンドラーを登録
-    add_action('wp_ajax_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
-    add_action('wp_ajax_nopriv_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
+    // $order_instance = new Kntan_Order_Class();
+
+    // Ajaxハンドラーを登録 - KTPWP_Ajaxクラスで処理
+    // add_action('wp_ajax_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
+    // add_action('wp_ajax_nopriv_ktp_auto_save_item', array($order_instance, 'ajax_auto_save_item'));
+
+    // 新規アイテム作成用Ajaxハンドラーを登録 - KTPWP_Ajaxクラスで処理
+    // add_action('wp_ajax_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
+    // add_action('wp_ajax_nopriv_ktp_create_new_item', array($order_instance, 'ajax_create_new_item'));
 }
 add_action('init', 'ktpwp_init_ajax_handlers');
 
@@ -522,7 +560,7 @@ function ktp_table_setup() {
         'class-tab-setting.php',
         'class-login-error.php'
     ];
-    
+
     foreach ($class_files as $file) {
         $file_path = plugin_dir_path(__FILE__) . 'includes/' . $file;
         if (file_exists($file_path)) {
@@ -534,7 +572,7 @@ function ktp_table_setup() {
         } else {
         }
     }
-    
+
     // 各クラスでテーブル作成/更新処理を行う
     if (class_exists('Kntan_Client_Class')) {
         $client = new Kntan_Client_Class();
@@ -613,7 +651,7 @@ function KTPWP_Index(){
 
             // ログイン中のユーザー情報を取得（ログインしている場合のみ）
             $logged_in_users_html = '';
-            
+
             // より厳密なログイン状態の確認
             if ( is_user_logged_in() && current_user_can( 'edit_posts' ) && $current_user && $current_user->ID > 0 ) {
                 // セッションの有効性も確認
@@ -674,7 +712,7 @@ function KTPWP_Index(){
             // デバッグ：タブ処理開始
             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             }
-            
+
             switch ($tab_name) {
                 case 'list':
                     if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -730,11 +768,11 @@ function KTPWP_Index(){
                         }
                         error_log( 'KTPWP DEBUG: Current user can manage options: ' . ( current_user_can('manage_options') ? 'YES' : 'NO' ) );
                     }
-                    
+
                     $supplier = new KTPWP_Supplier_Class();
                     if (current_user_can('manage_options')) {
                         $supplier->Create_Table($tab_name);
-                        
+
                         // Only call Update_Table if POST data exists
                         if ( ! empty( $_POST ) ) {
                             if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -808,7 +846,7 @@ function kpwp_github_plugin_update($transient) {
     if (empty($transient->checked)) {
         return $transient;
     }
-    
+
     // プラグイン情報
     $plugin_slug = 'KTPWP/ktpwp.php';
     $github_user = 'aiojiipg'; // 正しいGitHubユーザー名
@@ -821,7 +859,7 @@ function kpwp_github_plugin_update($transient) {
             'User-Agent' => 'WordPress/' . get_bloginfo('version')
         ]
     ]);
-    
+
     if (is_wp_error($response)) {
         return $transient;
     }
@@ -835,7 +873,7 @@ function kpwp_github_plugin_update($transient) {
     $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin_slug);
     $current_version = $plugin_data['Version'];
     $latest_version = ltrim($release->tag_name, 'v');
-    
+
 
     // 新しいバージョンがあればアップデート情報をセット
     if (version_compare($current_version, $latest_version, '<')) {
@@ -843,19 +881,19 @@ function kpwp_github_plugin_update($transient) {
         $package_url = '';
         if (isset($release->assets) && is_array($release->assets)) {
             foreach ($release->assets as $asset) {
-                if (isset($asset->browser_download_url) && 
+                if (isset($asset->browser_download_url) &&
                     strpos($asset->browser_download_url, '.zip') !== false) {
                     $package_url = $asset->browser_download_url;
                     break;
                 }
             }
         }
-        
+
         // アセットがなければzipballを使用
         if (empty($package_url) && isset($release->zipball_url)) {
             $package_url = $release->zipball_url;
         }
-        
+
         if (!empty($package_url)) {
             $transient->response[$plugin_slug] = (object)[
                 'slug' => dirname($plugin_slug),
@@ -874,28 +912,28 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
     if ($action !== 'plugin_information' || !isset($args->slug) || $args->slug !== 'KTPWP') {
         return $res;
     }
-    
+
     $github_user = 'aiojiipg';
     $github_repo = 'ktpwp';
-    
+
     $response = wp_remote_get("https://api.github.com/repos/$github_user/$github_repo/releases/latest", [
         'headers' => [
             'Accept' => 'application/vnd.github.v3+json',
             'User-Agent' => 'WordPress/' . get_bloginfo('version')
         ]
     ]);
-    
+
     if (is_wp_error($response)) {
         return $res;
     }
-    
+
     $release = json_decode(wp_remote_retrieve_body($response));
     if (empty($release)) {
         return $res;
     }
-    
+
     $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/KTPWP/ktpwp.php');
-    
+
     $res = new stdClass();
     $res->name = $plugin_data['Name'];
     $res->slug = 'KTPWP';
@@ -911,7 +949,7 @@ function kpwp_github_plugin_update_info($res, $action, $args) {
         'description' => $plugin_data['Description'],
         'changelog' => isset($release->body) ? $release->body : __('No changelog provided.', 'ktpwp'),
     ];
-    
+
     return $res;
 }
 
@@ -1053,7 +1091,7 @@ function ktp_capture_contact_form_data( $contact_form ) {
             // クライアントタブ表示用のクッキーを新しいクライアントIDで更新
             // class-tab-client.php で使用されるクッキー名は 'ktp_' . $tab_name . '_id' の形式なので、
             // ここでは $tab_name が 'client' であると想定して 'ktp_client_id' を使用します。
-            $client_cookie_name = 'ktp_client_id'; 
+            $client_cookie_name = 'ktp_client_id';
             if (!headers_sent()) { // この if に対する else
                 setcookie($client_cookie_name, $new_client_id, time() + (86400 * 30), COOKIEPATH, COOKIE_DOMAIN);
                 if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -1074,7 +1112,7 @@ function ktp_capture_contact_form_data( $contact_form ) {
                 'project_name' => __( 'お問い合わせの件', 'ktpwp' ),
                 'progress' => 1, // "受付中"
                 'user_name' => '', // 初期状態では空
-                'time' => $current_unix_time, 
+                'time' => $current_unix_time,
                 'created_at' => $current_time_mysql,
                 'updated_at' => $current_time_mysql,
             );

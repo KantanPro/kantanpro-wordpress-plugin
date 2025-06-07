@@ -1,11 +1,11 @@
 <?php
 
 class view_tabs_Class{
-    
+
     public function __construct() {
 
     }
-    
+
     // 指定された内容でタブを表示するメソッド
     function TabsView(
       $list_content,
@@ -16,7 +16,10 @@ class view_tabs_Class{
       $report_content,
       $setting_content
       ) {
-        
+
+        // AJAX設定を確実に出力（スタッフチャット用）
+        $this->output_staff_chat_ajax_config();
+
         // タブの位置を取得
         $position = $_GET['tab_name'] ?? 'list';
 
@@ -35,16 +38,16 @@ class view_tabs_Class{
         $view = "<div class=\"tabs ktp_plugin_container\">";
         // 現在のURL情報を取得
         $current_url = add_query_arg(NULL, NULL);
-        
+
         // 各タブ用のクリーンなベースURLを作成（KTPWPパラメータを全て除去）
         $clean_base_url = remove_query_arg([
-            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id', 
+            'tab_name', 'from_client', 'customer_name', 'user_name', 'client_id',
             'order_id', 'delete_order', 'data_id', 'view_mode', 'query_post',
             'page_start', 'page_stage', 'message', 'search_query', 'multiple_results',
             'no_results', 'flg', 'sort_by', 'sort_order', 'order_sort_by', 'order_sort_order',
             'chat_open', 'message_sent'  // チャット関連パラメータも除去
         ], $current_url);
-        
+
         foreach ($tabs as $key => $value) {
           $checked = $position === $key ? ' checked' : '';
           $active_class = $position === $key ? ' active' : '';
@@ -91,5 +94,34 @@ EOF;
 
     return $view;
     }
-    
+
+    /**
+     * スタッフチャット用AJAX設定を出力
+     */
+    private function output_staff_chat_ajax_config() {
+        static $output_done = false;
+
+        // 重複出力を防止
+        if ($output_done) {
+            return;
+        }
+
+        // 統一ナンス管理システムを使用
+        $nonce_manager = KTPWP_Nonce_Manager::getInstance();
+        $ajax_data = $nonce_manager->get_unified_ajax_config();
+
+        echo '<script type="text/javascript">';
+        echo 'window.ktpwp_ajax = ' . json_encode($ajax_data) . ';';
+        echo 'window.ktp_ajax_object = ' . json_encode($ajax_data) . ';';
+        echo 'window.ajaxurl = ' . json_encode($ajax_data['ajax_url']) . ';';
+        echo 'console.log("TabView: 統一AJAX設定を出力", window.ktpwp_ajax);';
+        echo '</script>';
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP TabView: Unified AJAX config output: ' . json_encode($ajax_data));
+        }
+
+        $output_done = true;
+    }
+
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * アセット管理クラス
- * 
+ *
  * プラグインのCSS・JavaScriptファイルの読み込みを管理
  *
  * @package KTPWP
@@ -17,35 +17,35 @@ if ( ! defined( 'ABSPATH' ) ) {
  * アセット管理クラス
  */
 class KTPWP_Assets {
-    
+
     /**
      * CSSファイルリスト
-     * 
+     *
      * @var array
      */
     private $styles = array();
-    
+
     /**
      * JavaScriptファイルリスト
-     * 
+     *
      * @var array
      */
     private $scripts = array();
-    
+
     /**
      * コンストラクタ
      */
     public function __construct() {
         $this->setup_assets();
     }
-    
+
     /**
      * 初期化
      */
     public function init() {
         $this->init_hooks();
     }
-    
+
     /**
      * フック初期化
      */
@@ -53,8 +53,10 @@ class KTPWP_Assets {
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
         add_action( 'wp_head', array( $this, 'add_preload_links' ), 1 );
+        add_action( 'wp_head', array( $this, 'output_ajax_config' ), 99 );
+        add_action( 'wp_footer', array( $this, 'output_ajax_config_fallback' ), 1 );
     }
-    
+
     /**
      * アセット設定
      */
@@ -62,7 +64,7 @@ class KTPWP_Assets {
         $this->setup_styles();
         $this->setup_scripts();
     }
-    
+
     /**
      * CSSファイル設定
      */
@@ -112,7 +114,7 @@ class KTPWP_Assets {
             ),
         );
     }
-    
+
     /**
      * JavaScriptファイル設定
      */
@@ -186,7 +188,7 @@ class KTPWP_Assets {
             ),
         );
     }
-    
+
     /**
      * フロントエンドアセット読み込み
      */
@@ -195,23 +197,24 @@ class KTPWP_Assets {
         $this->enqueue_scripts( false );
         $this->localize_frontend_scripts();
     }
-    
+
     /**
      * 管理画面アセット読み込み
-     * 
+     *
      * @param string $hook_suffix 現在の管理画面のフック
      */
     public function enqueue_admin_assets( $hook_suffix ) {
         // KTPWPプラグインの管理画面でのみ読み込み
-        if ( strpos( $hook_suffix, 'ktp-' ) !== false ) {
+        if ( strpos( $hook_suffix, 'ktp-' ) !== false || strpos( $hook_suffix, 'ktpwp-' ) !== false ) {
             $this->enqueue_styles( true );
             $this->enqueue_scripts( true );
+            $this->localize_frontend_scripts(); // 管理画面でもフロントエンド用のAJAX設定を追加
         }
     }
-    
+
     /**
      * CSS読み込み
-     * 
+     *
      * @param bool $is_admin 管理画面かどうか
      */
     private function enqueue_styles( $is_admin = false ) {
@@ -222,54 +225,86 @@ class KTPWP_Assets {
             }
         }
     }
-    
+
     /**
      * JavaScript読み込み
-     * 
+     *
      * @param bool $is_admin 管理画面かどうか
      */
     private function enqueue_scripts( $is_admin = false ) {
         // 必要な基本スクリプトを読み込み
         wp_enqueue_script( 'jquery' );
         wp_enqueue_script( 'jquery-ui-sortable' );
-        
+
         foreach ( $this->scripts as $handle => $script ) {
             if ( $script['admin'] === $is_admin || ! $script['admin'] ) {
                 // 権限チェック
                 if ( isset( $script['capability'] ) && ! current_user_can( $script['capability'] ) ) {
                     continue;
                 }
-                
+
                 $src = $this->get_asset_url( $script['src'] );
                 wp_enqueue_script( $handle, $src, $script['deps'], $script['ver'], $script['in_footer'] );
-                
+
                 // Localizeスクリプト
                 if ( isset( $script['localize'] ) ) {
                     $this->localize_script( $handle, $script['localize'] );
                 }
+
+                // 管理画面でktp-jsスクリプトが読み込まれた場合、スタッフチャット用AJAX設定を追加
+                if ( $is_admin && $handle === 'ktp-js' ) {
+                    $ajax_data = $this->get_unified_ajax_config();
+
+                    wp_add_inline_script( 'ktp-js', 'window.ktpwp_ajax = ' . json_encode($ajax_data) . ';', 'after' );
+                    wp_add_inline_script( 'ktp-js', 'window.ktp_ajax_object = ' . json_encode($ajax_data) . ';', 'after' );
+                    wp_add_inline_script( 'ktp-js', 'window.ajaxurl = ' . json_encode($ajax_data['ajax_url']) . ';', 'after' );
+                    wp_add_inline_script( 'ktp-js', 'console.log("Admin: AJAX設定を出力 (unified nonce)", window.ktpwp_ajax);', 'after' );
+
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('KTPWP Assets: Admin AJAX config added for ktp-js with unified nonce: ' . json_encode($ajax_data));
+                    }
+                }
             }
         }
     }
-    
+
     /**
      * フロントエンド用JavaScript設定
      */
     private function localize_frontend_scripts() {
-        // 共通のAjax設定
-        wp_add_inline_script( 'ktp-js', 'var ktp_ajax_object = ' . json_encode(array(
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-        )) . ';' );
+        // デバッグログ
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Assets: localize_frontend_scripts called');
+        }
+
+        // 統一されたAJAX設定を使用
+        $ajax_data = $this->get_unified_ajax_config();
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Assets: AJAX data prepared with unified nonce: ' . json_encode($ajax_data));
+        }
+
+        wp_add_inline_script( 'ktp-js', 'var ktp_ajax_object = ' . json_encode($ajax_data) . ';' );
+        wp_add_inline_script( 'ktp-js', 'var ktpwp_ajax = ' . json_encode($ajax_data) . ';' );
+        wp_add_inline_script( 'ktp-js', 'var ajaxurl = ' . json_encode($ajax_data['ajax_url']) . ';' );
 
         // 翻訳ラベル
         wp_add_inline_script( 'ktp-js', 'var ktpwpCostShowLabel = ' . json_encode( esc_html__( '表示', 'ktpwp' ) ) . ';' );
         wp_add_inline_script( 'ktp-js', 'var ktpwpCostHideLabel = ' . json_encode( esc_html__( '非表示', 'ktpwp' ) ) . ';' );
         wp_add_inline_script( 'ktp-js', 'var ktpwpStaffChatShowLabel = ' . json_encode( esc_html__( '表示', 'ktpwp' ) ) . ';' );
         wp_add_inline_script( 'ktp-js', 'var ktpwpStaffChatHideLabel = ' . json_encode( esc_html__( '非表示', 'ktpwp' ) ) . ';' );
+
+        // デバッグ情報
+        wp_add_inline_script( 'ktp-js', 'console.log("Assets: AJAX設定を出力 (unified nonce)", window.ktpwp_ajax);' );
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Assets: Inline scripts added with unified nonce');
+        }
     }
-    
+
     /**
      * スクリプトローカライズ
-     * 
+     *
      * @param string $handle スクリプトハンドル
      * @param array $localize_data ローカライズデータ
      */
@@ -286,10 +321,10 @@ class KTPWP_Assets {
             wp_localize_script( $handle, $localize_data['object'], $localize_data['data'] );
         }
     }
-    
+
     /**
      * アセットURLの取得
-     * 
+     *
      * @param string $path ファイルパス
      * @return string
      */
@@ -300,16 +335,16 @@ class KTPWP_Assets {
         }
         return KTPWP_PLUGIN_URL . $path;
     }
-    
+
     /**
      * デバッグモードの取得
-     * 
+     *
      * @return bool
      */
     private function get_debug_mode() {
         return ( defined( 'WP_DEBUG' ) && WP_DEBUG ) || ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG );
     }
-    
+
     /**
      * プリロードリンクの追加
      */
@@ -322,10 +357,10 @@ class KTPWP_Assets {
         // FontAwesome Webfont のプリロードリンクを修正
         echo '<link rel="preload" href="https://example.com/path/to/fontawesome-webfont.woff2" as="font" type="font/woff2" crossorigin="anonymous">' . "\n";
     }
-    
+
     /**
      * アセットを動的に追加
-     * 
+     *
      * @param string $handle ハンドル名
      * @param array $asset アセット設定
      * @param string $type 'style' または 'script'
@@ -337,10 +372,10 @@ class KTPWP_Assets {
             $this->scripts[ $handle ] = $asset;
         }
     }
-    
+
     /**
      * アセットを削除
-     * 
+     *
      * @param string $handle ハンドル名
      * @param string $type 'style' または 'script'
      */
@@ -349,6 +384,65 @@ class KTPWP_Assets {
             unset( $this->styles[ $handle ] );
         } else {
             unset( $this->scripts[ $handle ] );
+        }
+    }
+
+    /**
+     * ナンス値を統一して取得
+     *
+     * @return string 統一されたstaff_chatナンス値
+     */
+    private function get_unified_staff_chat_nonce() {
+        return KTPWP_Nonce_Manager::get_instance()->get_staff_chat_nonce();
+    }
+
+    /**
+     * 統一されたAJAX設定を取得
+     *
+     * @return array 統一されたAJAX設定配列
+     */
+    private function get_unified_ajax_config() {
+        return KTPWP_Nonce_Manager::get_instance()->get_unified_ajax_config();
+    }
+
+    /**
+     * wp_headでAJAX設定を出力
+     */
+    public function output_ajax_config() {
+        if (!wp_script_is('ktp-js', 'enqueued') && !wp_script_is('ktp-js', 'done')) {
+            return;
+        }
+
+        $ajax_data = $this->get_unified_ajax_config();
+
+        echo '<script type="text/javascript">';
+        echo 'window.ktpwp_ajax = ' . json_encode($ajax_data) . ';';
+        echo 'window.ktp_ajax_object = ' . json_encode($ajax_data) . ';';
+        echo 'window.ajaxurl = ' . json_encode($ajax_data['ajax_url']) . ';';
+        echo 'console.log("Head: AJAX設定を出力 (unified nonce)", window.ktpwp_ajax);';
+        echo '</script>';
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Assets: AJAX config output in head with unified data: ' . json_encode($ajax_data));
+        }
+    }
+
+    /**
+     * wp_footerでAJAX設定のフォールバック出力
+     */
+    public function output_ajax_config_fallback() {
+        echo '<script type="text/javascript">';
+        echo 'if (typeof window.ktpwp_ajax === "undefined") {';
+        $ajax_data = $this->get_unified_ajax_config();
+        echo 'window.ktpwp_ajax = ' . json_encode($ajax_data) . ';';
+        echo 'window.ktp_ajax_object = ' . json_encode($ajax_data) . ';';
+        echo 'window.ajaxurl = ' . json_encode($ajax_data['ajax_url']) . ';';
+        echo 'console.log("Footer fallback: AJAX設定を出力 (unified nonce)", window.ktpwp_ajax);';
+        echo '}';
+        echo '</script>';
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('KTPWP Assets: Fallback AJAX config output in footer with unified nonce');
         }
     }
 }
